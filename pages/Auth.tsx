@@ -18,7 +18,8 @@ const Auth: React.FC = () => {
   useEffect(() => {
     const probe = async () => {
       try {
-        const res = await fetch('https://localhost:7124/api/rooms', { 
+        // Updated probe to production API
+        const res = await fetch('https://api.moorehotelandsuites.com/api/rooms', { 
           method: 'GET',
           headers: { 'Accept': 'application/json' }
         }).catch(() => null);
@@ -29,14 +30,14 @@ const Auth: React.FC = () => {
       }
     };
     probe();
-    const interval = setInterval(probe, 10000);
+    const interval = setInterval(probe, 30000); // 30s interval for production health check
     return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isBackendLive === false) {
-      setError("Connectivity Fault: Enterprise API node at localhost:7124 is unreachable.");
+      setError("Connectivity Fault: Enterprise API node at api.moorehotelandsuites.com is unreachable.");
       return;
     }
     
@@ -101,10 +102,10 @@ const Auth: React.FC = () => {
               <div className="mb-8 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex flex-col gap-3">
                 <div className="flex items-center gap-3 text-rose-400">
                   <WifiOff size={20} />
-                  <span className="text-[11px] font-black uppercase tracking-widest">Backend Link Down</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest">Gateway Link Down</span>
                 </div>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-dash leading-relaxed">
-                  Ensure the backend service is running on port 7124.
+                  Unable to reach the Enterprise API Gateway. Check network connection.
                 </p>
               </div>
             )}

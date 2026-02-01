@@ -1,5 +1,5 @@
 
-const BASE_URL = 'https://localhost:7124'; 
+const BASE_URL = 'https://api.moorehotelandsuites.com'; 
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -56,7 +56,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     return data as T;
   } catch (error: any) {
     clearTimeout(abortId);
-    if (error.name === 'AbortError') throw new Error("Sync Timeout: Local API node unresponsive.");
+    if (error.name === 'AbortError') throw new Error("Sync Timeout: Enterprise API node unreachable.");
     throw error;
   }
 }
