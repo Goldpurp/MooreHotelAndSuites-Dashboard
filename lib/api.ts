@@ -1,5 +1,5 @@
 
-const BASE_URL = 'https://api.moorehotelandsuites.com'; 
+const BASE_URL = import.meta.env.VITE_API_URL; 
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
