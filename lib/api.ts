@@ -1,5 +1,6 @@
 
-const BASE_URL = import.meta.env.VITE_API_URL; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -10,7 +11,7 @@ interface RequestOptions extends RequestInit {
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { params, timeout = 15000, silent = false, ...init } = options;
   
-  let url = `${BASE_URL}${endpoint}`;
+  let url = `${API_BASE_URL}${endpoint}`;
   if (params) {
     const searchParams = new URLSearchParams(params);
     url += (url.includes('?') ? '&' : '?') + searchParams.toString();
