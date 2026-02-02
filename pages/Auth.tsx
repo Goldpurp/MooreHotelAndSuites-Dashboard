@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, ArrowRight, ShieldAlert, AlertCircle, Loader2, WifiOff, RefreshCw, ChevronLeft } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
@@ -137,7 +136,15 @@ const Auth: React.FC = () => {
                       </div>
                       <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                        <input type="password" required placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                        <input 
+                          type="password" 
+                          required 
+                          placeholder="••••••••" 
+                          autoComplete="current-password"
+                          value={formData.password} 
+                          onChange={(e) => setFormData({...formData, password: e.target.value})} 
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" 
+                        />
                       </div>
                     </div>
 

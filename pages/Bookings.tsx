@@ -4,7 +4,7 @@ import { useHotel } from '../store/HotelContext';
 import { BookingStatus, Booking, Guest, Room } from '../types';
 import { 
   Filter, FileUp, Search, Plus, ArrowRight, Zap, CheckCircle, 
-  AlertCircle, Printer, History, XCircle, Users, Calendar, Bed, User, X, Mail, Phone
+  AlertCircle, Printer, History, XCircle, Users, Calendar, Bed, User, X, Mail, Phone, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import BookingModal from '../components/BookingModal';
 import VoidBookingModal from '../components/VoidBookingModal';
@@ -34,6 +34,15 @@ const Bookings: React.FC = () => {
   const [isCheckInConfirmOpen, setIsCheckInConfirmOpen] = useState(false);
   const [bookingToCheckIn, setBookingToCheckIn] = useState<Booking | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 15;
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, lookupId]);
+
   // Updated filtering logic to include search query
   const filteredBookings = useMemo(() => {
     const q = lookupId.trim().toLowerCase();
@@ -46,6 +55,12 @@ const Bookings: React.FC = () => {
       return matchesStatus && matchesSearch;
     });
   }, [bookings, filter, lookupId]);
+
+  const totalPages = Math.ceil(filteredBookings.length / PAGE_SIZE);
+  const paginatedBookings = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredBookings.slice(start, start + PAGE_SIZE);
+  }, [filteredBookings, currentPage]);
 
   useEffect(() => {
     if (selectedBookingId) {
@@ -211,10 +226,10 @@ const Bookings: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {filteredBookings.length === 0 ? (
+                  {paginatedBookings.length === 0 ? (
                     <tr><td colSpan={6} className="py-20 text-center text-slate-700 font-black uppercase tracking-[0.3em] text-[10px]">No dossiers found matching criteria</td></tr>
                   ) : (
-                    filteredBookings.map((b) => {
+                    paginatedBookings.map((b) => {
                       const room = rooms.find(r => r.id === b.roomId);
                       const isSelected = selectedBooking?.id === b.id;
                       const guestName = resolveGuestName(b);
@@ -297,6 +312,31 @@ const Bookings: React.FC = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            <div className="px-5 py-3 border-t border-white/5 bg-slate-900/40 flex items-center justify-between">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                Showing {paginatedBookings.length} of {filteredBookings.length} results
+              </span>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="flex items-center px-4 rounded-lg bg-black/20 border border-white/5">
+                  <span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span>
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           </div>
         </div>

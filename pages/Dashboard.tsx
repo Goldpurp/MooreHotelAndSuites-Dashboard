@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { DollarSign, UserCheck, Bed, Activity, ArrowRight, RefreshCw, PieChart as PieIcon, Clock, Zap } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import StatCard from '../components/StatCard';
@@ -17,7 +17,7 @@ const Dashboard: React.FC = () => {
   const [dailyStats, setDailyStats] = useState<any>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       const [analyticsRes, dailyRes] = await Promise.all([
         api.get('/api/analytics/overview', { params: { period: timeFilter.toLowerCase() } }),
@@ -28,16 +28,21 @@ const Dashboard: React.FC = () => {
     } catch (e) {
       setAnalytics(null);
     }
-  };
+  }, [timeFilter]);
 
+  // Only fetch analytics on period change or mount
   useEffect(() => {
     fetchDashboardData();
-  }, [timeFilter, bookings, rooms]);
+  }, [fetchDashboardData]);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refreshData();
-    await fetchDashboardData();
+    // refreshData updates the context rooms/bookings, 
+    // fetchDashboardData updates the analytics summaries
+    await Promise.all([
+      refreshData(),
+      fetchDashboardData()
+    ]);
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
