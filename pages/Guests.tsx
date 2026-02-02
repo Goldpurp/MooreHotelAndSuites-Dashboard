@@ -18,26 +18,22 @@ const Guests: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  // Robust Linking Logic: Match guest to active booking by ID, Email, or Phone
+  // Aggressive Linking Logic: Null-safe and status-flexible
   const getActiveStay = (guest: Guest) => {
     if (!guest || !bookings) return null;
     
     const booking = (bookings || []).find(b => {
-      // Priority 1: Check-in status must be correct
-      const isCheckedIn = b.status === BookingStatus.CHECKED_IN;
+      // Allow flexible status strings from the API (e.g. "CheckedIn", "Checked-In", "Checked In")
+      const status = String(b.status || '').toLowerCase().replace(/[-_ ]/g, '');
+      const isCheckedIn = status === 'checkedin';
       if (!isCheckedIn) return false;
 
-      const guestIdLower = String(guest.id).toLowerCase();
+      const guestIdLower = String(guest.id || '').toLowerCase();
       
-      // Priority 2: Precise ID matching (handles GUIDs and synthesized strings)
       const idMatch = b.guestId && String(b.guestId).toLowerCase() === guestIdLower;
-      
-      // Priority 3: Fuzzy matching (email/phone) for cases where IDs differ across systems
       const emailMatch = b.guestEmail && guest.email && b.guestEmail.toLowerCase() === guest.email.toLowerCase();
       const phoneMatch = b.guestPhone && guest.phone && b.guestPhone.replace(/\D/g, '') === guest.phone.replace(/\D/g, '');
-      
-      // Priority 4: Synthesis ID matching (where guest.id IS the email or bookingCode)
-      const synthesisMatch = guestIdLower === b.guestEmail?.toLowerCase() || guestIdLower === b.bookingCode?.toLowerCase();
+      const synthesisMatch = guestIdLower && (guestIdLower === String(b.guestEmail || '').toLowerCase() || guestIdLower === String(b.bookingCode || '').toLowerCase());
 
       return idMatch || emailMatch || phoneMatch || synthesisMatch;
     });
@@ -51,9 +47,8 @@ const Guests: React.FC = () => {
     const q = searchQuery.toLowerCase().trim();
     return (guests || [])
       .filter(g => {
-        const matchesSearch = `${g.firstName} ${g.lastName} ${g.email} ${g.phone}`.toLowerCase().includes(q);
+        const matchesSearch = `${g.firstName || ''} ${g.lastName || ''} ${g.email || ''} ${g.phone || ''}`.toLowerCase().includes(q);
         const stay = getActiveStay(g);
-        // If we are showing only in-house, ensure the guest has an active stay verified
         return matchesSearch && (showInHouseOnly ? !!stay : true);
       })
       .map(g => ({ ...g, activeStay: getActiveStay(g) }))
@@ -95,7 +90,7 @@ const Guests: React.FC = () => {
                }`}
              >
                {showInHouseOnly ? <UserCheck size={16}/> : <Archive size={16}/>} 
-               {showInHouseOnly ? 'Active Focus' : 'Full Ledger'}
+               {showInHouseOnly ? 'Focus: Active' : 'Registry: Full'}
              </button>
           </div>
         </div>
@@ -127,7 +122,7 @@ const Guests: React.FC = () => {
                     {processedGuests.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="py-24 text-center">
-                          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">No matching records found</p>
+                          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">No matching records detected</p>
                         </td>
                       </tr>
                     ) : (
@@ -153,7 +148,7 @@ const Guests: React.FC = () => {
                                    Room {guest.activeStay.room?.roomNumber || '...'}
                                 </span>
                               ) : (
-                                <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest italic opacity-50">Archived</span>
+                                <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest italic opacity-50">Inactive</span>
                               )}
                            </td>
                            <td className="px-8 py-5">
@@ -161,7 +156,7 @@ const Guests: React.FC = () => {
                               <p className="text-[8px] text-slate-600 font-bold uppercase tracking-dash">{guest.totalStays ?? 1} Visit(s)</p>
                            </td>
                            <td className="px-8 py-5 text-right">
-                              <button className="p-2.5 bg-white/5 rounded-xl border border-white/5 hover:text-blue-400 hover:border-blue-500/20 transition-all">
+                              <button className="p-2.5 bg-white/5 rounded-xl border border-white/10 hover:text-blue-400 hover:border-blue-500/20 transition-all">
                                  <Eye size={18}/>
                               </button>
                            </td>
@@ -207,7 +202,7 @@ const Guests: React.FC = () => {
                 <div className="bg-emerald-500/5 p-6 rounded-3xl border border-emerald-500/20 space-y-4 shadow-inner">
                    <div className="flex justify-between items-center">
                       <span className="text-[10px] text-emerald-500/60 font-black uppercase tracking-widest">Active Folio</span>
-                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-tighter italic">Authorized</span>
+                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-tighter italic">Verified</span>
                    </div>
                    <div className="flex items-center gap-4">
                       <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400"><Bed size={24}/></div>
@@ -222,7 +217,7 @@ const Guests: React.FC = () => {
                          <p className="text-[11px] font-black text-white">{new Date(selectedGuest.activeStay.booking.checkIn).toLocaleDateString()}</p>
                       </div>
                       <div className="text-right">
-                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-dash mb-1">Balance</p>
+                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-dash mb-1">Settlement</p>
                          <p className="text-[11px] font-black text-emerald-400">₦{selectedGuest.activeStay.booking.amount.toLocaleString()}</p>
                       </div>
                    </div>
@@ -230,7 +225,7 @@ const Guests: React.FC = () => {
               ) : (
                 <div className="bg-white/5 p-8 rounded-3xl border border-white/5 flex flex-col items-center text-center opacity-60">
                    <Archive size={32} className="text-slate-700 mb-4" />
-                   <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest leading-relaxed">No active residency detected in current property ledger.</p>
+                   <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest leading-relaxed">No active folio detected in current property ledger cycle.</p>
                 </div>
               )}
            </div>
@@ -257,7 +252,7 @@ const Guests: React.FC = () => {
                  onClick={() => setActiveTab('bookings')} 
                  className="w-full bg-blue-600 hover:bg-blue-700 py-6 rounded-3xl font-black text-[13px] uppercase tracking-[0.2em] text-white transition-all border border-blue-500/30 shadow-2xl shadow-blue-950/50 flex items-center justify-center gap-3 italic"
                >
-                 <CreditCard size={20}/> New Resident Assignment
+                 <CreditCard size={20}/> New Folio Assignment
                </button>
              )}
            </div>

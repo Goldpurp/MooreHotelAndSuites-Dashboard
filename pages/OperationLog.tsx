@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { VisitAction } from '../types';
@@ -27,11 +26,12 @@ const OperationLog: React.FC = () => {
   const filteredLogs = useMemo(() => {
     const query = localSearch.toLowerCase().trim();
     return (visitHistory || []).filter(log => {
+      if (!log) return false;
       const matchesSearch = 
-        log.guestName.toLowerCase().includes(query) ||
-        log.bookingCode.toLowerCase().includes(query) ||
-        log.roomNumber.toLowerCase().includes(query) ||
-        log.authorizedBy.toLowerCase().includes(query);
+        (log.guestName || '').toLowerCase().includes(query) ||
+        (log.bookingCode || '').toLowerCase().includes(query) ||
+        (log.roomNumber || '').toLowerCase().includes(query) ||
+        (log.authorizedBy || '').toLowerCase().includes(query);
       
       const matchesProtocol = activeProtocol === 'All' || log.action === activeProtocol;
       
@@ -207,8 +207,8 @@ const OperationLog: React.FC = () => {
                       </td>
                       <td className="px-8 py-6">
                          <div>
-                            <p className="text-[15px] font-black text-slate-200 uppercase tracking-tight group-hover:text-blue-400 transition-colors italic">{log.guestName}</p>
-                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-dash mt-0.5">Ref: {log.bookingCode}</p>
+                            <p className="text-[15px] font-black text-slate-200 uppercase tracking-tight group-hover:text-blue-400 transition-colors italic">{log.guestName || 'Resident'}</p>
+                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-dash mt-0.5">Ref: {log.bookingCode || '---'}</p>
                          </div>
                       </td>
                       <td className="px-8 py-6">
@@ -225,14 +225,14 @@ const OperationLog: React.FC = () => {
                                <Bed size={16} />
                             </div>
                             <div>
-                               <p className="text-[14px] font-black text-slate-300">Room {log.roomNumber}</p>
+                               <p className="text-[14px] font-black text-slate-300">Room {log.roomNumber || '---'}</p>
                                <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">Asset Unit</p>
                             </div>
                          </div>
                       </td>
                       <td className="px-8 py-6 text-right">
                          <div>
-                            <p className="text-[13px] font-black text-slate-400 italic">{log.authorizedBy}</p>
+                            <p className="text-[13px] font-black text-slate-400 italic">{log.authorizedBy || 'System'}</p>
                             <p className="text-[8px] text-emerald-500/50 font-black uppercase tracking-dash mt-0.5">Verification Confirmed</p>
                          </div>
                       </td>
