@@ -115,8 +115,13 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setStaff(staffData || []);
       setNotifications(notificationsData || []);
       setAuditLogs(auditLogsData || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to sync property ledger', error);
+      // If we got an unauthorized error during refresh, log out
+      if (error.message.includes('Authorization Required') || error.message.includes('expired')) {
+        setIsAuthenticated(false);
+        api.removeToken();
+      }
     } finally {
       setIsInitialLoading(false);
     }
@@ -144,7 +149,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [refreshData]);
 
   const login = async (email: string, password?: string) => {
-    // The api.post helper will throw an error with the server message if it fails (e.g., 401 Unauthorized)
     const response = await api.post<any>('/api/Auth/login', { email, password });
     
     const token = 
@@ -166,8 +170,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsAuthenticated(true);
       await refreshData();
     } else {
-      // This part only hits if the server returned 200 OK but no token was found in the body
-      throw new Error("Authentication succeeded but no security token was returned by the node.");
+      throw new Error("MHS Node Protocol Error: Login succeeded but no bearer token was returned.");
     }
   };
 

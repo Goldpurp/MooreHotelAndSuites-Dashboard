@@ -1,4 +1,3 @@
-
 // Fallback to the production API if the environment variable is missing
 const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'https://api.moorehotelandsuites.com';
 
@@ -42,15 +41,20 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     const response = await fetch(finalUrl, { 
       ...init, 
       headers,
-      signal: controller.signal 
+      signal: controller.signal,
+      redirect: 'follow' // Allow browser to follow, but we will inspect the result
     });
     clearTimeout(abortId);
 
-    // Handle authentication expiration
-    if (response.status === 401 && !endpoint.toLowerCase().includes('login')) {
-       sessionStorage.removeItem('mhs_token');
-       window.location.reload(); // Force re-auth
-       throw new Error("Session Expired: Please re-authenticate.");
+    // CRITICAL FIX: Detect .NET Identity redirection to /Account/Login
+    // If the response URL doesn't match our base API anymore, it means we were redirected to a login page
+    if (response.redirected || (response.url && response.url.includes('Account/Login'))) {
+       console.error(`[MHS Security] Unauthorized redirect detected to: ${response.url}`);
+       if (!endpoint.toLowerCase().includes('login')) {
+         sessionStorage.removeItem('mhs_token');
+         // Use a more descriptive error so the UI can show "Session Expired"
+         throw new Error("Authorization Required: Your session has expired or is invalid.");
+       }
     }
 
     const text = await response.text();
@@ -66,6 +70,12 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
       if (!silent) {
         console.error(`[MHS Protocol Fault] Status ${response.status} at ${finalUrl}:`, data);
       }
+      
+      // If we got a 404 but it's clearly a redirect issue
+      if (response.status === 404 && response.url.includes('Account/Login')) {
+        throw new Error("Access Denied: Please log in again.");
+      }
+
       // Extract the most useful error message for the user
       const errorMessage = 
         data.message || 
