@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehotelandsuites.com';
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -9,11 +10,15 @@ interface RequestOptions extends RequestInit {
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { params, timeout = 15000, silent = false, ...init } = options;
   
-  let url = `${API_BASE_URL}${endpoint}`;
+  const sanitizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  let url = `${BASE_URL}${sanitizedEndpoint}`;
+  
   if (params) {
     const searchParams = new URLSearchParams(params);
     url += (url.includes('?') ? '&' : '?') + searchParams.toString();
   }
+
+  if (!silent) console.debug(`[MHS Fetch] ${init.method || 'GET'} -> ${url}`);
 
   const controller = new AbortController();
   const abortId = setTimeout(() => controller.abort(), timeout);
@@ -36,6 +41,15 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     });
     clearTimeout(abortId);
 
+    // CRITICAL: Handle .NET Identity redirects for unauthorized requests
+    if (response.redirected && (response.url.includes('Account/Login') || response.url.includes('/login'))) {
+       console.error(`[MHS Security Fault] Endpoint ${sanitizedEndpoint} redirected to login. Token rejected or path mismatch.`);
+       if (!sanitizedEndpoint.toLowerCase().includes('login')) {
+         sessionStorage.removeItem('mhs_token');
+         throw new Error("Authorization Rejected: Please re-authenticate.");
+       }
+    }
+
     const text = await response.text();
     let data: any = {};
     
@@ -46,8 +60,8 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
 
     if (!response.ok) {
-      if (response.status !== 401 && !silent) {
-        console.error(`[MHS Protocol Fault] Status ${response.status}:`, data);
+      if (!silent) {
+        console.error(`[MHS Protocol Fault] Status ${response.status} at ${url}:`, data);
       }
       throw new Error(data.message || data.title || data.error || `Protocol Error ${response.status}`);
     }
@@ -67,7 +81,9 @@ export interface ApiCallOptions {
 
 export const api = {
   getToken: () => sessionStorage.getItem('mhs_token'),
-  setToken: (token: string) => sessionStorage.setItem('mhs_token', token),
+  setToken: (token: string) => {
+    if (token) sessionStorage.setItem('mhs_token', token);
+  },
   removeToken: () => sessionStorage.removeItem('mhs_token'),
 
   get<T>(endpoint: string, options?: ApiCallOptions): Promise<T> {
