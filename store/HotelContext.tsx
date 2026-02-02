@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { Room, Booking, Guest, RoomStatus, BookingStatus, AppNotification, UserRole, AppUser, StaffUser, AuditLog, VisitRecord, VisitAction, PaymentStatus } from '../types';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { Room, Booking, Guest, RoomStatus, BookingStatus, AppNotification, UserRole, AppUser, StaffUser, AuditLog, VisitRecord, PaymentStatus } from '../types';
 import { api } from '../lib/api';
 
 interface HotelContextType {
@@ -106,13 +106,14 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const refreshData = useCallback(async () => {
     if (!api.getToken()) return;
     try {
-      const [roomsRes, bookingsRes, guestsRes, staffRes, notificationsRes, auditLogsRes] = await Promise.all([
+      const [roomsRes, bookingsRes, guestsRes, staffRes, notificationsRes, auditLogsRes, historyRes] = await Promise.all([
         api.get('/api/rooms').catch(() => []),
         api.get('/api/bookings').catch(() => []),
         api.get('/api/admin/management/clients').catch(() => []),
         api.get('/api/admin/management/employees').catch(() => []),
         api.get('/api/notifications/staff').catch(() => []),
         api.get('/api/audit-logs').catch(() => []),
+        api.get('/api/operations/history').catch(() => [])
       ]);
 
       setRooms(normalizeData(roomsRes));
@@ -121,6 +122,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setStaff(normalizeData(staffRes));
       setNotifications(normalizeData(notificationsRes));
       setAuditLogs(normalizeData(auditLogsRes));
+      setVisitHistory(normalizeData(historyRes));
     } catch (error: any) {
       console.error('Ledger sync fault:', error);
       if (error.message.includes('Authorization Required')) {

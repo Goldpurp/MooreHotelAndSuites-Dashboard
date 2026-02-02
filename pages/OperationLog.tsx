@@ -1,12 +1,12 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { VisitAction } from '../types';
 import { 
   Search, Clock, User, Bed, ShieldCheck, 
   Calendar, Zap, LogOut, Filter, Printer, 
   ArrowRight, ClipboardList, RefreshCw, Hash, FileDown,
-  ShieldAlert, Activity, ChevronLeft, ChevronRight
+  ShieldAlert, Activity
 } from 'lucide-react';
 
 const OperationLog: React.FC = () => {
@@ -15,14 +15,6 @@ const OperationLog: React.FC = () => {
   
   const [localSearch, setLocalSearch] = useState('');
   const [activeProtocol, setActiveProtocol] = useState<'All' | VisitAction>('All');
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 15;
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [localSearch, activeProtocol]);
 
   const filteredLogs = useMemo(() => {
     const query = localSearch.toLowerCase().trim();
@@ -38,12 +30,6 @@ const OperationLog: React.FC = () => {
       return matchesSearch && matchesProtocol;
     });
   }, [visitHistory, localSearch, activeProtocol]);
-
-  const totalPages = Math.ceil(filteredLogs.length / PAGE_SIZE);
-  const paginatedLogs = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredLogs.slice(start, start + PAGE_SIZE);
-  }, [filteredLogs, currentPage]);
 
   const stats = useMemo(() => {
     const today = new Date().toDateString();
@@ -182,7 +168,7 @@ const OperationLog: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {paginatedLogs.length === 0 ? (
+              {filteredLogs.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-40 text-center opacity-20">
                     <ClipboardList size={56} className="mx-auto mb-6 text-slate-700" />
@@ -190,7 +176,7 @@ const OperationLog: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedLogs.map((log) => {
+                filteredLogs.map((log) => {
                   const badge = getActionBadge(log.action);
                   return (
                     <tr key={log.id} className="hover:bg-blue-600/5 transition-all group">
@@ -208,7 +194,7 @@ const OperationLog: React.FC = () => {
                       <td className="px-8 py-6">
                          <div>
                             <p className="text-[15px] font-black text-slate-200 uppercase tracking-tight group-hover:text-blue-400 transition-colors italic">{log.guestName}</p>
-                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-dash mt-0.5">Ref: {log.bookingCode}</p>
+                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-dash mt-0.5">{log.guestId}</p>
                          </div>
                       </td>
                       <td className="px-8 py-6">
@@ -247,27 +233,9 @@ const OperationLog: React.FC = () => {
         <div className="px-8 py-5 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
            <div className="flex items-center gap-3">
               <ShieldCheck size={14} className="text-blue-500" />
-              <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em] italic">Moore Hotels Ledger Protocol • Showing {paginatedLogs.length} of {filteredLogs.length}</p>
+              <p className="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em] italic">Moore Hotels Ledger Protocol • Audit Trail Sequence</p>
            </div>
-           <div className="flex gap-2">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <div className="flex items-center px-4 rounded-lg bg-black/20 border border-white/5">
-                <span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span>
-              </div>
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages || totalPages === 0}
-                className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronRight size={16} />
-              </button>
-           </div>
+           <p className="text-[9px] text-slate-800 font-bold italic uppercase tracking-widest">Property Intelligence System v2.04</p>
         </div>
       </div>
     </div>
