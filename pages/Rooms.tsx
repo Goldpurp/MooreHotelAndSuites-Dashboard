@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Room, RoomStatus } from '../types';
@@ -6,6 +5,7 @@ import { LayoutGrid, List, Search, Pencil, Trash2, Plus, Eye, SearchX, Wrench, R
 import RoomModal from '../components/RoomModal';
 import RoomDetailModal from '../components/RoomDetailModal';
 import DeleteRoomModal from '../components/DeleteRoomModal';
+import MaintenanceModal from '../components/MaintenanceModal';
 import PermissionWrapper from '../components/PermissionWrapper';
 
 const Rooms: React.FC = () => {
@@ -13,11 +13,13 @@ const Rooms: React.FC = () => {
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [viewingRoom, setViewingRoom] = useState<Room | null>(null);
   const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+  const [roomForMaintenance, setRoomForMaintenance] = useState<Room | null>(null);
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,6 +73,12 @@ const Rooms: React.FC = () => {
     e.stopPropagation();
     setRoomToDelete(room);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleOpenMaintenanceModal = (e: React.MouseEvent, room: Room) => {
+    e.stopPropagation();
+    setRoomForMaintenance(room);
+    setIsMaintenanceModalOpen(true);
   };
 
   const handleDeleteConfirm = (id: string) => {
@@ -211,7 +219,7 @@ const Rooms: React.FC = () => {
                       <td className="px-6 py-5 text-right">
                           <div className="flex justify-end gap-2.5" onClick={e => e.stopPropagation()}>
                              <PermissionWrapper allowedRoles={['admin', 'manager']}>
-                               <button onClick={() => toggleRoomMaintenance(room.id)} className={`p-3 rounded-xl border transition-all ${room.status === RoomStatus.MAINTENANCE ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg' : 'bg-white/5 text-slate-500 border-white/10 hover:text-amber-500'}`} title="Toggle Maintenance">
+                               <button onClick={(e) => handleOpenMaintenanceModal(e, room)} className={`p-3 rounded-xl border transition-all ${room.status === RoomStatus.MAINTENANCE ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg' : 'bg-white/5 text-slate-500 border-white/10 hover:text-amber-500'}`} title="Toggle Maintenance">
                                   <Wrench size={18}/>
                                </button>
                                <button onClick={(e) => openEditModal(e, room)} className="p-3 bg-white/5 text-slate-500 hover:text-blue-400 rounded-xl border border-white/10 transition-all"><Pencil size={18}/></button>
@@ -264,6 +272,7 @@ const Rooms: React.FC = () => {
       <RoomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveRoom} editingRoom={editingRoom} />
       <RoomDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} room={viewingRoom} />
       <DeleteRoomModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleDeleteConfirm} room={roomToDelete} />
+      <MaintenanceModal isOpen={isMaintenanceModalOpen} onClose={() => setIsMaintenanceModalOpen(false)} onConfirm={toggleRoomMaintenance} room={roomForMaintenance} />
     </div>
   );
 };
