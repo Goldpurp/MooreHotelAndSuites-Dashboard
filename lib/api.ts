@@ -1,5 +1,4 @@
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -11,11 +10,12 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   const { params, timeout = 15000, silent = false, ...init } = options;
   
   const sanitizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  let url = `${BASE_URL}${sanitizedEndpoint}`;
+  const url = `${API_BASE_URL}${sanitizedEndpoint}`;
   
   if (params) {
     const searchParams = new URLSearchParams(params);
-    url += (url.includes('?') ? '&' : '?') + searchParams.toString();
+    const separator = url.includes('?') ? '&' : '?';
+    url + separator + searchParams.toString();
   }
 
   if (!silent) console.debug(`[MHS Fetch] ${init.method || 'GET'} -> ${url}`);
@@ -41,13 +41,10 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     });
     clearTimeout(abortId);
 
-    // CRITICAL: Handle .NET Identity redirects for unauthorized requests
-    if (response.redirected && (response.url.includes('Account/Login') || response.url.includes('/login'))) {
-       console.error(`[MHS Security Fault] Endpoint ${sanitizedEndpoint} redirected to login. Token rejected or path mismatch.`);
-       if (!sanitizedEndpoint.toLowerCase().includes('login')) {
-         sessionStorage.removeItem('mhs_token');
-         throw new Error("Authorization Rejected: Please re-authenticate.");
-       }
+    // Handle standard redirects or authentication failures
+    if (response.status === 401 && !endpoint.toLowerCase().includes('login')) {
+       sessionStorage.removeItem('mhs_token');
+       throw new Error("Session Expired: Please re-authenticate.");
     }
 
     const text = await response.text();
@@ -63,13 +60,15 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
       if (!silent) {
         console.error(`[MHS Protocol Fault] Status ${response.status} at ${url}:`, data);
       }
-      throw new Error(data.message || data.title || data.error || `Protocol Error ${response.status}`);
+      // Prioritize backend-provided error messages for real-world feedback
+      const errorMessage = data.message || data.error || data.title || (data.errors ? Object.values(data.errors).flat().join(', ') : null) || `Error ${response.status}`;
+      throw new Error(errorMessage);
     }
 
     return data as T;
   } catch (error: any) {
     clearTimeout(abortId);
-    if (error.name === 'AbortError') throw new Error("Sync Timeout: Enterprise API node unreachable.");
+    if (error.name === 'AbortError') throw new Error("Connection Timeout: The API server is not responding.");
     throw error;
   }
 }

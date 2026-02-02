@@ -6,11 +6,10 @@ import RoleBadge from '../components/RoleBadge';
 import { api } from '../lib/api';
 
 const Settings: React.FC = () => {
-  const { userRole, currentUser, updateCurrentUserProfile } = useHotel();
+  const { userRole, currentUser, updateCurrentUserProfile, isInitialLoading } = useHotel();
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security'>('profile');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Security Form State updated to match API schema
   const [securityForm, setSecurityForm] = useState({
     oldPassword: '',
     newPassword: '',
@@ -66,6 +65,15 @@ const Settings: React.FC = () => {
       setIsRotating(false);
     }
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <Loader2 className="animate-spin text-blue-500" size={32} />
+        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Retrieving Credentials...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-1000 max-w-4xl">
@@ -136,13 +144,13 @@ const Settings: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <h3 className="text-3xl font-black text-white tracking-tight italic uppercase">{currentUser?.name || "Moore Professional"}</h3>
+                <h3 className="text-3xl font-black text-white tracking-tight italic uppercase">{currentUser?.name || "Authenticating..."}</h3>
                 <div className="flex items-center gap-3">
                   <div className="px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-lg text-blue-400 text-[10px] font-black uppercase tracking-widest">
-                    {userRole.toUpperCase()}
+                    {(currentUser?.role || userRole).toUpperCase()}
                   </div>
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-dash flex items-center gap-1">
-                    <ShieldCheck size={12} className="text-emerald-500" /> Verified Account
+                    <ShieldCheck size={12} className="text-emerald-500" /> Verified Authority
                   </span>
                 </div>
               </div>
@@ -152,15 +160,15 @@ const Settings: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex justify-between">
                   Primary Email
-                  <span className="text-[8px] text-amber-500 flex items-center gap-1 uppercase tracking-tighter">
-                    <Shield size={10} /> Account is locked
+                  <span className="text-[8px] text-emerald-500 flex items-center gap-1 uppercase tracking-tighter">
+                    <Shield size={10} /> Account Identity Verified
                   </span>
                 </label>
                 <div className="relative">
                   <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
                   <input 
                     readOnly 
-                    value={currentUser?.email || "user@moorehotels.com"} 
+                    value={currentUser?.email || ""} 
                     className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-[13px] text-slate-500 cursor-not-allowed outline-none" 
                   />
                 </div>
@@ -169,15 +177,15 @@ const Settings: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex justify-between">
                   Assigned Authority
-                  <span className="text-[8px] text-amber-500 flex items-center gap-1 uppercase tracking-tighter">
-                    <Shield size={10} /> Identity Managed
+                  <span className="text-[8px] text-blue-500 flex items-center gap-1 uppercase tracking-tighter">
+                    <Shield size={10} /> Active Permission Level
                   </span>
                 </label>
                 <div className="relative">
                   <Shield size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
                   <input 
                     readOnly 
-                    value={userRole.toUpperCase()} 
+                    value={(currentUser?.role || userRole).toUpperCase()} 
                     className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-[13px] text-slate-500 cursor-not-allowed outline-none" 
                   />
                 </div>

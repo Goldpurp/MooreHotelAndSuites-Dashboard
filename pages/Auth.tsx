@@ -1,9 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, ArrowRight, ShieldAlert, AlertCircle, Loader2, WifiOff, RefreshCw, ChevronLeft } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import Logo from '../components/Logo';
 import { api } from '../lib/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Auth: React.FC = () => {
   const { login } = useHotel();
@@ -14,8 +15,6 @@ const Auth: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isBackendLive, setIsBackendLive] = useState<boolean | null>(null);
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehotelandsuites.com';
 
   useEffect(() => {
     const probe = async () => {
@@ -33,12 +32,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehote
     probe();
     const interval = setInterval(probe, 30000); 
     return () => clearInterval(interval);
-  }, [API_BASE_URL]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isBackendLive === false) {
-      setError(`Connectivity Fault: Enterprise API node at ${new URL(API_BASE_URL).hostname} is unreachable.`);
+      setError(`Connectivity Fault: Enterprise API node at ${API_BASE_URL} is unreachable.`);
       return;
     }
     
@@ -48,7 +47,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehote
     try {
       await login(formData.email, formData.password);
     } catch (err: any) {
-      setError(err.message || "Access Denied: Invalid credentials.");
+      // Prioritize the real error message from the backend (e.g. "Invalid password")
+      setError(err.message || "Access Denied: Could not verify credentials.");
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +122,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehote
                       <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Account identifier</label>
                       <div className="relative">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                        <input type="email" required placeholder="name@moorehotels.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20" />
+                        <input type="email" required placeholder="name@moorehotels.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
                       </div>
                     </div>
 
@@ -133,14 +133,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehote
                       </div>
                       <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                        <input type="password" required placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20" />
+                        <input type="password" required placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
                       </div>
                     </div>
 
                     {error && (
                       <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 animate-in shake">
                         <AlertCircle size={18} />
-                        <p className="text-[11px] font-black uppercase">{error}</p>
+                        <p className="text-[11px] font-black uppercase tracking-tight leading-snug">{error}</p>
                       </div>
                     )}
 
@@ -174,7 +174,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehote
                       <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Registered Enterprise Email</label>
                       <div className="relative">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                        <input type="email" required placeholder="name@moorehotels.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20" />
+                        <input type="email" required placeholder="name@moorehotels.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
                       </div>
                     </div>
 
@@ -200,6 +200,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehote
           <p className="text-center text-slate-700 text-[9px] font-black uppercase tracking-[0.4em] mt-20 opacity-40 italic">Moore Enterprise Management Protocol</p>
         </div>
       </div>
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.2s ease-in-out 0s 2; }
+      `}</style>
     </div>
   );
 };

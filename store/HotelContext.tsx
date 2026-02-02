@@ -55,7 +55,6 @@ interface HotelContextType {
 
 const HotelContext = createContext<HotelContextType | undefined>(undefined);
 
-// @fix: Export useHotel hook to resolve "no exported member 'useHotel'" errors in consuming components
 export const useHotel = () => {
   const context = useContext(HotelContext);
   if (context === undefined) {
@@ -84,38 +83,41 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
-  // @fix: Implemented normalizeUser to properly map backend user objects to AppUser type
   const normalizeUser = (raw: any): AppUser | null => {
     if (!raw) return null;
+    const data = raw.user || raw.profile || raw.data || raw;
+    if (!data.id && !data.Id && !data.email && !data.Email) return null;
+
     return {
-      id: raw.id,
-      name: raw.name || raw.displayName,
-      email: raw.email,
-      role: (raw.role?.toLowerCase() || 'staff') as UserRole,
-      avatarUrl: raw.avatarUrl
+      id: String(data.id || data.Id || "").toLowerCase(),
+      name: data.name || data.fullName || data.fullName || data.displayName || data.Name || "Personnel",
+      email: data.email || data.Email || "",
+      role: (String(data.role || data.Role || data.assignedRole || 'staff').toLowerCase() as UserRole),
+      avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || data.fullName || 'P')}&background=020617&color=fff`
     };
   };
 
   const refreshData = useCallback(async () => {
+    if (!api.getToken()) return;
+
     try {
-      const [roomsData, bookingsData, guestsData, staffData, notificationsData, auditLogsData, visitHistoryData] = await Promise.all([
-        api.get<Room[]>('/api/rooms'),
-        api.get<Booking[]>('/api/bookings'),
-        api.get<Guest[]>('/api/guests'),
-        api.get<StaffUser[]>('/api/staff'),
-        api.get<AppNotification[]>('/api/notifications'),
-        api.get<AuditLog[]>('/api/audit'),
-        api.get<VisitRecord[]>('/api/visits'),
+      const [roomsData, bookingsData, guestsData, staffData, notificationsData, auditLogsData] = await Promise.all([
+        api.get<any[]>('/api/rooms').catch(() => []),
+        api.get<any[]>('/api/bookings').catch(() => []),
+        api.get<any[]>('/api/admin/management/clients').catch(() => []),
+        api.get<any[]>('/api/admin/management/employees').catch(() => []),
+        api.get<AppNotification[]>('/api/notifications/staff').catch(() => []),
+        api.get<any[]>('/api/audit-logs').catch(() => []),
       ]);
-      setRooms(roomsData);
-      setBookings(bookingsData);
-      setGuests(guestsData);
-      setStaff(staffData);
-      setNotifications(notificationsData);
-      setAuditLogs(auditLogsData);
-      setVisitHistory(visitHistoryData);
+
+      setRooms(roomsData || []);
+      setBookings(bookingsData || []);
+      setGuests(guestsData || []);
+      setStaff(staffData || []);
+      setNotifications(notificationsData || []);
+      setAuditLogs(auditLogsData || []);
     } catch (error) {
-      console.error('Failed to fetch hotel data', error);
+      console.error('Failed to sync property ledger', error);
     } finally {
       setIsInitialLoading(false);
     }
@@ -125,28 +127,40 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const token = api.getToken();
     if (token) {
       setIsAuthenticated(true);
-      api.get<any>('/api/profile').then(data => {
+      api.get<any>('/api/profile/me').then(data => {
         const user = normalizeUser(data);
         if (user) {
           setCurrentUser(user);
           setUserRole(user.role);
         }
-      }).catch(() => {});
-      refreshData();
+      }).catch(() => {
+        setIsAuthenticated(false);
+        api.removeToken();
+      }).finally(() => {
+        refreshData();
+      });
     } else {
       setIsInitialLoading(false);
     }
   }, [refreshData]);
 
   const login = async (email: string, password?: string) => {
-    const response = await api.post<{ token: string, user: any }>('/api/auth/login', { email, password });
-    api.setToken(response.token);
-    const user = normalizeUser(response.user);
-    if (user) {
-      setCurrentUser(user);
-      setUserRole(user.role);
-      setIsAuthenticated(true);
+    const response = await api.post<any>('/api/Auth/login', { email, password });
+    const token = response.token || response.data?.token || response.accessToken || (typeof response === 'string' ? response : null);
+    
+    if (token) {
+      api.setToken(token);
+      
+      const userFromRes = normalizeUser(response);
+      if (userFromRes) {
+        setCurrentUser(userFromRes);
+        setUserRole(userFromRes.role);
+        setIsAuthenticated(true);
+      }
+      
       await refreshData();
+    } else {
+      throw new Error("MHS Node rejected authorization: Protocol Error.");
     }
   };
 
@@ -154,6 +168,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     api.removeToken();
     setIsAuthenticated(false);
     setCurrentUser(null);
+    setUserRole('staff');
   };
 
   const addRoom = async (room: Omit<Room, 'id'>) => {
@@ -179,7 +194,18 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const addBooking = async (payload: any): Promise<Booking> => {
+  const addBooking = async (p: any): Promise<Booking> => {
+    const payload = {
+      roomId: p.roomId,
+      guestFirstName: p.guestFirstName,
+      guestLastName: p.guestLastName,
+      guestEmail: p.guestEmail,
+      guestPhone: p.guestPhone,
+      checkIn: `${p.checkIn}T14:00:00.000Z`,
+      checkOut: `${p.checkOut}T11:00:00.000Z`,
+      paymentMethod: p.paymentMethod === 'Bank Transfer' ? 'DirectTransfer' : 'Paystack',
+      notes: p.notes || ""
+    };
     const newBooking = await api.post<Booking>('/api/bookings', payload);
     await refreshData();
     return newBooking;
@@ -191,43 +217,43 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updatePaymentStatus = async (id: string, status: PaymentStatus) => {
-    await api.patch(`/api/bookings/${id}/payment`, { status });
+    await api.put(`/api/bookings/${id}`, { paymentStatus: status });
     await refreshData();
   };
 
   const confirmTransfer = async (bookingCode: string) => {
-    await api.post(`/api/bookings/confirm-transfer/${bookingCode}`);
+    await api.post(`/api/bookings/${bookingCode}/confirm-transfer`);
     await refreshData();
   };
 
   const checkInBooking = async (bookingId: string) => {
-    await api.post(`/api/bookings/${bookingId}/check-in`);
+    await api.put(`/api/bookings/${bookingId}/status`, null, { params: { status: 'CheckedIn' } });
     await refreshData();
   };
 
   const checkOutBooking = async (bookingId: string) => {
-    await api.post(`/api/bookings/${bookingId}/check-out`);
+    await api.put(`/api/bookings/${bookingId}/status`, null, { params: { status: 'CheckedOut' } });
     await refreshData();
   };
 
   const checkInBookingByCode = async (code: string) => {
-    await api.post(`/api/bookings/check-in-by-code/${code}`);
-    await refreshData();
+    const booking = bookings.find(b => b.bookingCode === code);
+    if (booking) await checkInBooking(booking.id);
   };
 
   const cancelBooking = async (bookingId: string) => {
-    await api.post(`/api/bookings/${bookingId}/cancel`);
+    await api.put(`/api/bookings/${bookingId}/status`, null, { params: { status: 'Cancelled' } });
     await refreshData();
   };
 
   const addGuest = async (guest: Omit<Guest, 'id' | 'totalStays' | 'totalSpent'>): Promise<string> => {
-    const newGuest = await api.post<Guest>('/api/guests', guest);
+    const newGuest = await api.post<any>('/api/Auth/register', guest);
     await refreshData();
-    return newGuest.id;
+    return newGuest.email;
   };
 
   const updateGuest = async (id: string, updates: Partial<Guest>) => {
-    await api.put(`/api/guests/${id}`, updates);
+    await api.put(`/api/profile/me`, updates);
     await refreshData();
   };
 
@@ -252,32 +278,48 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const markNotificationAsRead = async (id: string) => {
-    await api.post(`/api/notifications/${id}/read`);
+    await api.patch(`/api/notifications/${id}/read`);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
 
   const markAllNotificationsRead = async () => {
-    await api.post('/api/notifications/read-all');
+    const unread = notifications.filter(n => !n.isRead);
+    await Promise.all(unread.map(n => api.patch(`/api/notifications/${n.id}/read`)));
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 
-  const addStaff = async (user: any) => {
-    await api.post('/api/staff', user);
+  const addStaff = async (p: any) => {
+    await api.post('/api/admin/management/onboard-staff', {
+      fullName: p.name, 
+      email: p.email, 
+      temporaryPassword: p.password, 
+      assignedRole: p.role.charAt(0).toUpperCase() + p.role.slice(1), 
+      status: p.status || 'Active'
+    }); 
     await refreshData();
   };
 
   const updateStaff = async (id: string, updates: Partial<StaffUser>) => {
-    await api.put(`/api/staff/${id}`, updates);
+    await api.put(`/api/admin/management/employees/${id}`, {
+      fullName: updates.name, 
+      email: updates.email, 
+      assignedRole: updates.role ? updates.role.charAt(0).toUpperCase() + updates.role.slice(1) : undefined, 
+      status: updates.status
+    }); 
     await refreshData();
   };
 
   const toggleStaffStatus = async (id: string) => {
-    await api.post(`/api/staff/${id}/toggle-status`);
+    const target = staff.find(s => s.id === id);
+    if (target) {
+      const action = target.status === 'Active' ? 'deactivate' : 'activate';
+      await api.post(`/api/admin/management/accounts/${id}/${action}`); 
+    }
     await refreshData();
   };
 
   const updateCurrentUserProfile = async (updates: Partial<AppUser>) => {
-    await api.patch('/api/profile', updates);
+    await api.put('/api/profile/me', updates);
     if (currentUser) {
       setCurrentUser({ ...currentUser, ...updates });
     }
@@ -296,7 +338,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     addStaff, updateStaff, toggleStaffStatus, updateCurrentUserProfile, refreshData
   };
 
-  // @fix: Added mandatory return statement to HotelProvider to resolve the 'Type void is not assignable to type ReactNode' error
   return (
     <HotelContext.Provider value={value}>
       {children}
