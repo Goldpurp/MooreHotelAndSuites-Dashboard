@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, ArrowRight, ShieldAlert, AlertCircle, Loader2, WifiOff, RefreshCw, ChevronLeft } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import Logo from '../components/Logo';
 import { api } from '../lib/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Use the exact same logic as lib/api.ts for consistency
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'https://api.moorehotelandsuites.com';
 
 const Auth: React.FC = () => {
   const { login } = useHotel();
@@ -19,12 +21,14 @@ const Auth: React.FC = () => {
   useEffect(() => {
     const probe = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/rooms`, { 
+        const base = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+        // Probe a public endpoint or just the root to check connectivity
+        const res = await fetch(`${base}/api/rooms`, { 
           method: 'GET',
           headers: { 'Accept': 'application/json' }
         }).catch(() => null);
         
-        setIsBackendLive(res !== null);
+        setIsBackendLive(res !== null && res.status !== 404);
       } catch {
         setIsBackendLive(false);
       }
@@ -47,7 +51,7 @@ const Auth: React.FC = () => {
     try {
       await login(formData.email, formData.password);
     } catch (err: any) {
-      // Prioritize the real error message from the backend (e.g. "Invalid password")
+      // This will now catch "Incorrect password" or other real server errors
       setError(err.message || "Access Denied: Could not verify credentials.");
     } finally {
       setIsLoading(false);
@@ -106,7 +110,7 @@ const Auth: React.FC = () => {
                   <span className="text-[11px] font-black uppercase tracking-widest">Gateway Link Down</span>
                 </div>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-dash leading-relaxed">
-                  Unable to reach the Enterprise API Gateway. Check network connection.
+                  Unable to reach the Enterprise API Gateway at {API_BASE_URL}.
                 </p>
               </div>
             )}

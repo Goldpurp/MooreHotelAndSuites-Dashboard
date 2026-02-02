@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { Room, Booking, Guest, RoomStatus, BookingStatus, AppNotification, UserRole, AppUser, StaffUser, AuditLog, VisitRecord, VisitAction, PaymentStatus } from '../types';
 import { api } from '../lib/api';
@@ -90,7 +89,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return {
       id: String(data.id || data.Id || "").toLowerCase(),
-      name: data.name || data.fullName || data.fullName || data.displayName || data.Name || "Personnel",
+      name: data.name || data.fullName || data.displayName || data.Name || "Personnel",
       email: data.email || data.Email || "",
       role: (String(data.role || data.Role || data.assignedRole || 'staff').toLowerCase() as UserRole),
       avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || data.fullName || 'P')}&background=020617&color=fff`
@@ -145,8 +144,15 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [refreshData]);
 
   const login = async (email: string, password?: string) => {
+    // The api.post helper will throw an error with the server message if it fails (e.g., 401 Unauthorized)
     const response = await api.post<any>('/api/Auth/login', { email, password });
-    const token = response.token || response.data?.token || response.accessToken || (typeof response === 'string' ? response : null);
+    
+    const token = 
+      response.token || 
+      response.data?.token || 
+      response.accessToken || 
+      response.data?.accessToken ||
+      (typeof response === 'string' ? response : null);
     
     if (token) {
       api.setToken(token);
@@ -155,12 +161,13 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (userFromRes) {
         setCurrentUser(userFromRes);
         setUserRole(userFromRes.role);
-        setIsAuthenticated(true);
       }
       
+      setIsAuthenticated(true);
       await refreshData();
     } else {
-      throw new Error("MHS Node rejected authorization: Protocol Error.");
+      // This part only hits if the server returned 200 OK but no token was found in the body
+      throw new Error("Authentication succeeded but no security token was returned by the node.");
     }
   };
 

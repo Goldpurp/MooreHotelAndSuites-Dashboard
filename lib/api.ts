@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Fallback to the production API if the environment variable is missing
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'https://api.moorehotelandsuites.com';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -9,16 +11,19 @@ interface RequestOptions extends RequestInit {
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { params, timeout = 15000, silent = false, ...init } = options;
   
+  // Ensure we have a valid base URL and clean endpoint
+  const base = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
   const sanitizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${API_BASE_URL}${sanitizedEndpoint}`;
+  const url = `${base}${sanitizedEndpoint}`;
   
+  let finalUrl = url;
   if (params) {
     const searchParams = new URLSearchParams(params);
-    const separator = url.includes('?') ? '&' : '?';
-    url + separator + searchParams.toString();
+    const separator = finalUrl.includes('?') ? '&' : '?';
+    finalUrl = finalUrl + separator + searchParams.toString();
   }
 
-  if (!silent) console.debug(`[MHS Fetch] ${init.method || 'GET'} -> ${url}`);
+  if (!silent) console.debug(`[MHS Fetch] ${init.method || 'GET'} -> ${finalUrl}`);
 
   const controller = new AbortController();
   const abortId = setTimeout(() => controller.abort(), timeout);
@@ -34,16 +39,17 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   try {
-    const response = await fetch(url, { 
+    const response = await fetch(finalUrl, { 
       ...init, 
       headers,
       signal: controller.signal 
     });
     clearTimeout(abortId);
 
-    // Handle standard redirects or authentication failures
+    // Handle authentication expiration
     if (response.status === 401 && !endpoint.toLowerCase().includes('login')) {
        sessionStorage.removeItem('mhs_token');
+       window.location.reload(); // Force re-auth
        throw new Error("Session Expired: Please re-authenticate.");
     }
 
@@ -58,10 +64,16 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
     if (!response.ok) {
       if (!silent) {
-        console.error(`[MHS Protocol Fault] Status ${response.status} at ${url}:`, data);
+        console.error(`[MHS Protocol Fault] Status ${response.status} at ${finalUrl}:`, data);
       }
-      // Prioritize backend-provided error messages for real-world feedback
-      const errorMessage = data.message || data.error || data.title || (data.errors ? Object.values(data.errors).flat().join(', ') : null) || `Error ${response.status}`;
+      // Extract the most useful error message for the user
+      const errorMessage = 
+        data.message || 
+        data.error || 
+        data.title || 
+        (data.errors ? Object.values(data.errors).flat().join(', ') : null) || 
+        `Server Error (${response.status})`;
+      
       throw new Error(errorMessage);
     }
 
