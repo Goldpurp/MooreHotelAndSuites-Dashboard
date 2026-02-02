@@ -343,7 +343,7 @@ const Bookings: React.FC = () => {
       </div>
 
       {selectedBooking && (
-        <div className="w-[380px] flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
+        <div className="w-[350px] flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
            <div className="glass-card rounded-[2.5rem] p-8 flex flex-col h-full overflow-y-auto custom-scrollbar border border-white/10 bg-[#0a0f1a] relative">
              <div className="flex justify-between items-start mb-8">
                <div>

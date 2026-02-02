@@ -82,43 +82,48 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
+  const normalizeData = (res: any): any[] => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (res.data && Array.isArray(res.data)) return res.data;
+    if (res.items && Array.isArray(res.items)) return res.items;
+    return [];
+  };
+
   const normalizeUser = (raw: any): AppUser | null => {
     if (!raw) return null;
     const data = raw.user || raw.profile || raw.data || raw;
     if (!data.id && !data.Id && !data.email && !data.Email) return null;
-
     return {
       id: String(data.id || data.Id || "").toLowerCase(),
-      name: data.name || data.fullName || data.displayName || data.Name || "Personnel",
+      name: data.name || data.fullName || data.Name || "Personnel",
       email: data.email || data.Email || "",
-      role: (String(data.role || data.Role || data.assignedRole || 'staff').toLowerCase() as UserRole),
-      avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || data.fullName || 'P')}&background=020617&color=fff`
+      role: (String(data.role || data.Role || 'staff').toLowerCase() as UserRole),
+      avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'P')}&background=020617&color=fff`
     };
   };
 
   const refreshData = useCallback(async () => {
     if (!api.getToken()) return;
-
     try {
-      const [roomsData, bookingsData, guestsData, staffData, notificationsData, auditLogsData] = await Promise.all([
-        api.get<any[]>('/api/rooms').catch(() => []),
-        api.get<any[]>('/api/bookings').catch(() => []),
-        api.get<any[]>('/api/admin/management/clients').catch(() => []),
-        api.get<any[]>('/api/admin/management/employees').catch(() => []),
-        api.get<AppNotification[]>('/api/notifications/staff').catch(() => []),
-        api.get<any[]>('/api/audit-logs').catch(() => []),
+      const [roomsRes, bookingsRes, guestsRes, staffRes, notificationsRes, auditLogsRes] = await Promise.all([
+        api.get('/api/rooms').catch(() => []),
+        api.get('/api/bookings').catch(() => []),
+        api.get('/api/admin/management/clients').catch(() => []),
+        api.get('/api/admin/management/employees').catch(() => []),
+        api.get('/api/notifications/staff').catch(() => []),
+        api.get('/api/audit-logs').catch(() => []),
       ]);
 
-      setRooms(roomsData || []);
-      setBookings(bookingsData || []);
-      setGuests(guestsData || []);
-      setStaff(staffData || []);
-      setNotifications(notificationsData || []);
-      setAuditLogs(auditLogsData || []);
+      setRooms(normalizeData(roomsRes));
+      setBookings(normalizeData(bookingsRes));
+      setGuests(normalizeData(guestsRes));
+      setStaff(normalizeData(staffRes));
+      setNotifications(normalizeData(notificationsRes));
+      setAuditLogs(normalizeData(auditLogsRes));
     } catch (error: any) {
-      console.error('Failed to sync property ledger', error);
-      // If we got an unauthorized error during refresh, log out
-      if (error.message.includes('Authorization Required') || error.message.includes('expired')) {
+      console.error('Ledger sync fault:', error);
+      if (error.message.includes('Authorization Required')) {
         setIsAuthenticated(false);
         api.removeToken();
       }
@@ -150,207 +155,66 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const login = async (email: string, password?: string) => {
     const response = await api.post<any>('/api/Auth/login', { email, password });
-    
-    const token = 
-      response.token || 
-      response.data?.token || 
-      response.accessToken || 
-      response.data?.accessToken ||
-      (typeof response === 'string' ? response : null);
-    
+    const token = response.token || response.data?.token || response.accessToken;
     if (token) {
       api.setToken(token);
-      
-      const userFromRes = normalizeUser(response);
-      if (userFromRes) {
-        setCurrentUser(userFromRes);
-        setUserRole(userFromRes.role);
-      }
-      
+      const user = normalizeUser(response);
+      if (user) { setCurrentUser(user); setUserRole(user.role); }
       setIsAuthenticated(true);
       await refreshData();
     } else {
-      throw new Error("MHS Node Protocol Error: Login succeeded but no bearer token was returned.");
+      throw new Error("Login succeeded but no bearer token was returned.");
     }
   };
 
-  const logout = () => {
-    api.removeToken();
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    setUserRole('staff');
-  };
-
-  const addRoom = async (room: Omit<Room, 'id'>) => {
-    await api.post('/api/rooms', room);
-    await refreshData();
-  };
-
-  const updateRoom = async (id: string, updates: Partial<Room>) => {
-    await api.put(`/api/rooms/${id}`, updates);
-    await refreshData();
-  };
-
-  const deleteRoom = async (id: string) => {
-    await api.delete(`/api/rooms/${id}`);
-    await refreshData();
-  };
-
+  const logout = () => { api.removeToken(); setIsAuthenticated(false); setCurrentUser(null); setUserRole('staff'); };
+  const addRoom = async (room: Omit<Room, 'id'>) => { await api.post('/api/rooms', room); await refreshData(); };
+  const updateRoom = async (id: string, updates: Partial<Room>) => { await api.put(`/api/rooms/${id}`, updates); await refreshData(); };
+  const deleteRoom = async (id: string) => { await api.delete(`/api/rooms/${id}`); await refreshData(); };
   const toggleRoomMaintenance = async (id: string) => {
     const room = rooms.find(r => r.id === id);
-    if (room) {
-      const newStatus = room.status === RoomStatus.MAINTENANCE ? RoomStatus.AVAILABLE : RoomStatus.MAINTENANCE;
-      await updateRoom(id, { status: newStatus });
-    }
+    if (room) await updateRoom(id, { status: room.status === RoomStatus.MAINTENANCE ? RoomStatus.AVAILABLE : RoomStatus.MAINTENANCE });
   };
 
   const addBooking = async (p: any): Promise<Booking> => {
-    const payload = {
-      roomId: p.roomId,
-      guestFirstName: p.guestFirstName,
-      guestLastName: p.guestLastName,
-      guestEmail: p.guestEmail,
-      guestPhone: p.guestPhone,
-      checkIn: `${p.checkIn}T14:00:00.000Z`,
-      checkOut: `${p.checkOut}T11:00:00.000Z`,
-      paymentMethod: p.paymentMethod === 'Bank Transfer' ? 'DirectTransfer' : 'Paystack',
-      notes: p.notes || ""
-    };
-    const newBooking = await api.post<Booking>('/api/bookings', payload);
+    const newBooking = await api.post<Booking>('/api/bookings', p);
     await refreshData();
     return newBooking;
   };
 
-  const updateBooking = async (id: string, updates: Partial<Booking>) => {
-    await api.put(`/api/bookings/${id}`, updates);
-    await refreshData();
-  };
-
-  const updatePaymentStatus = async (id: string, status: PaymentStatus) => {
-    await api.put(`/api/bookings/${id}`, { paymentStatus: status });
-    await refreshData();
-  };
-
-  const confirmTransfer = async (bookingCode: string) => {
-    await api.post(`/api/bookings/${bookingCode}/confirm-transfer`);
-    await refreshData();
-  };
-
-  const checkInBooking = async (bookingId: string) => {
-    await api.put(`/api/bookings/${bookingId}/status`, null, { params: { status: 'CheckedIn' } });
-    await refreshData();
-  };
-
-  const checkOutBooking = async (bookingId: string) => {
-    await api.put(`/api/bookings/${bookingId}/status`, null, { params: { status: 'CheckedOut' } });
-    await refreshData();
-  };
-
-  const checkInBookingByCode = async (code: string) => {
-    const booking = bookings.find(b => b.bookingCode === code);
-    if (booking) await checkInBooking(booking.id);
-  };
-
-  const cancelBooking = async (bookingId: string) => {
-    await api.put(`/api/bookings/${bookingId}/status`, null, { params: { status: 'Cancelled' } });
-    await refreshData();
-  };
-
-  const addGuest = async (guest: Omit<Guest, 'id' | 'totalStays' | 'totalSpent'>): Promise<string> => {
-    const newGuest = await api.post<any>('/api/Auth/register', guest);
-    await refreshData();
-    return newGuest.email;
-  };
-
-  const updateGuest = async (id: string, updates: Partial<Guest>) => {
-    await api.put(`/api/profile/me`, updates);
-    await refreshData();
-  };
+  const updateBooking = async (id: string, updates: Partial<Booking>) => { await api.put(`/api/bookings/${id}`, updates); await refreshData(); };
+  const updatePaymentStatus = async (id: string, status: PaymentStatus) => { await api.put(`/api/bookings/${id}`, { paymentStatus: status }); await refreshData(); };
+  const confirmTransfer = async (code: string) => { await api.post(`/api/bookings/${code}/confirm-transfer`); await refreshData(); };
+  const checkInBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedIn' } }); await refreshData(); };
+  const checkOutBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedOut' } }); await refreshData(); };
+  const checkInBookingByCode = async (code: string) => { const b = bookings.find(x => x.bookingCode === code); if (b) await checkInBooking(b.id); };
+  const cancelBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); await refreshData(); };
+  const addGuest = async (g: any) => { const res = await api.post<any>('/api/Auth/register', g); await refreshData(); return res.email; };
+  const updateGuest = async (id: string, updates: Partial<Guest>) => { await api.put(`/api/profile/me`, updates); await refreshData(); };
 
   const isRoomAvailable = (roomId: string, checkIn: string, checkOut: string, excludeBookingId?: string): boolean => {
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    
-    return !bookings.some(b => {
-      if (b.roomId !== roomId) return false;
-      if (b.id === excludeBookingId) return false;
-      if (b.status === BookingStatus.CANCELLED) return false;
-      
-      const bIn = new Date(b.checkIn);
-      const bOut = new Date(b.checkOut);
-      
-      return (checkInDate < bOut && checkOutDate > bIn);
-    });
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    return !bookings.some(b => b.roomId === roomId && b.id !== excludeBookingId && b.status !== BookingStatus.CANCELLED && (start < new Date(b.checkOut) && end > new Date(b.checkIn)));
   };
 
-  const dismissNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const markNotificationAsRead = async (id: string) => {
-    await api.patch(`/api/notifications/${id}/read`);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-  };
-
-  const markAllNotificationsRead = async () => {
-    const unread = notifications.filter(n => !n.isRead);
-    await Promise.all(unread.map(n => api.patch(`/api/notifications/${n.id}/read`)));
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-  };
-
-  const addStaff = async (p: any) => {
-    await api.post('/api/admin/management/onboard-staff', {
-      fullName: p.name, 
-      email: p.email, 
-      temporaryPassword: p.password, 
-      assignedRole: p.role.charAt(0).toUpperCase() + p.role.slice(1), 
-      status: p.status || 'Active'
-    }); 
-    await refreshData();
-  };
-
-  const updateStaff = async (id: string, updates: Partial<StaffUser>) => {
-    await api.put(`/api/admin/management/employees/${id}`, {
-      fullName: updates.name, 
-      email: updates.email, 
-      assignedRole: updates.role ? updates.role.charAt(0).toUpperCase() + updates.role.slice(1) : undefined, 
-      status: updates.status
-    }); 
-    await refreshData();
-  };
-
-  const toggleStaffStatus = async (id: string) => {
-    const target = staff.find(s => s.id === id);
-    if (target) {
-      const action = target.status === 'Active' ? 'deactivate' : 'activate';
-      await api.post(`/api/admin/management/accounts/${id}/${action}`); 
-    }
-    await refreshData();
-  };
-
-  const updateCurrentUserProfile = async (updates: Partial<AppUser>) => {
-    await api.put('/api/profile/me', updates);
-    if (currentUser) {
-      setCurrentUser({ ...currentUser, ...updates });
-    }
-  };
+  const dismissNotification = (id: string) => { setNotifications(prev => prev.filter(n => n.id !== id)); };
+  const markNotificationAsRead = async (id: string) => { await api.patch(`/api/notifications/${id}/read`); setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n)); };
+  const markAllNotificationsRead = async () => { await Promise.all(notifications.filter(n => !n.isRead).map(n => api.patch(`/api/notifications/${n.id}/read`))); setNotifications(prev => prev.map(n => ({ ...n, isRead: true }))); };
+  const addStaff = async (p: any) => { await api.post('/api/admin/management/onboard-staff', p); await refreshData(); };
+  const updateStaff = async (id: string, updates: Partial<StaffUser>) => { await api.put(`/api/admin/management/employees/${id}`, updates); await refreshData(); };
+  const toggleStaffStatus = async (id: string) => { const s = staff.find(x => x.id === id); if (s) await api.post(`/api/admin/management/accounts/${id}/${s.status === 'Active' ? 'deactivate' : 'activate'}`); await refreshData(); };
+  const updateCurrentUserProfile = async (updates: Partial<AppUser>) => { await api.put('/api/profile/me', updates); if (currentUser) setCurrentUser({ ...currentUser, ...updates }); };
 
   const value = {
     rooms, bookings, guests, staff, notifications, auditLogs, visitHistory,
     userRole, currentUser, isAuthenticated, isInitialLoading, isSidebarCollapsed, activeTab,
     selectedBookingId, setSelectedBookingId, selectedGuestId, setSelectedGuestId, selectedRoomId, setSelectedRoomId,
     setActiveTab, toggleSidebar: () => setIsSidebarCollapsed(!isSidebarCollapsed), login, logout, setUserRole,
-    addRoom, updateRoom, deleteRoom, toggleRoomMaintenance,
-    addBooking, updateBooking, updatePaymentStatus, confirmTransfer,
-    checkInBooking, checkOutBooking, checkInBookingByCode, cancelBooking,
-    addGuest, updateGuest, isRoomAvailable,
-    dismissNotification, markNotificationAsRead, markAllNotificationsRead,
-    addStaff, updateStaff, toggleStaffStatus, updateCurrentUserProfile, refreshData
+    addRoom, updateRoom, deleteRoom, toggleRoomMaintenance, addBooking, updateBooking, updatePaymentStatus, confirmTransfer,
+    checkInBooking, checkOutBooking, checkInBookingByCode, cancelBooking, addGuest, updateGuest, isRoomAvailable,
+    dismissNotification, markNotificationAsRead, markAllNotificationsRead, addStaff, updateStaff, toggleStaffStatus, updateCurrentUserProfile, refreshData
   };
 
-  return (
-    <HotelContext.Provider value={value}>
-      {children}
-    </HotelContext.Provider>
-  );
+  return <HotelContext.Provider value={value}>{children}</HotelContext.Provider>;
 };
