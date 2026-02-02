@@ -131,7 +131,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setNotifications(normalizeData(notificationsRes));
       setAuditLogs(normalizedAudit);
 
-      // --- AGGRESSIVE GUEST RECOVERY ---
+      // --- GUEST RECOVERY ENGINE ---
       const guestMap: Map<string, Guest> = new Map();
       normalizedGuests.forEach(g => {
         if (g && g.id) guestMap.set(String(g.id).toLowerCase(), {
@@ -161,20 +161,20 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setGuests(Array.from(guestMap.values()));
 
       // --- OPERATIONS LEDGER MAPPING ---
+      // Enhanced to support flexible backend property naming
       if (normalizedLedger.length > 0) {
         setVisitHistory(normalizedLedger.map((l: any) => ({
-          id: l.id || Math.random().toString(),
-          guestId: l.guestId || '',
-          guestName: l.guestName || l.guestFirstName || 'Property Occupant',
-          roomId: l.roomId || '',
-          roomNumber: l.roomNumber || 'Unit',
-          bookingCode: l.bookingCode || 'N/A',
-          action: (l.action || 'Activity').toUpperCase().replace('_', ' ') as VisitAction,
-          timestamp: l.timestamp || l.createdAt || new Date().toISOString(),
-          authorizedBy: l.authorizedBy || l.staffName || 'System'
+          id: l.id || l.Id || Math.random().toString(),
+          guestId: l.guestId || l.GuestId || '',
+          guestName: l.guestName || l.guestFirstName || l.GuestName || 'Property Occupant',
+          roomId: l.roomId || l.RoomId || '',
+          roomNumber: l.roomNumber || l.RoomNumber || 'Unit',
+          bookingCode: l.bookingCode || l.BookingCode || 'N/A',
+          action: (l.action || l.actionName || 'Activity').toUpperCase().replace('_', ' ') as VisitAction,
+          timestamp: l.timestamp || l.createdAt || l.occurredAt || new Date().toISOString(),
+          authorizedBy: l.authorizedBy || l.staffName || l.PerformedBy || 'System'
         })));
       } else {
-        // Final fallback: audit logs
         const auditHistory: VisitRecord[] = normalizedAudit
           .filter(log => log && log.action && ['CHECK_IN', 'CHECK_OUT', 'RESERVATION'].includes(log.action.toUpperCase()))
           .map(log => ({
@@ -241,9 +241,18 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addRoom = async (room: Omit<Room, 'id'>) => { await api.post('/api/rooms', room); await refreshData(); };
   const updateRoom = async (id: string, updates: Partial<Room>) => { await api.put(`/api/rooms/${id}`, updates); await refreshData(); };
   const deleteRoom = async (id: string) => { await api.delete(`/api/rooms/${id}`); await refreshData(); };
+  
   const toggleRoomMaintenance = async (id: string) => {
     const room = rooms.find(r => r.id === id);
-    if (room) await updateRoom(id, { status: room.status === RoomStatus.MAINTENANCE ? RoomStatus.AVAILABLE : RoomStatus.MAINTENANCE });
+    if (room) {
+      // FIX: Send the FULL object to satisfy backend validation schema
+      const updatedRoom = { 
+        ...room, 
+        status: room.status === RoomStatus.MAINTENANCE ? RoomStatus.AVAILABLE : RoomStatus.MAINTENANCE 
+      };
+      await api.put(`/api/rooms/${id}`, updatedRoom);
+      await refreshData();
+    }
   };
 
   const addBooking = async (p: any): Promise<Booking> => {
@@ -265,7 +274,20 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const isRoomAvailable = (roomId: string, checkIn: string, checkOut: string, excludeBookingId?: string): boolean => {
     const start = new Date(checkIn);
     const end = new Date(checkOut);
-    return !bookings.some(b => b.roomId === roomId && b.id !== excludeBookingId && b.status !== BookingStatus.CANCELLED && (start < new Date(b.checkOut) && end > new Date(b.checkIn)));
+    
+    // FIX: If a room is CheckedOut, it is technically free even if the original booking end date is in the future
+    return !bookings.some(b => {
+      const isCorrectRoom = b.roomId === roomId;
+      const isNotExcluded = b.id !== excludeBookingId;
+      const isActive = b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.CHECKED_OUT;
+      
+      if (!isCorrectRoom || !isNotExcluded || !isActive) return false;
+      
+      const bStart = new Date(b.checkIn);
+      const bEnd = new Date(b.checkOut);
+      
+      return (start < bEnd && end > bStart);
+    });
   };
 
   const dismissNotification = (id: string) => { setNotifications(prev => prev.filter(n => n.id !== id)); };
