@@ -18,7 +18,7 @@ const Guests: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  // Advanced Linking Logic: Matches across ID, Email, and Phone to ensure robust linkage
+  // Robust Linking Logic: Match guest to active booking by ID, Email, or Phone
   const getActiveStay = (guest: Guest) => {
     if (!guest || !bookings) return null;
     
@@ -85,7 +85,7 @@ const Guests: React.FC = () => {
                }`}
              >
                {showInHouseOnly ? <UserCheck size={16}/> : <Archive size={16}/>} 
-               {showInHouseOnly ? 'Focus: Active' : 'Registry: Full'}
+               {showInHouseOnly ? 'Active Focus' : 'Full Ledger'}
              </button>
           </div>
         </div>
@@ -117,7 +117,7 @@ const Guests: React.FC = () => {
                     {processedGuests.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="py-24 text-center">
-                          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">No matching records detected</p>
+                          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">No matching records found</p>
                         </td>
                       </tr>
                     ) : (
@@ -132,7 +132,7 @@ const Guests: React.FC = () => {
                                  <img src={guest.avatarUrl || `https://ui-avatars.com/api/?name=${guest.firstName}&background=020617&color=fff`} className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/5 group-hover:ring-blue-500/30 transition-all" alt=""/>
                                  <div>
                                     <p className="text-[15px] font-black text-white group-hover:text-blue-400 transition-colors uppercase italic tracking-tight">{guest.firstName} {guest.lastName}</p>
-                                    <p className="text-[9px] text-slate-600 font-black uppercase tracking-dash mt-0.5">{guest.email}</p>
+                                    <p className="text-[9px] text-slate-600 font-black uppercase tracking-dash mt-0.5 truncate max-w-[150px]">{guest.email}</p>
                                  </div>
                               </div>
                            </td>
@@ -143,12 +143,12 @@ const Guests: React.FC = () => {
                                    Room {guest.activeStay.room?.roomNumber || '...'}
                                 </span>
                               ) : (
-                                <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest italic opacity-50">Inactive</span>
+                                <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest italic opacity-50">Archived</span>
                               )}
                            </td>
                            <td className="px-8 py-5">
                               <p className="text-[14px] font-black text-white italic">₦{(guest.totalSpent ?? 0).toLocaleString()}</p>
-                              <p className="text-[8px] text-slate-600 font-bold uppercase tracking-dash">{guest.totalStays ?? 0} Stays</p>
+                              <p className="text-[8px] text-slate-600 font-bold uppercase tracking-dash">{guest.totalStays ?? 1} Visit(s)</p>
                            </td>
                            <td className="px-8 py-5 text-right">
                               <button className="p-2.5 bg-white/5 rounded-xl border border-white/5 hover:text-blue-400 hover:border-blue-500/20 transition-all">
@@ -178,41 +178,41 @@ const Guests: React.FC = () => {
               <h3 className="text-3xl font-black text-white italic uppercase text-center leading-[0.85] tracking-tighter">
                 {selectedGuest.firstName} <br/> {selectedGuest.lastName}
               </h3>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mt-3 truncate w-full text-center">FOLIO ID: {selectedGuest.id.toUpperCase()}</p>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mt-3 truncate w-full text-center">FOLIO ID: {selectedGuest.id.toUpperCase().slice(0, 12)}</p>
            </div>
 
            <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2">
               <div className="bg-black/40 p-6 rounded-3xl space-y-5 border border-white/5">
                  <div className="flex items-center gap-4 text-slate-400">
                     <div className="p-2 bg-white/5 rounded-lg border border-white/5"><Mail size={16}/></div>
-                    <span className="text-[13px] font-bold truncate tracking-tight">{selectedGuest.email}</span>
+                    <span className="text-[13px] font-bold truncate tracking-tight">{selectedGuest.email || 'NO EMAIL RECORDED'}</span>
                  </div>
                  <div className="flex items-center gap-4 text-slate-400 pt-4 border-t border-white/5">
                     <div className="p-2 bg-white/5 rounded-lg border border-white/5"><Phone size={16}/></div>
-                    <span className="text-[13px] font-bold tracking-tight">{selectedGuest.phone || 'NO RECORD'}</span>
+                    <span className="text-[13px] font-bold tracking-tight">{selectedGuest.phone || 'NO CONTACT RECORDED'}</span>
                  </div>
               </div>
 
               {selectedGuest.activeStay ? (
                 <div className="bg-emerald-500/5 p-6 rounded-3xl border border-emerald-500/20 space-y-4 shadow-inner">
                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-emerald-500/60 font-black uppercase tracking-widest">Active Stay</span>
-                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-tighter italic">Verified</span>
+                      <span className="text-[10px] text-emerald-500/60 font-black uppercase tracking-widest">Active Folio</span>
+                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-tighter italic">Authorized</span>
                    </div>
                    <div className="flex items-center gap-4">
                       <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400"><Bed size={24}/></div>
                       <div>
-                         <p className="text-xl font-black text-white italic">Room {selectedGuest.activeStay.room?.roomNumber}</p>
-                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{selectedGuest.activeStay.room?.category}</p>
+                         <p className="text-xl font-black text-white italic">Room {selectedGuest.activeStay.room?.roomNumber || '...'}</p>
+                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{selectedGuest.activeStay.room?.category || 'Standard'}</p>
                       </div>
                    </div>
                    <div className="pt-4 border-t border-emerald-500/10 flex justify-between">
                       <div>
-                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-dash mb-1">Check-In</p>
+                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-dash mb-1">Arrival</p>
                          <p className="text-[11px] font-black text-white">{new Date(selectedGuest.activeStay.booking.checkIn).toLocaleDateString()}</p>
                       </div>
                       <div className="text-right">
-                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-dash mb-1">Settlement</p>
+                         <p className="text-[9px] text-slate-500 font-black uppercase tracking-dash mb-1">Balance</p>
                          <p className="text-[11px] font-black text-emerald-400">₦{selectedGuest.activeStay.booking.amount.toLocaleString()}</p>
                       </div>
                    </div>
@@ -220,7 +220,7 @@ const Guests: React.FC = () => {
               ) : (
                 <div className="bg-white/5 p-8 rounded-3xl border border-white/5 flex flex-col items-center text-center opacity-60">
                    <Archive size={32} className="text-slate-700 mb-4" />
-                   <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest leading-relaxed">No active folio detected in current ledger cycle.</p>
+                   <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest leading-relaxed">No active residency detected in current property ledger.</p>
                 </div>
               )}
            </div>
@@ -233,7 +233,7 @@ const Guests: React.FC = () => {
                      setActiveCheckOutData({ 
                        guest: selectedGuest, 
                        booking: selectedGuest.activeStay.booking, 
-                       room: selectedGuest.activeStay.room 
+                       room: selectedGuest.activeStay.room || null
                      }); 
                      setIsCheckOutModalOpen(true); 
                    }
@@ -247,7 +247,7 @@ const Guests: React.FC = () => {
                  onClick={() => setActiveTab('bookings')} 
                  className="w-full bg-blue-600 hover:bg-blue-700 py-6 rounded-3xl font-black text-[13px] uppercase tracking-[0.2em] text-white transition-all border border-blue-500/30 shadow-2xl shadow-blue-950/50 flex items-center justify-center gap-3 italic"
                >
-                 <CreditCard size={20}/> New Folio Assignment
+                 <CreditCard size={20}/> New Resident Assignment
                </button>
              )}
            </div>
