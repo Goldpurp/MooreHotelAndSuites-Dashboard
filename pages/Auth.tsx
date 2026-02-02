@@ -15,11 +15,12 @@ const Auth: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [isBackendLive, setIsBackendLive] = useState<boolean | null>(null);
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.moorehotelandsuites.com';
+
   useEffect(() => {
     const probe = async () => {
       try {
-        // Updated probe to production API
-        const res = await fetch('https://api.moorehotelandsuites.com/api/rooms', { 
+        const res = await fetch(`${API_BASE_URL}/api/rooms`, { 
           method: 'GET',
           headers: { 'Accept': 'application/json' }
         }).catch(() => null);
@@ -30,14 +31,14 @@ const Auth: React.FC = () => {
       }
     };
     probe();
-    const interval = setInterval(probe, 30000); // 30s interval for production health check
+    const interval = setInterval(probe, 30000); 
     return () => clearInterval(interval);
-  }, []);
+  }, [API_BASE_URL]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isBackendLive === false) {
-      setError("Connectivity Fault: Enterprise API node at api.moorehotelandsuites.com is unreachable.");
+      setError(`Connectivity Fault: Enterprise API node at ${new URL(API_BASE_URL).hostname} is unreachable.`);
       return;
     }
     
