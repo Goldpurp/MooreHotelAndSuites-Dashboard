@@ -87,6 +87,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (Array.isArray(res)) return res;
     if (res.data && Array.isArray(res.data)) return res.data;
     if (res.items && Array.isArray(res.items)) return res.items;
+    if (res.value && Array.isArray(res.value)) return res.value; // Handle OData/Entity Framework standard
     return [];
   };
 
@@ -104,7 +105,9 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const refreshData = useCallback(async () => {
-    if (!api.getToken()) return;
+    const token = api.getToken();
+    if (!token) return;
+
     try {
       const [roomsRes, bookingsRes, guestsRes, staffRes, notificationsRes, auditLogsRes, historyRes] = await Promise.all([
         api.get('/api/rooms').catch(() => []),
@@ -124,8 +127,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setAuditLogs(normalizeData(auditLogsRes));
       setVisitHistory(normalizeData(historyRes));
     } catch (error: any) {
-      console.error('Ledger sync fault:', error);
-      if (error.message.includes('Authorization Required')) {
+      console.error('Property Ledger Sync Error:', error);
+      if (error.message?.includes('Authorization Required')) {
         setIsAuthenticated(false);
         api.removeToken();
       }
@@ -165,7 +168,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsAuthenticated(true);
       await refreshData();
     } else {
-      throw new Error("Login succeeded but no bearer token was returned.");
+      throw new Error("Authorization protocol failed: No token returned.");
     }
   };
 

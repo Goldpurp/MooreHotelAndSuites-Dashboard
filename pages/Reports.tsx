@@ -1,6 +1,5 @@
-
 import React, { useMemo, useState } from 'react';
-import { FileDown, Printer, ChevronDown, TrendingUp, TrendingDown, Calendar, Building, CreditCard, Users, History, Activity } from 'lucide-react';
+import { FileDown, Printer, ChevronDown, TrendingUp, TrendingDown, Calendar, Building, CreditCard, Users, History, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { BookingStatus, RoomStatus } from '../types';
 
@@ -16,6 +15,10 @@ import {
 const Reports: React.FC = () => {
   const { bookings, rooms, guests, auditLogs } = useHotel();
   const [reportTab, setReportTab] = useState<'analytics' | 'audit'>('analytics');
+  
+  // Pagination for Audit Logs
+  const [auditPage, setAuditPage] = useState(1);
+  const AUDIT_PAGE_SIZE = 10;
 
   const metrics = useMemo(() => {
     const validBookings = bookings.filter(b => b.status !== BookingStatus.CANCELLED);
@@ -62,6 +65,13 @@ const Reports: React.FC = () => {
       };
     }).filter(item => item.count > 0);
   }, [rooms]);
+
+  const paginatedAuditLogs = useMemo(() => {
+    const start = (auditPage - 1) * AUDIT_PAGE_SIZE;
+    return (auditLogs || []).slice(start, start + AUDIT_PAGE_SIZE);
+  }, [auditLogs, auditPage]);
+
+  const totalAuditPages = Math.ceil((auditLogs?.length || 0) / AUDIT_PAGE_SIZE);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -195,12 +205,12 @@ const Reports: React.FC = () => {
           </div>
         </>
       ) : (
-        <div className="glass-card rounded-md border border-white/5 overflow-hidden animate-in fade-in zoom-in-95">
+        <div className="glass-card rounded-md border border-white/5 overflow-hidden animate-in fade-in zoom-in-95 flex flex-col">
           <div className="px-6 py-4 border-b border-white/5 bg-slate-900/40 flex justify-between items-center">
             <h3 className="text-sm font-black text-white uppercase tracking-widest italic flex items-center gap-2">
               <Activity size={16} className="text-blue-500"/> System Audit Trail
             </h3>
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{auditLogs.length} Records</span>
+            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{auditLogs.length} Total Trace Records</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -214,12 +224,12 @@ const Reports: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {auditLogs.length === 0 ? (
+                {paginatedAuditLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-20 text-center text-[10px] font-black text-slate-700 uppercase tracking-[0.3em]">No activity detected</td>
+                    <td colSpan={5} className="py-20 text-center text-[10px] font-black text-slate-700 uppercase tracking-[0.3em]">No activity detected in current view</td>
                   </tr>
                 ) : (
-                  auditLogs.map((log) => (
+                  paginatedAuditLogs.map((log) => (
                     <tr key={log.id} className="hover:bg-white/5 transition-all group">
                       <td className="px-6 py-4">
                         <p className="text-[11px] font-bold text-slate-300">{new Date(log.createdAt).toLocaleDateString()}</p>
@@ -254,6 +264,32 @@ const Reports: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+          
+          {/* Audit Trail Pagination Controls */}
+          <div className="px-6 py-4 border-t border-white/5 bg-slate-900/20 flex items-center justify-between">
+            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+              Showing {paginatedAuditLogs.length} of {auditLogs.length} records
+            </span>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setAuditPage(p => Math.max(1, p - 1))}
+                disabled={auditPage === 1}
+                className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <div className="flex items-center px-4 rounded-lg bg-black/20 border border-white/5">
+                <span className="text-[10px] font-black text-white">{auditPage} / {totalAuditPages || 1}</span>
+              </div>
+              <button 
+                onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))}
+                disabled={auditPage === totalAuditPages || totalAuditPages === 0}
+                className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       )}

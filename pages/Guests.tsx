@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
-import { Guest, BookingStatus, RoomStatus, Booking, Room } from '../types';
-// Added Bed to the imports to resolve "Cannot find name 'Bed'" error on line 199
-import { Search, Phone, Eye, LogOut, UserCheck, RefreshCw, Archive, Mail, ShieldCheck, CreditCard, Bed } from 'lucide-react';
+import { Guest, BookingStatus, Booking, Room } from '../types';
+import { Search, Phone, Eye, LogOut, UserCheck, RefreshCw, Archive, Mail, CreditCard, Bed, ShieldCheck } from 'lucide-react';
 import CheckOutModal from '../components/CheckOutModal';
 
 const Guests: React.FC = () => {
@@ -19,20 +18,24 @@ const Guests: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
+  // Advanced Linking Logic: Matches across ID, Email, and Phone to ensure robust linkage
   const getActiveStay = (guest: Guest) => {
     if (!guest || !bookings) return null;
-    // Enhanced robust linkage: Match by ID, email, or phone to account for differing API response patterns
-    const booking = (bookings || []).find(b => 
-      b.status === BookingStatus.CHECKED_IN && 
-      (
-        (b.guestId && String(b.guestId).toLowerCase() === String(guest.id).toLowerCase()) ||
-        (b.guestEmail && b.guestEmail.toLowerCase() === guest.email.toLowerCase()) ||
-        (b.guestPhone && guest.phone && b.guestPhone.replace(/\D/g, '') === guest.phone.replace(/\D/g, ''))
-      )
-    );
+    
+    const booking = (bookings || []).find(b => {
+      const isCheckedIn = b.status === BookingStatus.CHECKED_IN;
+      if (!isCheckedIn) return false;
+
+      const idMatch = b.guestId && String(b.guestId).toLowerCase() === String(guest.id).toLowerCase();
+      const emailMatch = b.guestEmail && guest.email && b.guestEmail.toLowerCase() === guest.email.toLowerCase();
+      const phoneMatch = b.guestPhone && guest.phone && b.guestPhone.replace(/\D/g, '') === guest.phone.replace(/\D/g, '');
+
+      return idMatch || emailMatch || phoneMatch;
+    });
+
     if (!booking) return null;
     const room = (rooms || []).find(r => r.id === booking.roomId);
-    return { booking, room };
+    return { booking, room: room || null };
   };
 
   const processedGuests = useMemo(() => {
@@ -66,7 +69,7 @@ const Guests: React.FC = () => {
         <div className="flex items-end justify-between">
           <div>
              <h2 className="text-3xl font-black text-white tracking-tight italic uppercase">{showInHouseOnly ? 'In-House Residents' : 'Guest Registry'}</h2>
-             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Personnel Management Ledger</p>
+             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Property Personnel Ledger</p>
           </div>
           <div className="flex gap-2">
              <button 
@@ -82,7 +85,7 @@ const Guests: React.FC = () => {
                }`}
              >
                {showInHouseOnly ? <UserCheck size={16}/> : <Archive size={16}/>} 
-               {showInHouseOnly ? 'In-House Focus' : 'Full Registry'}
+               {showInHouseOnly ? 'Focus: Active' : 'Registry: Full'}
              </button>
           </div>
         </div>
@@ -107,14 +110,14 @@ const Guests: React.FC = () => {
                        <th className="px-8 py-5">Occupant Profile</th>
                        <th className="px-8 py-5">Protocol Status</th>
                        <th className="px-8 py-5">Ledger Value</th>
-                       <th className="px-8 py-5 text-right">Actions</th>
+                       <th className="px-8 py-5 text-right">Details</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-white/5">
                     {processedGuests.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="py-24 text-center">
-                          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">No matching records found</p>
+                          <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em]">No matching records detected</p>
                         </td>
                       </tr>
                     ) : (
@@ -136,11 +139,11 @@ const Guests: React.FC = () => {
                            <td className="px-8 py-5">
                               {guest.activeStay ? (
                                 <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-fit">
-                                   <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
-                                   Room {guest.activeStay.room?.roomNumber}
+                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                   Room {guest.activeStay.room?.roomNumber || '...'}
                                 </span>
                               ) : (
-                                <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest italic opacity-50">Archived</span>
+                                <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest italic opacity-50">Inactive</span>
                               )}
                            </td>
                            <td className="px-8 py-5">
@@ -162,23 +165,23 @@ const Guests: React.FC = () => {
       </div>
 
       {selectedGuest && (
-        <div className="flex-1 w-full lg:w-[400px] shrink-0 glass-card rounded-[2.5rem] p-10 flex flex-col border border-white/10 bg-slate-900/60 shadow-3xl animate-in slide-in-from-right-10 duration-500">
+        <div className="flex-1 w-full lg:w-[420px] shrink-0 glass-card rounded-[2.5rem] p-10 flex flex-col border border-white/10 bg-slate-900/60 shadow-3xl animate-in slide-in-from-right-10 duration-500">
            <div className="flex flex-col items-center mb-10 pt-4">
               <div className="relative">
-                 <img src={selectedGuest.avatarUrl} className="w-32 h-32 rounded-[2.5rem] object-cover mb-6 ring-4 ring-white/10 shadow-2xl" alt=""/>
+                 <img src={selectedGuest.avatarUrl || `https://ui-avatars.com/api/?name=${selectedGuest.firstName}`} className="w-32 h-32 rounded-[2.5rem] object-cover mb-6 ring-4 ring-white/10 shadow-2xl" alt=""/>
                  {selectedGuest.activeStay && (
                    <div className="absolute -bottom-2 -right-2 p-3 bg-emerald-600 rounded-2xl border-4 border-slate-900 text-white shadow-xl">
-                      <UserCheck size={20} />
+                      <ShieldCheck size={20} />
                    </div>
                  )}
               </div>
               <h3 className="text-3xl font-black text-white italic uppercase text-center leading-[0.85] tracking-tighter">
                 {selectedGuest.firstName} <br/> {selectedGuest.lastName}
               </h3>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mt-3">FOLIO IDENTIFIER: {selectedGuest.id.slice(0, 8).toUpperCase()}</p>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mt-3 truncate w-full text-center">FOLIO ID: {selectedGuest.id.toUpperCase()}</p>
            </div>
 
-           <div className="space-y-6 flex-1">
+           <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2">
               <div className="bg-black/40 p-6 rounded-3xl space-y-5 border border-white/5">
                  <div className="flex items-center gap-4 text-slate-400">
                     <div className="p-2 bg-white/5 rounded-lg border border-white/5"><Mail size={16}/></div>
@@ -186,15 +189,15 @@ const Guests: React.FC = () => {
                  </div>
                  <div className="flex items-center gap-4 text-slate-400 pt-4 border-t border-white/5">
                     <div className="p-2 bg-white/5 rounded-lg border border-white/5"><Phone size={16}/></div>
-                    <span className="text-[13px] font-bold tracking-tight">{selectedGuest.phone || 'NO CONTACT RECORD'}</span>
+                    <span className="text-[13px] font-bold tracking-tight">{selectedGuest.phone || 'NO RECORD'}</span>
                  </div>
               </div>
 
               {selectedGuest.activeStay ? (
-                <div className="bg-emerald-500/5 p-6 rounded-3xl border border-emerald-500/20 space-y-4">
+                <div className="bg-emerald-500/5 p-6 rounded-3xl border border-emerald-500/20 space-y-4 shadow-inner">
                    <div className="flex justify-between items-center">
                       <span className="text-[10px] text-emerald-500/60 font-black uppercase tracking-widest">Active Stay</span>
-                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-tighter italic">Authorized</span>
+                      <span className="text-[11px] font-black text-emerald-400 uppercase tracking-tighter italic">Verified</span>
                    </div>
                    <div className="flex items-center gap-4">
                       <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400"><Bed size={24}/></div>
@@ -215,9 +218,9 @@ const Guests: React.FC = () => {
                    </div>
                 </div>
               ) : (
-                <div className="bg-white/5 p-8 rounded-3xl border border-white/5 flex flex-col items-center text-center">
-                   <Archive size={32} className="text-slate-700 mb-4 opacity-50" />
-                   <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest leading-relaxed">Guest has no active folio assignments in current ledger.</p>
+                <div className="bg-white/5 p-8 rounded-3xl border border-white/5 flex flex-col items-center text-center opacity-60">
+                   <Archive size={32} className="text-slate-700 mb-4" />
+                   <p className="text-[11px] text-slate-600 font-black uppercase tracking-widest leading-relaxed">No active folio detected in current ledger cycle.</p>
                 </div>
               )}
            </div>
@@ -226,11 +229,11 @@ const Guests: React.FC = () => {
              {selectedGuest.activeStay ? (
                <button 
                  onClick={() => { 
-                   if (selectedGuest.activeStay) {
+                   if (selectedGuest && selectedGuest.activeStay) {
                      setActiveCheckOutData({ 
                        guest: selectedGuest, 
                        booking: selectedGuest.activeStay.booking, 
-                       room: selectedGuest.activeStay.room || null 
+                       room: selectedGuest.activeStay.room 
                      }); 
                      setIsCheckOutModalOpen(true); 
                    }
