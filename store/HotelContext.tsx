@@ -87,7 +87,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (Array.isArray(res)) return res;
     if (res.data && Array.isArray(res.data)) return res.data;
     if (res.items && Array.isArray(res.items)) return res.items;
-    if (res.value && Array.isArray(res.value)) return res.value;
+    if (res.value && Array.isArray(res.value)) return res.value; // Handle .NET OData wrapping
     return [];
   };
 
@@ -109,6 +109,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!token) return;
 
     try {
+      // Corrected historyRes endpoint to /api/operations/ledger based on backend logs
       const [roomsRes, bookingsRes, guestsRes, staffRes, notificationsRes, auditLogsRes, historyRes] = await Promise.all([
         api.get('/api/rooms').catch(() => []),
         api.get('/api/bookings').catch(() => []),
@@ -116,7 +117,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         api.get('/api/admin/management/employees').catch(() => []),
         api.get('/api/notifications/staff').catch(() => []),
         api.get('/api/audit-logs').catch(() => []),
-        api.get('/api/operations/history').catch(() => null) // Use null to detect 404
+        api.get('/api/operations/ledger').catch(() => null) 
       ]);
 
       const normalizedRooms = normalizeData(roomsRes);
@@ -130,51 +131,55 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setNotifications(normalizeData(notificationsRes));
       setAuditLogs(normalizedAudit);
 
-      // --- RESILIENCE LOGIC: Synthesize Guests from Bookings if registry is empty ---
-      if (normalizedGuests.length === 0 && normalizedBookings.length > 0) {
-        const synthesized: Map<string, Guest> = new Map();
-        normalizedBookings.forEach(b => {
-          const guestId = b.guestId || b.guestEmail?.toLowerCase() || b.bookingCode;
-          if (!synthesized.has(guestId)) {
-            synthesized.set(guestId, {
-              id: guestId,
-              firstName: b.guestFirstName || 'Guest',
-              lastName: b.guestLastName || '',
-              email: b.guestEmail || '',
-              phone: b.guestPhone || '',
-              totalStays: 1,
-              totalSpent: b.amount || 0,
-              avatarUrl: `https://ui-avatars.com/api/?name=${b.guestFirstName}+${b.guestLastName}&background=020617&color=fff`
-            });
-          }
-        });
-        setGuests(Array.from(synthesized.values()));
-      } else {
-        setGuests(normalizedGuests);
-      }
+      // --- ADVANCED GUEST RECOVERY ---
+      // We merge actual guests with synthesized ones from bookings to ensure checked-in residents always appear
+      const guestMap: Map<string, Guest> = new Map();
+      
+      // 1. Add explicitly registered guests
+      normalizedGuests.forEach(g => guestMap.set(String(g.id).toLowerCase(), g));
 
-      // --- RESILIENCE LOGIC: Map Audit Logs to History if history endpoint fails ---
+      // 2. Synthesize missing guests from active bookings
+      normalizedBookings.forEach(b => {
+        const primaryId = String(b.guestId || b.guestEmail || b.bookingCode).toLowerCase();
+        if (!guestMap.has(primaryId)) {
+          guestMap.set(primaryId, {
+            id: b.guestId || primaryId,
+            firstName: b.guestFirstName || 'Resident',
+            lastName: b.guestLastName || '',
+            email: b.guestEmail || '',
+            phone: b.guestPhone || '',
+            totalStays: 1,
+            totalSpent: b.amount || 0,
+            avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(b.guestFirstName || 'R')}+${encodeURIComponent(b.guestLastName || '')}&background=020617&color=fff`
+          });
+        }
+      });
+      
+      setGuests(Array.from(guestMap.values()));
+
+      // --- HISTORY RECOVERY ---
       if (historyRes === null || (Array.isArray(historyRes) && historyRes.length === 0)) {
-        const historyFromAudit: VisitRecord[] = normalizedAudit
-          .filter(log => ['CHECK_IN', 'CHECK_OUT', 'RESERVATION'].includes(log.action))
+        // Fallback: Map recent actions from audit logs to visit history
+        const auditHistory: VisitRecord[] = normalizedAudit
+          .filter(log => ['CHECK_IN', 'CHECK_OUT', 'RESERVATION'].includes(log.action.toUpperCase()))
           .map(log => ({
             id: log.id,
             guestId: log.entityId,
-            guestName: 'Recorded Occupant',
+            guestName: 'Recorded Activity',
             roomId: '',
-            roomNumber: 'Unit',
-            bookingCode: 'REF-' + log.id.slice(0, 4),
-            action: log.action as VisitAction,
+            roomNumber: 'UNIT',
+            bookingCode: 'TRC-' + log.id.slice(0, 4).toUpperCase(),
+            action: log.action.toUpperCase().replace('_', ' ') as VisitAction,
             timestamp: log.createdAt,
-            authorizedBy: 'System'
+            authorizedBy: 'System Audit'
           }));
-        setVisitHistory(historyFromAudit);
+        setVisitHistory(auditHistory);
       } else {
         setVisitHistory(normalizeData(historyRes));
       }
 
     } catch (error: any) {
-      console.error('Property Ledger Sync Error:', error);
+      console.error('Moore Property Sync Failure:', error);
       if (error.message?.includes('Authorization Required')) {
         setIsAuthenticated(false);
         api.removeToken();
@@ -215,7 +220,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsAuthenticated(true);
       await refreshData();
     } else {
-      throw new Error("Authorization protocol failed: No token returned.");
+      throw new Error("Authorization protocol failed: Access Token Null.");
     }
   };
 

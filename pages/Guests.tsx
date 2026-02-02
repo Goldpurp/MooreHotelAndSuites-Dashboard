@@ -23,14 +23,23 @@ const Guests: React.FC = () => {
     if (!guest || !bookings) return null;
     
     const booking = (bookings || []).find(b => {
+      // Priority 1: Check-in status must be correct
       const isCheckedIn = b.status === BookingStatus.CHECKED_IN;
       if (!isCheckedIn) return false;
 
-      const idMatch = b.guestId && String(b.guestId).toLowerCase() === String(guest.id).toLowerCase();
+      const guestIdLower = String(guest.id).toLowerCase();
+      
+      // Priority 2: Precise ID matching (handles GUIDs and synthesized strings)
+      const idMatch = b.guestId && String(b.guestId).toLowerCase() === guestIdLower;
+      
+      // Priority 3: Fuzzy matching (email/phone) for cases where IDs differ across systems
       const emailMatch = b.guestEmail && guest.email && b.guestEmail.toLowerCase() === guest.email.toLowerCase();
       const phoneMatch = b.guestPhone && guest.phone && b.guestPhone.replace(/\D/g, '') === guest.phone.replace(/\D/g, '');
+      
+      // Priority 4: Synthesis ID matching (where guest.id IS the email or bookingCode)
+      const synthesisMatch = guestIdLower === b.guestEmail?.toLowerCase() || guestIdLower === b.bookingCode?.toLowerCase();
 
-      return idMatch || emailMatch || phoneMatch;
+      return idMatch || emailMatch || phoneMatch || synthesisMatch;
     });
 
     if (!booking) return null;
@@ -44,6 +53,7 @@ const Guests: React.FC = () => {
       .filter(g => {
         const matchesSearch = `${g.firstName} ${g.lastName} ${g.email} ${g.phone}`.toLowerCase().includes(q);
         const stay = getActiveStay(g);
+        // If we are showing only in-house, ensure the guest has an active stay verified
         return matchesSearch && (showInHouseOnly ? !!stay : true);
       })
       .map(g => ({ ...g, activeStay: getActiveStay(g) }))
@@ -178,7 +188,7 @@ const Guests: React.FC = () => {
               <h3 className="text-3xl font-black text-white italic uppercase text-center leading-[0.85] tracking-tighter">
                 {selectedGuest.firstName} <br/> {selectedGuest.lastName}
               </h3>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mt-3 truncate w-full text-center">FOLIO ID: {selectedGuest.id.toUpperCase().slice(0, 12)}</p>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mt-3 truncate w-full text-center">FOLIO ID: {String(selectedGuest.id).toUpperCase().slice(0, 12)}</p>
            </div>
 
            <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar pr-2">
