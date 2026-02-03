@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, ShieldAlert, Save, Loader2 } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
@@ -10,12 +11,13 @@ interface CreateUserModalProps {
 }
 
 const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, editingUser }) => {
-  const { addStaff, updateStaff } = useHotel();
+  const { userRole, addStaff, updateStaff } = useHotel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    // Fix: Using 'Staff' instead of 'staff' to match UserRole type definition
     role: 'Staff' as UserRole,
     status: 'Active' as 'Active' | 'Suspended'
   });
@@ -31,11 +33,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
       });
     } else {
       setFormData({
-        name: '', 
-        email: '', 
-        password: '', 
-        role: 'Staff', 
-        status: 'Active'
+        // Fix: Using 'Staff' instead of 'staff' to match UserRole type definition
+        name: '', email: '', password: '', role: 'Staff', status: 'Active'
       });
     }
   }, [editingUser, isOpen]);
@@ -92,6 +91,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
             <div className="space-y-2">
               <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Role Access</label>
               <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as UserRole})} className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 px-5 text-sm text-white outline-none appearance-none">
+                {/* Fix: Capitalized option values to match UserRole type */}
                 <option value="Staff">Staff</option>
                 <option value="Manager">Manager</option>
                 <option value="Admin">Admin</option>

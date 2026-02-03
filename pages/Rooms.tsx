@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Room, RoomStatus } from '../types';
-import { LayoutGrid, List, Search, Pencil, Trash2, Plus, Eye, SearchX, Wrench, RefreshCw, Square, CheckCircle2, Loader2 } from 'lucide-react';
+import { LayoutGrid, List, Search, Pencil, Trash2, Plus, Eye, SearchX, Wrench, RefreshCw, Square } from 'lucide-react';
 import RoomModal from '../components/RoomModal';
 import RoomDetailModal from '../components/RoomDetailModal';
 import DeleteRoomModal from '../components/DeleteRoomModal';
@@ -14,7 +14,6 @@ const Rooms: React.FC = () => {
   const [viewingRoom, setViewingRoom] = useState<Room | null>(null);
   const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
   const [roomForMaintenance, setRoomForMaintenance] = useState<Room | null>(null);
-  const [isResetting, setIsResetting] = useState<string | null>(null);
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,17 +40,6 @@ const Rooms: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     setTimeout(() => setIsRefreshing(false), 800);
-  };
-
-  const handleResetAsset = async (e: React.MouseEvent, room: Room) => {
-    e.stopPropagation();
-    setIsResetting(room.id);
-    try {
-      // Integration Blueprint: Manual status update to reset asset to Available
-      await updateRoom(room.id, { ...room, status: RoomStatus.AVAILABLE });
-    } finally {
-      setIsResetting(null);
-    }
   };
 
   const stats = useMemo(() => [
@@ -183,6 +171,7 @@ const Rooms: React.FC = () => {
             <div className="flex flex-col items-center justify-center py-24 opacity-30">
               <SearchX size={56} className="text-slate-700 mb-6" />
               <p className="text-[14px] font-black uppercase tracking-[0.4em] text-slate-500">Inventory result null</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700 mt-2">Check filter parameters</p>
             </div>
           ) : (
             viewMode === 'list' ? (
@@ -190,6 +179,7 @@ const Rooms: React.FC = () => {
                 <thead>
                   <tr className="text-slate-600 text-[10px] font-black uppercase tracking-widest border-b border-white/5">
                     <th className="px-6 py-4">Unit Identity</th>
+                    <th className="px-6 py-4">Classification</th>
                     <th className="px-6 py-4 text-center">Status</th>
                     <th className="px-6 py-4">Tariff</th>
                     <th className="px-6 py-4 text-right">Actions</th>
@@ -203,9 +193,13 @@ const Rooms: React.FC = () => {
                           <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=100'} className="w-16 h-12 rounded-xl object-cover ring-2 ring-white/5 group-hover:ring-blue-500/40 transition-all shadow-md" alt=""/>
                           <div>
                              <p className="text-[16px] font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">Room {room.roomNumber}</p>
-                             <p className="text-[10px] text-slate-600 font-black uppercase mt-0.5">{room.category} • {room.floor.replace('Floor', ' Floor')}</p>
+                             <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash mt-0.5">{room.name}</p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-5">
+                          <span className="text-[12px] font-black text-slate-300 uppercase tracking-tighter italic">{room.category}</span>
+                          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-dash mt-0.5">{room.floor.replace(/([A-Z])/g, ' $1')}</p>
                       </td>
                       <td className="px-6 py-5 text-center">
                           <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${
@@ -224,18 +218,6 @@ const Rooms: React.FC = () => {
                       </td>
                       <td className="px-6 py-5 text-right">
                           <div className="flex justify-end gap-2.5" onClick={e => e.stopPropagation()}>
-                             {/* RESET PROTOCOL: Only for Cleaning rooms */}
-                             {room.status === RoomStatus.CLEANING && (
-                               <button 
-                                 onClick={(e) => handleResetAsset(e, room)}
-                                 disabled={isResetting === room.id}
-                                 className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-emerald-500/20 active:scale-95 disabled:bg-slate-800"
-                               >
-                                 {isResetting === room.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12}/>}
-                                 Mark Ready
-                               </button>
-                             )}
-                             
                              <PermissionWrapper allowedRoles={['Admin', 'Manager']}>
                                <button onClick={(e) => handleOpenMaintenanceModal(e, room)} className={`p-3 rounded-xl border transition-all ${room.status === RoomStatus.MAINTENANCE ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg' : 'bg-white/5 text-slate-500 border-white/10 hover:text-amber-500'}`} title="Toggle Maintenance">
                                   <Wrench size={18}/>
@@ -256,10 +238,7 @@ const Rooms: React.FC = () => {
                   <div key={room.id} onClick={() => { setViewingRoom(room); setIsDetailOpen(true); }} className="group glass-card rounded-2xl overflow-hidden hover:border-blue-500/40 transition-all cursor-pointer shadow-xl border border-white/10">
                     <div className="aspect-[16/10] relative overflow-hidden">
                       <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=600'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt=""/>
-                      <div className="absolute top-4 right-4 flex gap-2">
-                         {room.status === RoomStatus.CLEANING && (
-                           <button onClick={(e) => handleResetAsset(e, room)} className="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-600 text-white border border-emerald-500 shadow-xl backdrop-blur-md">Ready</button>
-                         )}
+                      <div className="absolute top-4 right-4">
                          <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border backdrop-blur-md transition-all ${
                            room.status === RoomStatus.AVAILABLE ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' :
                            'bg-slate-900/80 text-slate-400 border-white/10'

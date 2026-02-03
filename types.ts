@@ -1,3 +1,4 @@
+
 export enum RoomStatus {
   AVAILABLE = 'Available',
   OCCUPIED = 'Occupied',
@@ -100,8 +101,6 @@ export interface Booking {
   amount: number;
   paymentStatus: PaymentStatus;
   paymentMethod?: string;
-  paymentUrl?: string;
-  paymentInstruction?: string;
   createdAt: string;
   notes?: string;
   statusHistory: BookingStatusHistory[];

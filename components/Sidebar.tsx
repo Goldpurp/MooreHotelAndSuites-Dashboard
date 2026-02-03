@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, CalendarDays, Bed, Users, FileBarChart, Settings, LogOut, ShieldCheck, ChevronLeft, ChevronRight, ClipboardList, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Bed, Users, FileBarChart, Settings, LogOut, ShieldCheck, ChevronLeft, ChevronRight, ClipboardList, CreditCard, CheckCircle2 } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import PermissionWrapper from './PermissionWrapper';
 import Logo from './Logo';

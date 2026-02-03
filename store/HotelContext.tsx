@@ -98,12 +98,9 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     let role: UserRole = 'Staff';
     const rawRole = String(data.role || data.Role || 'Staff').toLowerCase();
-    
-    // Explicit PascalCase mapping to match UserRole type exactly
     if (rawRole === 'admin') role = 'Admin';
     else if (rawRole === 'manager') role = 'Manager';
-    else if (rawRole === 'client' || rawRole === 'guest') role = 'Client';
-    else if (rawRole === 'staff') role = 'Staff';
+    else if (rawRole === 'client') role = 'Client';
 
     return {
       id: String(data.id || data.Id || "").toLowerCase(),
@@ -137,11 +134,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       setRooms(normalizedRooms);
       setBookings(normalizedBookings);
-      setStaff(normalizeData(staffRes).map(s => normalizeUser(s) as StaffUser).filter(s => s !== null));
+      setStaff(normalizeData(staffRes).map(s => normalizeUser(s) as StaffUser));
       setNotifications(normalizeData(notificationsRes));
       setAuditLogs(normalizedAudit);
 
-      // GUEST RECOVERY
+      // --- GUEST RECOVERY ENGINE ---
       const guestMap: Map<string, Guest> = new Map();
       normalizedGuests.forEach(g => {
         if (g && g.id) guestMap.set(String(g.id).toLowerCase(), {
@@ -170,12 +167,12 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       setGuests(Array.from(guestMap.values()));
 
-      // OPERATIONS LEDGER SYNC (v9.1 Reference)
+      // --- OPERATIONS LEDGER MAPPING ---
       if (normalizedLedger && normalizedLedger.length > 0) {
         setVisitHistory(normalizedLedger.map((l: any) => ({
           id: l.id || l.Id || Math.random().toString(),
           guestId: l.guestId || l.GuestId || '',
-          guestName: l.guestName || l.guestFirstName || l.GuestName || 'Property Occupant',
+          guestName: l.guestName || l.guestFirstName || l.GuestName || 'Occupant',
           roomId: l.roomId || l.RoomId || '',
           roomNumber: l.roomNumber || l.RoomNumber || 'N/A',
           bookingCode: l.bookingCode || l.BookingCode || 'N/A',
@@ -183,6 +180,21 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           timestamp: l.timestamp || l.createdAt || l.occurredAt || new Date().toISOString(),
           authorizedBy: l.authorizedBy || l.staffName || l.PerformedBy || 'System'
         })));
+      } else {
+        const auditHistory: VisitRecord[] = normalizedAudit
+          .filter(log => log && log.action && ['CHECK_IN', 'CHECK_OUT', 'RESERVATION'].includes(log.action.toUpperCase()))
+          .map(log => ({
+            id: log.id,
+            guestId: log.entityId || '',
+            guestName: 'Recorded Activity',
+            roomId: '',
+            roomNumber: 'UNIT',
+            bookingCode: 'TRC-' + log.id.slice(0, 4).toUpperCase(),
+            action: log.action.toUpperCase().replace('_', ' ') as VisitAction,
+            timestamp: log.createdAt,
+            authorizedBy: 'System Audit'
+          }));
+        setVisitHistory(auditHistory);
       }
 
     } catch (error: any) {
@@ -223,24 +235,15 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (token) {
       api.setToken(token);
       const user = normalizeUser(response);
-      if (user) { 
-        setCurrentUser(user); 
-        setUserRole(user.role); 
-      }
+      if (user) { setCurrentUser(user); setUserRole(user.role); }
       setIsAuthenticated(true);
       await refreshData();
     } else {
-      throw new Error("Authorization protocol failed: Authentication node returned null.");
+      throw new Error("Authorization protocol failed.");
     }
   };
 
-  const logout = () => { 
-    api.removeToken(); 
-    setIsAuthenticated(false); 
-    setCurrentUser(null); 
-    setUserRole('Staff'); 
-  };
-
+  const logout = () => { api.removeToken(); setIsAuthenticated(false); setCurrentUser(null); setUserRole('Staff'); };
   const addRoom = async (room: Omit<Room, 'id'>) => { await api.post('/api/rooms', room); await refreshData(); };
   const updateRoom = async (id: string, updates: Partial<Room>) => { await api.put(`/api/rooms/${id}`, updates); await refreshData(); };
   const deleteRoom = async (id: string) => { await api.delete(`/api/rooms/${id}`); await refreshData(); };
@@ -266,12 +269,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateBooking = async (id: string, updates: Partial<Booking>) => { await api.put(`/api/bookings/${id}`, updates); await refreshData(); };
   const updatePaymentStatus = async (id: string, status: PaymentStatus) => { await api.put(`/api/bookings/${id}`, { paymentStatus: status }); await refreshData(); };
   const confirmTransfer = async (code: string) => { await api.post(`/api/bookings/${code}/confirm-transfer`); await refreshData(); };
-  
   const checkInBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedIn' } }); await refreshData(); };
   const checkOutBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedOut' } }); await refreshData(); };
-  const cancelBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); await refreshData(); };
-
   const checkInBookingByCode = async (code: string) => { const b = bookings.find(x => x.bookingCode === code); if (b) await checkInBooking(b.id); };
+  const cancelBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); await refreshData(); };
   const addGuest = async (g: any) => { const res = await api.post<any>('/api/Auth/register', g); await refreshData(); return res.email; };
   const updateGuest = async (id: string, updates: Partial<Guest>) => { await api.put(`/api/profile/me`, updates); await refreshData(); };
 
@@ -282,7 +283,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const isCorrectRoom = b.roomId === roomId;
       const isNotExcluded = b.id !== excludeBookingId;
       const isActive = b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.CHECKED_OUT;
-      
       if (!isCorrectRoom || !isNotExcluded || !isActive) return false;
       const bStart = new Date(b.checkIn);
       const bEnd = new Date(b.checkOut);

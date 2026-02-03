@@ -1,7 +1,8 @@
+
 import React, { useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Shield, Key, Mail, User, Info, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2 } from 'lucide-react';
-import { UserRole } from '../types';
+import RoleBadge from '../components/RoleBadge';
 import { api } from '../lib/api';
 
 const Settings: React.FC = () => {
@@ -18,8 +19,8 @@ const Settings: React.FC = () => {
   const [rotationStatus, setRotationStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Use PascalCase to match UserRole type exactly
-  const roles: UserRole[] = ['Admin', 'Manager', 'Staff'];
+  // Fix: Capitalized roles to match UserRole type: 'Admin' | 'Manager' | 'Staff' | 'Client'
+  const roles = ['Admin', 'Manager', 'Staff'] as const;
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -92,6 +93,7 @@ const Settings: React.FC = () => {
              <div 
                key={r}
                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${
+                 // Fix: Comparison now works because roles array uses capitalized values
                  userRole === r 
                    ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] ring-1 ring-blue-500/50' 
                    : 'text-slate-600 opacity-40'
