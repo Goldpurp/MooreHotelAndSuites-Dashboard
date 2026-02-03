@@ -1,8 +1,7 @@
-
 import React, { useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Shield, Key, Mail, User, Info, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2 } from 'lucide-react';
-import RoleBadge from '../components/RoleBadge';
+import { UserRole } from '../types';
 import { api } from '../lib/api';
 
 const Settings: React.FC = () => {
@@ -19,7 +18,8 @@ const Settings: React.FC = () => {
   const [rotationStatus, setRotationStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const roles = ['admin', 'manager', 'staff'] as const;
+  // Use PascalCase to match UserRole type exactly
+  const roles: UserRole[] = ['Admin', 'Manager', 'Staff'];
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();

@@ -7,7 +7,7 @@ import CreateUserModal from '../components/CreateUserModal';
 import { StaffUser } from '../types';
 
 const StaffManagement: React.FC = () => {
-  const { staff, userRole, toggleStaffStatus } = useHotel();
+  const { staff, toggleStaffStatus } = useHotel();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +45,7 @@ const StaffManagement: React.FC = () => {
           <p className="text-slate-400 text-[11px] font-medium">Configure property-wide roles and authorization profiles</p>
         </div>
         
-        <PermissionWrapper allowedRoles={['admin']}>
+        <PermissionWrapper allowedRoles={['Admin']}>
           <button 
             onClick={handleCreate}
             className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-blue-500/20 active:scale-95"
@@ -107,7 +107,7 @@ const StaffManagement: React.FC = () => {
                     <tr key={user.id} className="hover:bg-white/5 transition-all group">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <img src={user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'} className="w-8 h-8 rounded-md object-cover ring-1 ring-white/10" alt=""/>
+                          <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=020617&color=fff`} className="w-8 h-8 rounded-md object-cover ring-1 ring-white/10" alt=""/>
                           <div>
                             <p className="text-[13px] font-black text-white">{user.name}</p>
                             <p className="text-[10px] text-slate-500 font-medium tracking-tight">{user.email}</p>
@@ -131,7 +131,7 @@ const StaffManagement: React.FC = () => {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="flex justify-end gap-1.5">
-                          <PermissionWrapper allowedRoles={['admin']}>
+                          <PermissionWrapper allowedRoles={['Admin']}>
                             <button 
                               onClick={() => handleEdit(user)}
                               className="p-2 bg-white/5 text-slate-500 hover:text-white hover:bg-white/10 rounded-md border border-white/5 transition-all" 
@@ -150,11 +150,6 @@ const StaffManagement: React.FC = () => {
                             >
                               {user.status === 'Active' ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
                             </button>
-                          </PermissionWrapper>
-                          <PermissionWrapper allowedRoles={['staff', 'manager']}>
-                             <button className="p-2 bg-white/5 text-slate-300 opacity-50 cursor-not-allowed rounded-md border border-white/5 transition-all">
-                               <MoreHorizontal size={14} />
-                             </button>
                           </PermissionWrapper>
                         </div>
                       </td>
