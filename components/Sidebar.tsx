@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { LayoutDashboard, CalendarDays, Bed, Users, FileBarChart, Settings, LogOut, ShieldCheck, ChevronLeft, ChevronRight, ClipboardList, CreditCard, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Bed, Users, FileBarChart, Settings, LogOut, ShieldCheck, ChevronLeft, ChevronRight, ClipboardList, CheckCircle2 } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import PermissionWrapper from './PermissionWrapper';
 import Logo from './Logo';
@@ -73,7 +72,7 @@ const Sidebar: React.FC = () => {
           )}
           
           <div className="space-y-1.5">
-            <PermissionWrapper allowedRoles={['admin', 'manager']}>
+            <PermissionWrapper allowedRoles={['Admin', 'Manager']}>
               <button
                 onClick={() => setActiveTab('operation_log')}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${

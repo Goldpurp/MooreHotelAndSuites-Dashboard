@@ -102,7 +102,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Explicit PascalCase mapping to match UserRole type exactly
     if (rawRole === 'admin') role = 'Admin';
     else if (rawRole === 'manager') role = 'Manager';
-    else if (rawRole === 'client') role = 'Client';
+    else if (rawRole === 'client' || rawRole === 'guest') role = 'Client';
     else if (rawRole === 'staff') role = 'Staff';
 
     return {
@@ -137,7 +137,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       setRooms(normalizedRooms);
       setBookings(normalizedBookings);
-      setStaff(normalizeData(staffRes).map(s => normalizeUser(s) as StaffUser));
+      setStaff(normalizeData(staffRes).map(s => normalizeUser(s) as StaffUser).filter(s => s !== null));
       setNotifications(normalizeData(notificationsRes));
       setAuditLogs(normalizedAudit);
 
@@ -183,21 +183,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           timestamp: l.timestamp || l.createdAt || l.occurredAt || new Date().toISOString(),
           authorizedBy: l.authorizedBy || l.staffName || l.PerformedBy || 'System'
         })));
-      } else {
-        const auditHistory: VisitRecord[] = normalizedAudit
-          .filter(log => log && log.action && ['CHECK_IN', 'CHECK_OUT', 'RESERVATION'].includes(log.action.toUpperCase()))
-          .map(log => ({
-            id: log.id,
-            guestId: log.entityId || '',
-            guestName: 'Recorded Activity',
-            roomId: '',
-            roomNumber: 'UNIT',
-            bookingCode: 'TRC-' + log.id.slice(0, 4).toUpperCase(),
-            action: log.action.toUpperCase().replace('_', ' ') as VisitAction,
-            timestamp: log.createdAt,
-            authorizedBy: 'System Audit'
-          }));
-        setVisitHistory(auditHistory);
       }
 
     } catch (error: any) {
@@ -238,7 +223,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (token) {
       api.setToken(token);
       const user = normalizeUser(response);
-      if (user) { setCurrentUser(user); setUserRole(user.role); }
+      if (user) { 
+        setCurrentUser(user); 
+        setUserRole(user.role); 
+      }
       setIsAuthenticated(true);
       await refreshData();
     } else {
@@ -246,7 +234,13 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const logout = () => { api.removeToken(); setIsAuthenticated(false); setCurrentUser(null); setUserRole('Staff'); };
+  const logout = () => { 
+    api.removeToken(); 
+    setIsAuthenticated(false); 
+    setCurrentUser(null); 
+    setUserRole('Staff'); 
+  };
+
   const addRoom = async (room: Omit<Room, 'id'>) => { await api.post('/api/rooms', room); await refreshData(); };
   const updateRoom = async (id: string, updates: Partial<Room>) => { await api.put(`/api/rooms/${id}`, updates); await refreshData(); };
   const deleteRoom = async (id: string) => { await api.delete(`/api/rooms/${id}`); await refreshData(); };

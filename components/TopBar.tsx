@@ -1,283 +1,123 @@
-
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  Search, Bell, Bed, Users, Calendar, 
-  ShieldCheck, UserCog, Hash, X, CheckCircle, 
-  Info, AlertTriangle, Trash2, Clock, Check
-} from 'lucide-react';
+import React from 'react';
+import { LayoutDashboard, CalendarDays, Bed, Users, FileBarChart, Settings, LogOut, ShieldCheck, ChevronLeft, ChevronRight, ClipboardList, CreditCard, CheckCircle2 } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
-import { AppNotification } from '../types';
+import PermissionWrapper from './PermissionWrapper';
+import Logo from './Logo';
 
-const TopBar: React.FC = () => {
-  const { 
-    currentUser, rooms, guests, bookings, staff, 
-    setActiveTab, setSelectedBookingId, setSelectedGuestId, setSelectedRoomId,
-    notifications, markAllNotificationsRead, markNotificationAsRead, dismissNotification
-  } = useHotel();
+const Sidebar: React.FC = () => {
+  const { logout, isSidebarCollapsed, toggleSidebar, activeTab, setActiveTab } = useHotel();
   
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showResults, setShowResults] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const resultsRef = useRef<HTMLDivElement>(null);
-  const notificationRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (resultsRef.current && !resultsRef.current.contains(event.target as Node) && !searchInputRef.current?.contains(event.target as Node)) {
-        setShowResults(false);
-      }
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim() || searchQuery.length < 2) return null;
-    const q = searchQuery.toLowerCase();
-    
-    return {
-      rooms: (rooms || []).filter(r => 
-        (r.roomNumber || '').toLowerCase().includes(q) || 
-        (r.category || '').toLowerCase().includes(q) || 
-        (r.name || '').toLowerCase().includes(q)
-      ).slice(0, 4),
-      guests: (guests || []).filter(g => 
-        (g.lastName || '').toLowerCase().includes(q) || 
-        (g.firstName || '').toLowerCase().includes(q) ||
-        (g.email || '').toLowerCase().includes(q)
-      ).slice(0, 4),
-      bookings: (bookings || []).filter(b => 
-        (b.bookingCode || '').toLowerCase().includes(q) ||
-        (b.id || '').toLowerCase().includes(q)
-      ).slice(0, 4),
-      staff: (staff || []).filter(s => 
-        (s.name || '').toLowerCase().includes(q) || 
-        (s.email || '').toLowerCase().includes(q)
-      ).slice(0, 4)
-    };
-  }, [searchQuery, rooms, guests, bookings, staff]);
-
-  const hasAnyResults = useMemo(() => {
-    if (!searchResults) return false;
-    return Object.values(searchResults).some((arr) => (arr as any[]).length > 0);
-  }, [searchResults]);
-
-  const handleNavigate = (tab: string, id: string) => {
-    setSelectedBookingId(null);
-    setSelectedGuestId(null);
-    setSelectedRoomId(null);
-    if (tab === 'bookings') setSelectedBookingId(id);
-    if (tab === 'guests') setSelectedGuestId(id);
-    if (tab === 'rooms') setSelectedRoomId(id);
-    setActiveTab(tab);
-    setSearchQuery('');
-    setShowResults(false);
-  };
-
-  const handleNotificationClick = async (n: AppNotification) => {
-    if (!n.isRead) {
-      await markNotificationAsRead(n.id);
-    }
-    
-    // Logic to navigate based on bookingCode if present
-    if (n.bookingCode) {
-      const booking = (bookings || []).find(b => b.bookingCode === n.bookingCode);
-      if (booking) {
-        handleNavigate('bookings', booking.id);
-      } else {
-        // Fallback to bookings tab if booking not found in current local set
-        setActiveTab('bookings');
-      }
-    } else if (n.title.toLowerCase().includes('settlement')) {
-      setActiveTab('settlements');
-    }
-    
-    setShowNotifications(false);
-  };
-
-  // Only display unread notifications in the dropdown list as requested
-  const unreadNotifications = useMemo(() => 
-    (notifications || []).filter(n => !n.isRead)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), 
-    [notifications]
-  );
-
-  const unreadCount = unreadNotifications.length;
+  const menuItems = [
+    { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+    { id: 'bookings', label: 'Reservations', icon: CalendarDays },
+    { id: 'settlements', label: 'Confirmations', icon: CheckCircle2 },
+    { id: 'rooms', label: 'Rooms', icon: Bed },
+    { id: 'guests', label: 'Guests', icon: Users },
+    { id: 'reports', label: 'Analytics', icon: FileBarChart },
+  ];
 
   return (
-    <header className="h-20 bg-slate-900/60 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 sticky top-0 z-40">
-      <div className="relative w-full max-w-lg">
-        <div className="relative group">
-          <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchQuery ? 'text-brand-500' : 'text-slate-500'}`} size={16} />
-          <input 
-            ref={searchInputRef}
-            type="text" 
-            placeholder="Search Records... (⌘+K)" 
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setShowResults(true);
-            }}
-            onFocus={() => setShowResults(true)}
-            className="w-full bg-slate-950/60 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-sm text-slate-200 outline-none transition-all placeholder:text-slate-600 focus:border-brand-500/50 focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 shadow-inner"
-          />
-        </div>
-        
-        {showResults && searchQuery.trim().length >= 2 && (
-          <div ref={resultsRef} className="absolute top-full left-0 mt-3 w-full max-w-xl bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl p-2 z-[100] animate-in fade-in slide-in-from-top-2 overflow-hidden">
-            {!hasAnyResults ? (
-              <div className="p-12 text-center">
-                <p className="text-[11px] font-black uppercase tracking-dash text-slate-600 italic">No matches found in ledger</p>
-              </div>
-            ) : (
-              <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-4">
-                {searchResults?.rooms.length! > 0 && (
-                  <div>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Units</p>
-                    {searchResults?.rooms.map(r => (
-                      <button key={r.id} onClick={() => handleNavigate('rooms', r.id)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
-                        <div className="flex items-center gap-3">
-                          <Bed size={14} className="text-blue-500" />
-                          <span className="text-[13px] font-black text-white">Room {r.roomNumber}</span>
-                        </div>
-                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{r.category}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                
-                {searchResults?.bookings.length! > 0 && (
-                  <div>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Reservations</p>
-                    {searchResults?.bookings.map(b => (
-                      <button key={b.id} onClick={() => handleNavigate('bookings', b.id)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
-                        <div className="flex items-center gap-3">
-                          <Calendar size={14} className="text-amber-500" />
-                          <span className="text-[13px] font-black text-white">{b.guestFirstName} {b.guestLastName}</span>
-                        </div>
-                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{b.bookingCode}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {searchResults?.guests.length! > 0 && (
-                  <div>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Guests</p>
-                    {searchResults?.guests.map(g => (
-                      <button key={g.id} onClick={() => handleNavigate('guests', g.id)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
-                        <div className="flex items-center gap-3">
-                          <Users size={14} className="text-emerald-500" />
-                          <span className="text-[13px] font-black text-white">{g.firstName} {g.lastName}</span>
-                        </div>
-                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{g.email}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+    <aside 
+      className={`h-screen bg-slate-950/95 backdrop-blur-3xl border-r border-white/10 flex flex-col fixed left-0 top-0 z-50 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
+        isSidebarCollapsed ? 'w-20' : 'w-64'
+      }`}
+    >
+      <div className="p-6 flex items-center gap-4 h-24 overflow-hidden">
+        <Logo size="md" className="shrink-0" />
+        {!isSidebarCollapsed && (
+          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
+            <h1 className="text-sm font-black text-white tracking-tighter whitespace-nowrap leading-tight uppercase italic">Moore Hotels <br/> & Suites</h1>
+            <p className="text-[9px] text-brand-500 font-black tracking-dash uppercase whitespace-nowrap mt-0.5">Global Operations</p>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative" ref={notificationRef}>
-          <button onClick={() => setShowNotifications(!showNotifications)} className={`p-2.5 rounded-xl border transition-all duration-300 relative shadow-sm ${showNotifications ? 'bg-brand-600 text-white border-brand-500 shadow-xl' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
-            <Bell size={18} />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-slate-950">
-                {unreadCount}
-              </span>
+      <button 
+        onClick={toggleSidebar}
+        className="absolute -right-3.5 top-20 w-7 h-7 bg-brand-600 rounded-full border border-white/20 flex items-center justify-center text-white shadow-2xl hover:bg-brand-500 transition-all z-[60] active:scale-90 group"
+      >
+        {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+      </button>
+
+      <nav className="flex-1 px-4 pt-8 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
+              activeTab === item.id 
+                ? 'bg-brand-600/20 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-brand-500/20' 
+                : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'
+            }`}
+          >
+            {activeTab === item.id && (
+              <div className="absolute left-0 w-1.5 h-6 bg-brand-500 rounded-r-full shadow-[0_0_15px_rgba(59,130,246,0.8)]" />
             )}
+            <item.icon size={22} className={`shrink-0 transition-all ${activeTab === item.id ? 'text-brand-500 scale-110' : 'group-hover:text-slate-200 group-hover:scale-105'}`} />
+            <span 
+              className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${
+                isSidebarCollapsed ? 'opacity-0 -translate-x-10 invisible' : 'opacity-100 translate-x-0 visible'
+              }`}
+            >
+              {item.label}
+            </span>
           </button>
+        ))}
 
-          {showNotifications && (
-            <div className="absolute top-full right-0 mt-3 w-96 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 flex flex-col overflow-hidden">
-              <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
-                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white">Actionable Queue</h3>
-                 {unreadCount > 0 && (
-                   <button onClick={() => markAllNotificationsRead()} className="text-[9px] text-brand-400 font-black uppercase tracking-dash hover:text-brand-300 transition-colors">Acknowledge All</button>
-                 )}
-              </div>
-              <div className="max-h-[450px] overflow-y-auto custom-scrollbar p-2 space-y-1">
-                 {unreadCount === 0 ? (
-                   <div className="py-12 text-center">
-                      <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 border border-white/5">
-                        <CheckCircle size={24} className="text-slate-700 opacity-40" />
-                      </div>
-                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash italic">Operational queue is clear</p>
-                   </div>
-                 ) : (
-                   unreadNotifications.map((n) => (
-                     <div 
-                      key={n.id} 
-                      onClick={() => handleNotificationClick(n)}
-                      className="p-4 rounded-xl border border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/[0.08] transition-all cursor-pointer group relative overflow-hidden"
-                     >
-                        <div className="absolute top-4 left-0 w-1 h-4 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                        <div className="flex gap-3">
-                           <div className={`p-2 rounded-lg h-fit ${
-                             n.title.toLowerCase().includes('reservation') ? 'bg-emerald-500/10 text-emerald-500' :
-                             n.title.toLowerCase().includes('payment') ? 'bg-amber-500/10 text-amber-500' :
-                             n.title.toLowerCase().includes('error') ? 'bg-rose-500/10 text-rose-500' :
-                             'bg-brand-500/10 text-brand-500'
-                           }`}>
-                             {n.title.toLowerCase().includes('reservation') ? <Calendar size={14}/> : 
-                              n.title.toLowerCase().includes('payment') ? <CheckCircle size={14}/> :
-                              <Info size={14}/>}
-                           </div>
-                           <div className="flex-1 min-w-0">
-                             <div className="flex justify-between items-start gap-2">
-                               <p className="text-[12px] font-black uppercase tracking-tight truncate text-white">{n.title}</p>
-                               <span className="text-[8px] text-slate-600 font-black whitespace-nowrap mt-0.5">{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                             </div>
-                             <p className="text-[11px] leading-relaxed mt-1.5 font-medium whitespace-pre-line text-slate-400">{n.message}</p>
-                             <div className="flex items-center gap-1.5 mt-3 text-brand-400">
-                               <span className="text-[8px] font-black uppercase tracking-dash">Inspect Dossier</span>
-                               <Check size={8}/>
-                             </div>
-                           </div>
-                        </div>
-                     </div>
-                   ))
-                 )}
-              </div>
-              {unreadCount > 0 && (
-                <div className="p-3 border-t border-white/5 bg-slate-950/40 text-center">
-                   <p className="text-[8px] text-slate-700 font-black uppercase tracking-[0.3em] italic">Moore Property Management Protocol v2.1</p>
-                </div>
-              )}
-            </div>
+        <div className="pt-10">
+          {!isSidebarCollapsed && (
+            <p className="px-4 text-[10px] text-slate-600 font-black uppercase tracking-dash mb-5 flex items-center gap-2">
+              <span className="w-4 h-px bg-slate-800"></span> Administration
+            </p>
           )}
-        </div>
+          
+          <div className="space-y-1.5">
+            <PermissionWrapper allowedRoles={['Admin', 'Manager']}>
+              <button
+                onClick={() => setActiveTab('operation_log')}
+                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
+                  activeTab === 'operation_log' ? 'bg-brand-600/20 text-white border border-brand-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'
+                }`}
+              >
+                <ClipboardList size={22} className={`shrink-0 ${activeTab === 'operation_log' ? 'text-brand-500' : 'group-hover:text-slate-200'}`} />
+                <span className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? 'opacity-0 invisible -translate-x-10' : 'opacity-100 visible translate-x-0'}`}>Operation Log</span>
+              </button>
 
-        <div className="flex items-center gap-3 pl-4 border-l border-white/10">
-          <div className="text-right hidden sm:block">
-            <p className="text-[13px] font-black text-white leading-tight">{currentUser?.name || 'Authorized Personnel'}</p>
-            <p className="text-[9px] font-black uppercase text-slate-500 tracking-dash">{(currentUser?.role || 'staff').toUpperCase()}</p>
+              <button
+                onClick={() => setActiveTab('staff')}
+                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
+                  activeTab === 'staff' ? 'bg-brand-600/20 text-white border border-brand-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'
+                }`}
+              >
+                <ShieldCheck size={22} className={`shrink-0 ${activeTab === 'staff' ? 'text-brand-500' : 'group-hover:text-slate-200'}`} />
+                <span className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? 'opacity-0 invisible -translate-x-10' : 'opacity-100 visible translate-x-0'}`}>Staffing</span>
+              </button>
+            </PermissionWrapper>
+
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
+                activeTab === 'settings' ? 'bg-brand-600/20 text-white border border-brand-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'
+              }`}
+            >
+              <Settings size={22} className={`shrink-0 ${activeTab === 'settings' ? 'text-brand-500' : 'group-hover:text-slate-200'}`} />
+              <span className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? 'opacity-0 invisible -translate-x-10' : 'opacity-100 visible translate-x-0'}`}>Settings</span>
+            </button>
           </div>
-          <img src={currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10" alt="" />
         </div>
+      </nav>
+
+      <div className="p-4 mt-auto border-t border-white/5">
+        <button 
+          onClick={logout}
+          className="w-full flex items-center gap-4 px-4 py-4 text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all text-[12px] font-black uppercase tracking-widest group"
+        >
+          <LogOut size={22} className="group-hover:-translate-x-1 transition-transform shrink-0" />
+          <span className={`transition-all duration-500 ${isSidebarCollapsed ? 'opacity-0 invisible -translate-x-10' : 'opacity-100 visible translate-x-0'}`}>Sign Out</span>
+        </button>
       </div>
-    </header>
+    </aside>
   );
 };
 
-export default TopBar;
+export default Sidebar;
