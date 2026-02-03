@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { X, Calendar, Zap, FileCheck, Printer, Check, AlertCircle, Loader2, User, Bed, Info } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
@@ -35,7 +34,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     guestPhone: '',
     checkIn: isWalkIn ? today : tomorrow,
     checkOut: isWalkIn ? tomorrow : dayAfter,
-    paymentMethod: 'Paystack', 
+    paymentMethod: 'DirectTransfer', 
     notes: ''
   });
 
@@ -125,7 +124,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     setError(null);
 
     try {
-      const newBooking = await addBooking(formData);
+      // Backend expects PascalCase enum "DirectTransfer" and the data wrapped in a "request" field
+      const submissionPayload = {
+        request: {
+          ...formData,
+          paymentMethod: formData.paymentMethod === 'Bank Transfer' ? 'DirectTransfer' : formData.paymentMethod
+        }
+      };
+      
+      const newBooking = await addBooking(submissionPayload);
       setFinalBookingCode(newBooking.bookingCode || 'SUCCESS');
       setStep('success');
     } catch (err: any) {
@@ -276,7 +283,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                           className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-blue-400 font-black uppercase tracking-widest outline-none appearance-none"
                         >
                           <option value="Paystack">Paystack</option>
-                          <option value="Bank Transfer">Bank Transfer</option>
+                          <option value="DirectTransfer">Bank Transfer</option>
                         </select>
                      </div>
                   </div>
