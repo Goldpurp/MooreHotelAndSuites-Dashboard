@@ -74,7 +74,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
-  const [userRole, setUserRole] = useState<UserRole>('staff');
+  const [userRole, setUserRole] = useState<UserRole>('Staff');
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -95,11 +95,21 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!raw) return null;
     const data = raw.user || raw.profile || raw.data || raw;
     if (!data.id && !data.Id && !data.email && !data.Email) return null;
+    
+    let role: UserRole = 'Staff';
+    const rawRole = String(data.role || data.Role || 'Staff').toLowerCase();
+    
+    // Explicit PascalCase mapping to match UserRole type exactly
+    if (rawRole === 'admin') role = 'Admin';
+    else if (rawRole === 'manager') role = 'Manager';
+    else if (rawRole === 'client') role = 'Client';
+    else if (rawRole === 'staff') role = 'Staff';
+
     return {
       id: String(data.id || data.Id || "").toLowerCase(),
       name: data.name || data.fullName || data.Name || "Personnel",
       email: data.email || data.Email || "",
-      role: (String(data.role || data.Role || 'staff').toLowerCase() as UserRole),
+      role: role,
       avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'P')}&background=020617&color=fff`
     };
   };
@@ -127,11 +137,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       setRooms(normalizedRooms);
       setBookings(normalizedBookings);
-      setStaff(normalizeData(staffRes));
+      setStaff(normalizeData(staffRes).map(s => normalizeUser(s) as StaffUser));
       setNotifications(normalizeData(notificationsRes));
       setAuditLogs(normalizedAudit);
 
-      // --- GUEST RECOVERY ENGINE ---
+      // GUEST RECOVERY
       const guestMap: Map<string, Guest> = new Map();
       normalizedGuests.forEach(g => {
         if (g && g.id) guestMap.set(String(g.id).toLowerCase(), {
@@ -160,15 +170,14 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       setGuests(Array.from(guestMap.values()));
 
-      // --- OPERATIONS LEDGER MAPPING ---
-      // Enhanced to support flexible backend property naming
-      if (normalizedLedger.length > 0) {
+      // OPERATIONS LEDGER SYNC (v9.1 Reference)
+      if (normalizedLedger && normalizedLedger.length > 0) {
         setVisitHistory(normalizedLedger.map((l: any) => ({
           id: l.id || l.Id || Math.random().toString(),
           guestId: l.guestId || l.GuestId || '',
           guestName: l.guestName || l.guestFirstName || l.GuestName || 'Property Occupant',
           roomId: l.roomId || l.RoomId || '',
-          roomNumber: l.roomNumber || l.RoomNumber || 'Unit',
+          roomNumber: l.roomNumber || l.RoomNumber || 'N/A',
           bookingCode: l.bookingCode || l.BookingCode || 'N/A',
           action: (l.action || l.actionName || 'Activity').toUpperCase().replace('_', ' ') as VisitAction,
           timestamp: l.timestamp || l.createdAt || l.occurredAt || new Date().toISOString(),
@@ -237,7 +246,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const logout = () => { api.removeToken(); setIsAuthenticated(false); setCurrentUser(null); setUserRole('staff'); };
+  const logout = () => { api.removeToken(); setIsAuthenticated(false); setCurrentUser(null); setUserRole('Staff'); };
   const addRoom = async (room: Omit<Room, 'id'>) => { await api.post('/api/rooms', room); await refreshData(); };
   const updateRoom = async (id: string, updates: Partial<Room>) => { await api.put(`/api/rooms/${id}`, updates); await refreshData(); };
   const deleteRoom = async (id: string) => { await api.delete(`/api/rooms/${id}`); await refreshData(); };
@@ -245,7 +254,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const toggleRoomMaintenance = async (id: string) => {
     const room = rooms.find(r => r.id === id);
     if (room) {
-      // FIX: Send the FULL object to satisfy backend validation schema
       const updatedRoom = { 
         ...room, 
         status: room.status === RoomStatus.MAINTENANCE ? RoomStatus.AVAILABLE : RoomStatus.MAINTENANCE 
@@ -255,37 +263,35 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const addBooking = async (p: any): Promise<Booking> => {
-    const newBooking = await api.post<Booking>('/api/bookings', p);
+  const addBooking = async (payload: any): Promise<Booking> => {
+    const res = await api.post<any>('/api/bookings', payload);
     await refreshData();
-    return newBooking;
+    return res;
   };
 
   const updateBooking = async (id: string, updates: Partial<Booking>) => { await api.put(`/api/bookings/${id}`, updates); await refreshData(); };
   const updatePaymentStatus = async (id: string, status: PaymentStatus) => { await api.put(`/api/bookings/${id}`, { paymentStatus: status }); await refreshData(); };
   const confirmTransfer = async (code: string) => { await api.post(`/api/bookings/${code}/confirm-transfer`); await refreshData(); };
+  
   const checkInBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedIn' } }); await refreshData(); };
   const checkOutBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedOut' } }); await refreshData(); };
-  const checkInBookingByCode = async (code: string) => { const b = bookings.find(x => x.bookingCode === code); if (b) await checkInBooking(b.id); };
   const cancelBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); await refreshData(); };
+
+  const checkInBookingByCode = async (code: string) => { const b = bookings.find(x => x.bookingCode === code); if (b) await checkInBooking(b.id); };
   const addGuest = async (g: any) => { const res = await api.post<any>('/api/Auth/register', g); await refreshData(); return res.email; };
   const updateGuest = async (id: string, updates: Partial<Guest>) => { await api.put(`/api/profile/me`, updates); await refreshData(); };
 
   const isRoomAvailable = (roomId: string, checkIn: string, checkOut: string, excludeBookingId?: string): boolean => {
     const start = new Date(checkIn);
     const end = new Date(checkOut);
-    
-    // FIX: If a room is CheckedOut, it is technically free even if the original booking end date is in the future
     return !bookings.some(b => {
       const isCorrectRoom = b.roomId === roomId;
       const isNotExcluded = b.id !== excludeBookingId;
       const isActive = b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.CHECKED_OUT;
       
       if (!isCorrectRoom || !isNotExcluded || !isActive) return false;
-      
       const bStart = new Date(b.checkIn);
       const bEnd = new Date(b.checkOut);
-      
       return (start < bEnd && end > bStart);
     });
   };

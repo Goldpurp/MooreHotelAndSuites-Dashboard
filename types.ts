@@ -1,4 +1,3 @@
-
 export enum RoomStatus {
   AVAILABLE = 'Available',
   OCCUPIED = 'Occupied',
@@ -101,6 +100,8 @@ export interface Booking {
   amount: number;
   paymentStatus: PaymentStatus;
   paymentMethod?: string;
+  paymentUrl?: string;
+  paymentInstruction?: string;
   createdAt: string;
   notes?: string;
   statusHistory: BookingStatusHistory[];
@@ -117,7 +118,7 @@ export interface AuditLog {
   createdAt: string;
 }
 
-export type UserRole = 'admin' | 'manager' | 'staff' | 'client';
+export type UserRole = 'Admin' | 'Manager' | 'Staff' | 'Client';
 
 export interface AppUser {
   id: string;

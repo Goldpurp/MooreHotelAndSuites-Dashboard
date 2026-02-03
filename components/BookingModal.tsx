@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Calendar, Zap, FileCheck, Printer, Check, AlertCircle, Loader2, User, Bed, Info } from 'lucide-react';
+import { X, Calendar, Zap, FileCheck, Printer, Check, AlertCircle, Loader2, User, Bed, Info, CreditCard } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
-import { RoomStatus } from '../types';
+import { RoomStatus, Booking } from '../types';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -24,7 +24,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
   const [step, setStep] = useState<'details' | 'confirm' | 'success'>('details');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [finalBookingCode, setFinalBookingCode] = useState('');
+  const [finalBooking, setFinalBooking] = useState<Booking | null>(null);
   
   const [formData, setFormData] = useState({
     roomId: '',
@@ -34,7 +34,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     guestPhone: '',
     checkIn: isWalkIn ? today : tomorrow,
     checkOut: isWalkIn ? tomorrow : dayAfter,
-    paymentMethod: 'DirectTransfer', 
+    paymentMethod: 'Paystack', 
     notes: ''
   });
 
@@ -71,7 +71,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   useEffect(() => {
     if (isOpen) {
       setStep('details');
-      setFinalBookingCode('');
+      setFinalBooking(null);
       setFormData({
         roomId: '',
         guestFirstName: initialData?.guestFirstName || '',
@@ -109,13 +109,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       return;
     }
 
-    const isActuallyAvailable = availableRooms.some(r => r.id === formData.roomId);
-    if (!isActuallyAvailable) {
-      setError("Selected asset is no longer available for this date range.");
-      setFormData(prev => ({ ...prev, roomId: '' }));
-      return;
-    }
-
     setStep('confirm');
   };
 
@@ -124,19 +117,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     setError(null);
 
     try {
-      // Backend expects PascalCase enum "DirectTransfer" and the data wrapped in a "request" field
-      const submissionPayload = {
-        request: {
-          ...formData,
-          paymentMethod: formData.paymentMethod === 'Bank Transfer' ? 'DirectTransfer' : formData.paymentMethod
-        }
+      const submissionData = {
+        ...formData,
+        paymentMethod: formData.paymentMethod === 'Bank Transfer' ? 'DirectTransfer' : formData.paymentMethod
       };
-      
-      const newBooking = await addBooking(submissionPayload);
-      setFinalBookingCode(newBooking.bookingCode || 'SUCCESS');
+
+      const submissionPayload = { request: submissionData };
+      const res = await addBooking(submissionPayload);
+      setFinalBooking(res);
       setStep('success');
     } catch (err: any) {
-      setError(`Ledger update rejected: ${err.message}`);
+      setError(`Ledger rejection: ${err.message}`);
       setStep('details');
     } finally {
       setIsSubmitting(false);
@@ -148,40 +139,39 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       <div className="glass-card w-full max-w-5xl rounded-[2.5rem] shadow-3xl border border-white/10 flex flex-col md:flex-row min-h-[600px] overflow-hidden">
         
         {step === 'success' && (
-          <div className="flex-1 bg-slate-950 p-12 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center mb-8 border border-emerald-500/30">
-              <Check size={48} className="text-emerald-500" />
+          <div className="flex-1 bg-slate-950 p-12 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500 overflow-y-auto custom-scrollbar">
+            <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mb-6 border border-emerald-500/30">
+              <Check size={40} className="text-emerald-500" />
             </div>
             <h2 className="text-4xl font-black text-white uppercase italic tracking-tight mb-4">Folio Synchronized</h2>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-[11px] mb-12">Asset committed to property ledger.</p>
-
-            <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
-               <div className="p-10 border-b border-white/5 bg-slate-900/60">
-                  <div className="flex justify-between items-center mb-8">
-                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Dossier Code</span>
-                     <span className="text-4xl font-black text-blue-500 tracking-tighter italic">{finalBookingCode}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Asset Unit</span>
-                     <span className="text-[13px] font-black text-white uppercase">Room {selectedRoom?.roomNumber}</span>
-                  </div>
+            
+            <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl p-10 space-y-6">
+               <div className="flex justify-between items-center mb-4">
+                  <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Dossier Code</span>
+                  <span className="text-4xl font-black text-blue-500 tracking-tighter italic">{finalBooking?.bookingCode || 'SUCCESS'}</span>
                </div>
-               <div className="p-10 space-y-5 text-left">
-                  <div className="flex justify-between">
-                     <span className="text-[10px] text-slate-500 font-black uppercase">Occupant</span>
-                     <span className="text-[12px] font-black text-slate-200 uppercase">{formData.guestFirstName} {formData.guestLastName}</span>
-                  </div>
-                  <div className="flex justify-between pt-6 border-t border-white/5">
-                     <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Settlement</span>
-                     <span className="text-3xl font-black text-white tracking-tighter">₦{totalAmount.toLocaleString()}</span>
-                  </div>
+               
+               {/* Integration Blueprint: Payment Instruction Display */}
+               {finalBooking?.paymentInstruction && (
+                 <div className="bg-blue-600/10 border border-blue-500/20 p-6 rounded-2xl text-left space-y-3">
+                   <div className="flex items-center gap-2">
+                     <CreditCard size={14} className="text-blue-400" />
+                     <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Settlement Instructions</p>
+                   </div>
+                   <p className="text-[12px] font-bold text-slate-300 leading-relaxed italic">{finalBooking.paymentInstruction}</p>
+                 </div>
+               )}
+
+               <div className="flex justify-between pt-6 border-t border-white/5">
+                  <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Settlement</span>
+                  <span className="text-3xl font-black text-white tracking-tighter">₦{totalAmount.toLocaleString()}</span>
                </div>
             </div>
-
-            <div className="flex gap-4 mt-12 w-full max-w-md">
-               <button onClick={onClose} className="flex-1 py-5 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-widest hover:text-white transition-all">Close</button>
-               <button className="flex-[1.5] py-5 bg-white text-slate-950 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl">
-                  <Printer size={18} /> Print Record
+            
+            <div className="flex gap-4 mt-8">
+               <button onClick={onClose} className="py-5 px-12 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-widest hover:text-white transition-all">Close</button>
+               <button className="py-5 px-12 bg-white text-slate-950 rounded-2xl font-black text-[11px] uppercase tracking-widest flex items-center gap-3 transition-all active:scale-95 shadow-xl shadow-white/5">
+                 <Printer size={18} /> Print Record
                </button>
             </div>
           </div>
@@ -190,30 +180,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
         {step === 'confirm' && (
            <div className="flex-1 bg-slate-950 p-12 flex flex-col items-center justify-center animate-in fade-in duration-300">
               <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-4">Verify Dossier</h3>
-              <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-10 mb-12 text-left bg-white/5 p-10 rounded-[2rem] border border-white/5">
-                 <div className="space-y-8">
-                    <div>
-                       <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Occupant</label>
-                       <p className="text-2xl font-black text-white italic uppercase tracking-tighter">{formData.guestFirstName} {formData.guestLastName}</p>
-                    </div>
-                    <div>
-                       <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Asset</label>
-                       <p className="text-xl font-black text-slate-200 uppercase">Room {selectedRoom?.roomNumber}</p>
-                    </div>
-                 </div>
-                 <div className="space-y-8 md:text-right">
-                    <div>
-                       <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Duration</label>
-                       <p className="text-2xl font-black text-white">{nights} Night(s)</p>
-                    </div>
-                    <div>
-                       <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Settlement Value</label>
-                       <p className="text-4xl font-black text-blue-500 tracking-tighter italic">₦{totalAmount.toLocaleString()}</p>
-                    </div>
-                 </div>
+              <div className="w-full max-w-2xl text-left bg-white/5 p-10 rounded-[2rem] border border-white/5 space-y-6">
+                  <div>
+                     <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Occupant</label>
+                     <p className="text-2xl font-black text-white italic uppercase tracking-tighter">{formData.guestFirstName} {formData.guestLastName}</p>
+                  </div>
+                  <div className="flex justify-between pt-6 border-t border-white/5">
+                     <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Total Value</span>
+                     <span className="text-3xl font-black text-blue-500 tracking-tighter italic">₦{totalAmount.toLocaleString()}</span>
+                  </div>
               </div>
-
-              <div className="flex gap-4 w-full max-w-md">
+              <div className="flex gap-4 w-full max-w-md mt-10">
                 <button onClick={() => setStep('details')} className="flex-1 py-5 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-widest hover:text-white transition-all">Back</button>
                 <button onClick={handleFinalSubmit} disabled={isSubmitting} className="flex-[2] py-5 bg-blue-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3">
                    {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <FileCheck size={18} />}
@@ -234,89 +211,58 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                     {isWalkIn ? 'FRONT\nDESK\nWALK-IN' : 'NEW\nFOLIO\nRESERVE'}
                   </h2>
                </div>
-
                <div className="bg-black/30 p-8 rounded-[2rem] border border-white/15 space-y-6 backdrop-blur-md">
                   <div className="flex justify-between items-center">
                      <span className="text-[10px] text-white/50 font-black uppercase tracking-widest">Nights</span>
                      <span className="text-lg text-white font-black">{nights}</span>
                   </div>
                   <div className="flex justify-between items-center border-t border-white/10 pt-6">
-                     <div>
-                       <span className="text-[10px] text-white/50 font-black uppercase tracking-widest block mb-1">Total Value</span>
-                       <span className="text-3xl font-black text-white tracking-tighter italic">₦{totalAmount.toLocaleString()}</span>
-                     </div>
+                     <span className="text-3xl font-black text-white tracking-tighter italic">₦{totalAmount.toLocaleString()}</span>
                   </div>
                </div>
             </div>
 
-            <div className="flex-1 bg-slate-950 p-12 flex flex-col">
-               <div className="flex justify-between items-center mb-12">
+            <div className="flex-1 bg-slate-950 p-12 flex flex-col overflow-y-auto custom-scrollbar">
+               <div className="flex justify-between items-center mb-8">
                   <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Enrollment Protocol</span>
                   <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-2xl text-slate-600 transition-all"><X size={24}/></button>
                </div>
 
-               <div className="flex-1 space-y-10">
-                  <div className="space-y-6">
-                      <h4 className="text-[11px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><User size={14} /> Occupant Identity</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <input placeholder="First Name" value={formData.guestFirstName} onChange={e => setFormData({...formData, guestFirstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                        <input placeholder="Last Name" value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                        <input placeholder="Email Address" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                        <input placeholder="Phone" value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                      </div>
+               <div className="space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <input placeholder="First Name" value={formData.guestFirstName} onChange={e => setFormData({...formData, guestFirstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
+                    <input placeholder="Last Name" value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
+                    <input placeholder="Email" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
+                    <input placeholder="Phone" value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Check-In</label>
-                        <input type="date" min={today} readOnly={isWalkIn} value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Check-Out</label>
-                        <input type="date" min={formData.checkIn} value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol</label>
-                        <select 
-                          value={formData.paymentMethod} 
-                          onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-blue-400 font-black uppercase tracking-widest outline-none appearance-none"
-                        >
-                          <option value="Paystack">Paystack</option>
-                          <option value="DirectTransfer">Bank Transfer</option>
-                        </select>
-                     </div>
+                     <input type="date" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
+                     <input type="date" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
+                     <select 
+                        value={formData.paymentMethod} 
+                        onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-blue-400 font-black uppercase outline-none appearance-none"
+                      >
+                        <option value="Paystack">Paystack</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                      </select>
                   </div>
 
-                  <div className="space-y-6">
-                     <div className="flex justify-between items-center">
-                        <h4 className="text-[11px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2"><Bed size={14} /> Asset Allocation</h4>
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-dash italic">{availableRooms.length} Units Available for these dates</span>
-                     </div>
-                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 overflow-y-auto max-h-40 custom-scrollbar pr-2 p-1">
-                        {availableRooms.map(room => (
-                          <button key={room.id} onClick={() => setFormData({...formData, roomId: room.id})} className={`p-4 rounded-2xl border text-center transition-all ${formData.roomId === room.id ? 'bg-blue-600 border-blue-500 text-white shadow-xl scale-105' : 'bg-white/5 border-white/5 text-slate-600 hover:border-white/20 hover:bg-white/[0.07]'}`}>
-                             <p className="text-[14px] font-black leading-tight">Room {room.roomNumber}</p>
-                             <p className="text-[8px] font-bold uppercase mt-1 opacity-60">₦{(room.pricePerNight/1000).toFixed(0)}k</p>
-                          </button>
-                        ))}
-                        {availableRooms.length === 0 && (
-                          <div className="col-span-full py-8 text-center bg-rose-500/5 border border-dashed border-rose-500/20 rounded-2xl">
-                             <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest">No assets available for selected period.</p>
-                          </div>
-                        )}
-                     </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                    {availableRooms.map(room => (
+                      <button key={room.id} onClick={() => setFormData({...formData, roomId: room.id})} className={`p-4 rounded-2xl border transition-all ${formData.roomId === room.id ? 'bg-blue-600 border-blue-500 text-white shadow-xl' : 'bg-white/5 border-white/5 text-slate-600'}`}>
+                         <p className="text-[14px] font-black leading-tight">{room.roomNumber}</p>
+                      </button>
+                    ))}
                   </div>
 
-                  {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-tight flex items-center gap-3 animate-in shake"><AlertCircle size={18}/> {error}</div>}
+                  {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-tight flex items-center gap-3"><AlertCircle size={18} /> {error}</div>}
 
                   <button 
                     onClick={validateAndShowConfirm} 
-                    disabled={!formData.roomId || availableRooms.length === 0}
-                    className={`w-full py-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all ${
-                      !formData.roomId ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 
-                      isWalkIn ? 'bg-amber-600 text-white hover:bg-amber-700' : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
+                    disabled={!formData.roomId}
+                    className="w-full py-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] bg-blue-600 text-white shadow-2xl active:scale-95 transition-all"
                   >
                     Continue to Verification
                   </button>
