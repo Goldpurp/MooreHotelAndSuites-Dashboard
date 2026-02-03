@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Calendar, Zap, FileCheck, Printer, Check, AlertCircle, Loader2, User, Bed, Info, CreditCard } from 'lucide-react';
+import { X, Calendar, Zap, FileCheck, Printer, Check, AlertCircle, Loader2, User, Bed, Info, CreditCard, ArrowRight } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { RoomStatus, Booking } from '../types';
 
@@ -51,10 +51,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
   const totalAmount = useMemo(() => (selectedRoom?.pricePerNight || 0) * nights, [selectedRoom, nights]);
 
+  // Split-method filtering: Walk-in vs Reservation
   const availableRooms = useMemo(() => {
     return rooms.filter(room => {
+      // 1. Check if the room is available for the requested range
       const isFreeForDates = isRoomAvailable(room.id, formData.checkIn, formData.checkOut);
+      
+      // 2. Physical check: Walk-ins require immediate 'Available' status. 
+      // Reservations just need the room to not be in 'Maintenance'.
       const isPhysicallyReady = isWalkIn ? room.status === RoomStatus.AVAILABLE : room.status !== RoomStatus.MAINTENANCE;
+      
       return isFreeForDates && isPhysicallyReady;
     });
   }, [rooms, formData.checkIn, formData.checkOut, isRoomAvailable, isWalkIn]);
@@ -117,17 +123,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     setError(null);
 
     try {
-      const submissionData = {
+      // Direct DTO payload instead of wrapped 'request' object for better API compatibility
+      const submissionPayload = {
         ...formData,
         paymentMethod: formData.paymentMethod === 'Bank Transfer' ? 'DirectTransfer' : formData.paymentMethod
       };
 
-      const submissionPayload = { request: submissionData };
       const res = await addBooking(submissionPayload);
       setFinalBooking(res);
       setStep('success');
     } catch (err: any) {
-      setError(`Ledger rejection: ${err.message}`);
+      setError(`Ledger rejection: ${err.message || 'The property management node refused the dossier.'}`);
       setStep('details');
     } finally {
       setIsSubmitting(false);
@@ -151,7 +157,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                   <span className="text-4xl font-black text-blue-500 tracking-tighter italic">{finalBooking?.bookingCode || 'SUCCESS'}</span>
                </div>
                
-               {/* Integration Blueprint: Payment Instruction Display */}
                {finalBooking?.paymentInstruction && (
                  <div className="bg-blue-600/10 border border-blue-500/20 p-6 rounded-2xl text-left space-y-3">
                    <div className="flex items-center gap-2">
@@ -185,6 +190,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                      <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Occupant</label>
                      <p className="text-2xl font-black text-white italic uppercase tracking-tighter">{formData.guestFirstName} {formData.guestLastName}</p>
                   </div>
+                  <div className="flex items-center gap-10">
+                    <div>
+                      <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Check-In</label>
+                      <p className="text-xl font-black text-white">{new Date(formData.checkIn).toLocaleDateString()}</p>
+                    </div>
+                    <ArrowRight className="text-slate-800" size={24} />
+                    <div>
+                      <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Check-Out</label>
+                      <p className="text-xl font-black text-white">{new Date(formData.checkOut).toLocaleDateString()}</p>
+                    </div>
+                  </div>
                   <div className="flex justify-between pt-6 border-t border-white/5">
                      <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Total Value</span>
                      <span className="text-3xl font-black text-blue-500 tracking-tighter italic">₦{totalAmount.toLocaleString()}</span>
@@ -207,7 +223,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                   <div className="w-16 h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white shadow-2xl backdrop-blur-md">
                     {isWalkIn ? <Zap size={32}/> : <Calendar size={32}/>}
                   </div>
-                  <h2 className="text-5xl font-black text-white uppercase italic leading-[0.85] tracking-tighter">
+                  <h2 className="text-5xl font-black text-white uppercase italic leading-[0.85] tracking-tighter whitespace-pre-line">
                     {isWalkIn ? 'FRONT\nDESK\nWALK-IN' : 'NEW\nFOLIO\nRESERVE'}
                   </h2>
                </div>
@@ -230,31 +246,64 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
                <div className="space-y-10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <input placeholder="First Name" value={formData.guestFirstName} onChange={e => setFormData({...formData, guestFirstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                    <input placeholder="Last Name" value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                    <input placeholder="Email" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                    <input placeholder="Phone" value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
+                    <div className="space-y-2">
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">First Name</label>
+                       <input value={formData.guestFirstName} onChange={e => setFormData({...formData, guestFirstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Last Name</label>
+                       <input value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Email address</label>
+                       <input value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Contact Phone</label>
+                       <input value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                     <input type="date" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                     <input type="date" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                     <select 
-                        value={formData.paymentMethod} 
-                        onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-blue-400 font-black uppercase outline-none appearance-none"
-                      >
-                        <option value="Paystack">Paystack</option>
-                        <option value="Bank Transfer">Bank Transfer</option>
-                      </select>
+                     <div className="space-y-2">
+                        <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Check-In</label>
+                        <input type="date" readOnly={isWalkIn} value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className={`w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm outline-none ${isWalkIn ? 'text-slate-500 cursor-not-allowed opacity-60' : 'text-white'}`} />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Check-Out</label>
+                        <input type="date" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Payment</label>
+                        <select 
+                          value={formData.paymentMethod} 
+                          onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-blue-400 font-black uppercase outline-none appearance-none"
+                        >
+                          <option value="Paystack">Paystack</option>
+                          <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                    {availableRooms.map(room => (
-                      <button key={room.id} onClick={() => setFormData({...formData, roomId: room.id})} className={`p-4 rounded-2xl border transition-all ${formData.roomId === room.id ? 'bg-blue-600 border-blue-500 text-white shadow-xl' : 'bg-white/5 border-white/5 text-slate-600'}`}>
-                         <p className="text-[14px] font-black leading-tight">{room.roomNumber}</p>
-                      </button>
-                    ))}
+                  <div className="space-y-4">
+                    <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1 flex justify-between">
+                       <span>Available Unit Allocation</span>
+                       <span className="text-blue-500">{availableRooms.length} Ready</span>
+                    </label>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                      {availableRooms.map(room => (
+                        <button key={room.id} onClick={() => setFormData({...formData, roomId: room.id})} className={`p-4 rounded-2xl border transition-all text-center ${formData.roomId === room.id ? 'bg-blue-600 border-blue-500 text-white shadow-xl ring-2 ring-blue-500/20' : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/20'}`}>
+                           <p className="text-[14px] font-black leading-tight mb-1">{room.roomNumber}</p>
+                           <p className="text-[8px] font-bold uppercase opacity-60">{room.category.slice(0, 4)}</p>
+                        </button>
+                      ))}
+                      {availableRooms.length === 0 && (
+                        <div className="col-span-full py-6 bg-rose-500/5 border border-rose-500/10 rounded-2xl text-center">
+                           <p className="text-[10px] text-rose-400 font-black uppercase tracking-widest">No available units for this configuration</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-tight flex items-center gap-3"><AlertCircle size={18} /> {error}</div>}
@@ -262,7 +311,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                   <button 
                     onClick={validateAndShowConfirm} 
                     disabled={!formData.roomId}
-                    className="w-full py-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] bg-blue-600 text-white shadow-2xl active:scale-95 transition-all"
+                    className="w-full py-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] bg-blue-600 text-white shadow-2xl active:scale-95 transition-all disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed"
                   >
                     Continue to Verification
                   </button>

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { BookingStatus, Booking, Guest, Room } from '../types';
 import { 
-  Search, Plus, ArrowRight, Zap, XCircle, Users, Calendar, X, Mail, Phone, ChevronLeft, ChevronRight, Loader2
+  Search, Plus, ArrowRight, Zap, XCircle, Users, Calendar, X, Mail, Phone, 
+  ChevronLeft, ChevronRight, Loader2, Filter, FileUp, CheckCircle, AlertCircle
 } from 'lucide-react';
 import BookingModal from '../components/BookingModal';
 import VoidBookingModal from '../components/VoidBookingModal';
@@ -23,10 +24,10 @@ const Bookings: React.FC = () => {
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [preFillData, setPreFillData] = useState<any>(null);
   
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchEmail, setSearchEmail] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
+  const [lookupId, setLookupId] = useState('');
+  const [lookupResult, setLookupResult] = useState<Booking | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [bookingToVoid, setBookingToVoid] = useState<Booking | null>(null);
@@ -34,15 +35,42 @@ const Bookings: React.FC = () => {
   const [isCheckInConfirmOpen, setIsCheckInConfirmOpen] = useState(false);
   const [bookingToCheckIn, setBookingToCheckIn] = useState<Booking | null>(null);
 
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 15;
 
+  // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, searchQuery]);
+  }, [filter, lookupId]);
 
+  // Deep Ledger Lookup Logic (API Integration)
+  const handleFolioLookup = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!lookupId.trim()) return;
+    
+    setIsSearching(true);
+    setLookupError(null);
+    try {
+      const res = await api.get<Booking>('/api/bookings/lookup', {
+        params: { code: lookupId }
+      });
+      if (res && res.id) {
+        setSelectedBooking(res);
+        setSelectedBookingId(res.id);
+        setLookupResult(res);
+      }
+    } catch (err: any) {
+      setLookupError(err.message || "Dossier not found in property ledger.");
+      setLookupResult(null);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Local filtering logic for immediate results
   const filteredBookings = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = lookupId.trim().toLowerCase();
     return (bookings || []).filter(b => {
       const matchesStatus = filter === 'All' || b.status === filter;
       const matchesSearch = !q || 
@@ -51,7 +79,7 @@ const Bookings: React.FC = () => {
         `${b.guestFirstName || ''} ${b.guestLastName || ''}`.toLowerCase().includes(q);
       return matchesStatus && matchesSearch;
     });
-  }, [bookings, filter, searchQuery]);
+  }, [bookings, filter, lookupId]);
 
   const totalPages = Math.ceil(filteredBookings.length / PAGE_SIZE);
   const paginatedBookings = useMemo(() => {
@@ -68,27 +96,30 @@ const Bookings: React.FC = () => {
     }
   }, [selectedBookingId, bookings, selectedBooking]);
 
-  const handleFolioLookup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery && !searchEmail) return;
-    
-    setIsSearching(true);
-    setLookupError(null);
-    try {
-      // Guest Folio Management: Lookup by Code and Email
-      const res = await api.get<Booking>('/api/bookings/lookup', {
-        params: { code: searchQuery, email: searchEmail }
-      });
-      if (res && res.id) {
-        setSelectedBooking(res);
-        setSelectedBookingId(res.id);
+  // Visual feedback for local matches
+  useEffect(() => {
+    const q = lookupId.trim().toUpperCase();
+    if (q.length >= 3) {
+      const found = (bookings || []).find(b => 
+        b.id.toUpperCase() === q || 
+        b.bookingCode.toUpperCase() === q ||
+        b.bookingCode.toUpperCase().includes(q)
+      );
+      
+      if (found) {
+        if (found.status === BookingStatus.CANCELLED || found.status === BookingStatus.CHECKED_OUT) {
+          setLookupResult(null);
+        } else {
+          setLookupResult(found);
+          setLookupError(null);
+        }
+      } else {
+        setLookupResult(null);
       }
-    } catch (err: any) {
-      setLookupError(err.message || "Folio not found in property ledger.");
-    } finally {
-      setIsSearching(false);
+    } else {
+      setLookupResult(null);
     }
-  };
+  }, [lookupId, bookings]);
 
   const handleSelectBooking = (b: Booking) => {
     setSelectedBooking(b);
@@ -151,36 +182,32 @@ const Bookings: React.FC = () => {
           </div>
 
           <form onSubmit={handleFolioLookup} className="flex items-center gap-2 w-full md:w-auto">
-            <div className="flex gap-1">
+            <div className="relative flex-1 md:w-64">
+              <Search size={12} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${lookupResult ? 'text-brand-500' : 'text-slate-500'}`} />
               <input 
                 type="text" 
-                placeholder="Folio Code" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-white/5 border border-white/5 rounded-md py-2.5 px-3 text-[10px] text-slate-200 outline-none w-32 focus:bg-white/10 transition-all placeholder:text-slate-600"
+                placeholder="Search Code, Name or ID..." 
+                value={lookupId}
+                onChange={(e) => setLookupId(e.target.value)}
+                className={`w-full bg-white/5 border rounded-md py-2.5 pl-9 pr-3 text-[10px] text-slate-200 outline-none transition-all placeholder:text-slate-600 ${
+                  lookupResult ? 'border-brand-500/50 bg-brand-500/5 ring-4 ring-brand-500/10 shadow-2xl' : 'border-white/5 focus:bg-white/10'
+                }`}
               />
-              <input 
-                type="email" 
-                placeholder="Guest Email" 
-                value={searchEmail}
-                onChange={(e) => setSearchEmail(e.target.value)}
-                className="bg-white/5 border border-white/5 rounded-md py-2.5 px-3 text-[10px] text-slate-200 outline-none w-40 focus:bg-white/10 transition-all placeholder:text-slate-600"
-              />
+              {isSearching && <Loader2 size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-blue-500" />}
             </div>
-            <button 
-              type="submit"
-              disabled={isSearching}
-              className="bg-slate-800 hover:bg-slate-700 text-white p-2.5 rounded-md transition-all active:scale-95"
-            >
-              {isSearching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-            </button>
-            <div className="w-px h-6 bg-white/10 mx-1" />
             <button 
               type="button"
               onClick={() => { setPreFillData(null); setIsWalkIn(true); setIsBookingModalOpen(true); }}
               className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-md text-[9px] font-black uppercase tracking-dash flex items-center gap-2 transition-all shadow-xl shadow-amber-500/10 active:scale-95"
             >
               <Zap size={14}/> Walk-In
+            </button>
+            <button 
+              type="button"
+              onClick={() => { setPreFillData(null); setIsWalkIn(false); setIsBookingModalOpen(true); }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-md text-[9px] font-black uppercase tracking-dash flex items-center gap-2 transition-all shadow-xl shadow-blue-500/10 active:scale-95"
+            >
+              <Plus size={14}/> New Booking
             </button>
           </form>
         </div>
@@ -206,6 +233,11 @@ const Bookings: React.FC = () => {
                   </button>
                 ))}
               </div>
+              {lookupId && (
+                <button onClick={() => setLookupId('')} className="text-[8px] font-black uppercase text-rose-500 flex items-center gap-1 hover:text-rose-400">
+                  <X size={10} /> Clear Search
+                </button>
+              )}
             </div>
 
             <div className="overflow-y-auto flex-1 custom-scrollbar">
@@ -338,7 +370,7 @@ const Bookings: React.FC = () => {
       </div>
 
       {selectedBooking && (
-        <div className="w-[380px] flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
+        <div className="w-[330px] flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
            <div className="glass-card rounded-[2.5rem] p-8 flex flex-col h-full overflow-y-auto custom-scrollbar border border-white/10 bg-[#0a0f1a] relative">
              <div className="flex justify-between items-start mb-8">
                <div>
