@@ -87,14 +87,12 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (Array.isArray(res)) return res;
     if (res.data && Array.isArray(res.data)) return res.data;
     if (res.items && Array.isArray(res.items)) return res.items;
-    if (res.value && Array.isArray(res.value)) return res.value; 
     return [];
   };
 
   const normalizeUser = (raw: any): AppUser | null => {
     if (!raw) return null;
     const data = raw.user || raw.profile || raw.data || raw;
-    if (!data.id && !data.Id && !data.email && !data.Email) return null;
     
     let role: UserRole = 'Staff';
     const rawRole = String(data.role || data.Role || 'Staff').toLowerCase();
@@ -126,83 +124,51 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         api.get('/api/operations/ledger').catch(() => null) 
       ]);
 
-      const normalizedRooms = normalizeData(roomsRes);
-      const normalizedBookings = normalizeData(bookingsRes);
-      const normalizedGuests = normalizeData(guestsRes);
-      const normalizedAudit = normalizeData(auditLogsRes);
-      const normalizedLedger = normalizeData(ledgerRes);
-      
-      setRooms(normalizedRooms);
-      setBookings(normalizedBookings);
-      setStaff(normalizeData(staffRes).map(s => normalizeUser(s) as StaffUser));
+      setRooms(normalizeData(roomsRes));
+      setBookings(normalizeData(bookingsRes));
+      setStaff(normalizeData(staffRes).map(s => normalizeUser(s) as StaffUser).filter(Boolean));
       setNotifications(normalizeData(notificationsRes));
-      setAuditLogs(normalizedAudit);
+      setAuditLogs(normalizeData(auditLogsRes));
 
-      // --- GUEST RECOVERY ENGINE ---
+      // STRICT DE-DUPLICATION LOGIC
+      const rawGData = normalizeData(guestsRes);
       const guestMap: Map<string, Guest> = new Map();
-      normalizedGuests.forEach(g => {
-        if (g && g.id) guestMap.set(String(g.id).toLowerCase(), {
-          ...g,
-          firstName: g.firstName || 'Guest',
-          lastName: g.lastName || '',
-          email: g.email || '',
-          phone: g.phone || ''
-        });
-      });
-
-      normalizedBookings.forEach(b => {
-        const primaryId = String(b.guestId || b.guestEmail || b.bookingCode || '').toLowerCase();
-        if (primaryId && !guestMap.has(primaryId)) {
-          guestMap.set(primaryId, {
-            id: b.guestId || primaryId,
-            firstName: b.guestFirstName || 'Resident',
-            lastName: b.guestLastName || '',
-            email: b.guestEmail || '',
-            phone: b.guestPhone || '',
-            totalStays: 1,
-            totalSpent: b.amount || 0,
-            avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(b.guestFirstName || 'R')}+${encodeURIComponent(b.guestLastName || '')}&background=020617&color=fff`
+      rawGData.forEach(g => {
+        if (!g) return;
+        const normalizedId = String(g.id || g.Id || '').toLowerCase();
+        if (normalizedId) {
+          guestMap.set(normalizedId, {
+            id: normalizedId,
+            firstName: g.firstName || g.FirstName || 'Guest',
+            lastName: g.lastName || g.LastName || '',
+            email: g.email || g.Email || '',
+            phone: g.phone || g.Phone || '',
+            totalStays: Number(g.totalStays || g.TotalStays || 0),
+            totalSpent: Number(g.totalSpent || g.TotalSpent || 0),
+            avatarUrl: g.avatarUrl || g.AvatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(g.firstName || 'G')}&background=020617&color=fff`,
+            isVIP: Boolean(g.isVIP || g.IsVIP)
           });
         }
       });
       setGuests(Array.from(guestMap.values()));
 
-      // --- OPERATIONS LEDGER MAPPING ---
-      if (normalizedLedger && normalizedLedger.length > 0) {
-        setVisitHistory(normalizedLedger.map((l: any) => ({
+      const ledger = normalizeData(ledgerRes);
+      if (ledger.length > 0) {
+        setVisitHistory(ledger.map((l: any) => ({
           id: l.id || l.Id || Math.random().toString(),
           guestId: l.guestId || l.GuestId || '',
-          guestName: l.guestName || l.guestFirstName || l.GuestName || 'Occupant',
+          guestName: l.guestName || l.GuestName || 'Occupant',
           roomId: l.roomId || l.RoomId || '',
           roomNumber: l.roomNumber || l.RoomNumber || 'N/A',
           bookingCode: l.bookingCode || l.BookingCode || 'N/A',
-          action: (l.action || l.actionName || 'Activity').toUpperCase().replace('_', ' ') as VisitAction,
-          timestamp: l.timestamp || l.createdAt || l.occurredAt || new Date().toISOString(),
-          authorizedBy: l.authorizedBy || l.staffName || l.PerformedBy || 'System'
+          action: (l.action || 'Activity') as VisitAction,
+          timestamp: l.timestamp || new Date().toISOString(),
+          authorizedBy: l.authorizedBy || 'System'
         })));
-      } else {
-        const auditHistory: VisitRecord[] = normalizedAudit
-          .filter(log => log && log.action && ['CHECK_IN', 'CHECK_OUT', 'RESERVATION'].includes(log.action.toUpperCase()))
-          .map(log => ({
-            id: log.id,
-            guestId: log.entityId || '',
-            guestName: 'Recorded Activity',
-            roomId: '',
-            roomNumber: 'UNIT',
-            bookingCode: 'TRC-' + log.id.slice(0, 4).toUpperCase(),
-            action: log.action.toUpperCase().replace('_', ' ') as VisitAction,
-            timestamp: log.createdAt,
-            authorizedBy: 'System Audit'
-          }));
-        setVisitHistory(auditHistory);
       }
 
     } catch (error: any) {
-      console.error('Property Synchronization Protocol Failed:', error);
-      if (error.message?.includes('Authorization Required')) {
-        setIsAuthenticated(false);
-        api.removeToken();
-      }
+      console.error('Context Sync Fault:', error);
     } finally {
       setIsInitialLoading(false);
     }
@@ -235,77 +201,78 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (token) {
       api.setToken(token);
       const user = normalizeUser(response);
-      if (user) { setCurrentUser(user); setUserRole(user.role); }
+      if (user) { 
+        setCurrentUser(user); 
+        setUserRole(user.role); 
+      }
       setIsAuthenticated(true);
       await refreshData();
-    } else {
-      throw new Error("Authorization protocol failed.");
     }
   };
 
-  const logout = () => { api.removeToken(); setIsAuthenticated(false); setCurrentUser(null); setUserRole('Staff'); };
-  const addRoom = async (room: Omit<Room, 'id'>) => { await api.post('/api/rooms', room); await refreshData(); };
-  const updateRoom = async (id: string, updates: Partial<Room>) => { await api.put(`/api/rooms/${id}`, updates); await refreshData(); };
-  const deleteRoom = async (id: string) => { await api.delete(`/api/rooms/${id}`); await refreshData(); };
-  
-  const toggleRoomMaintenance = async (id: string) => {
-    const room = rooms.find(r => r.id === id);
-    if (room) {
-      const updatedRoom = { 
-        ...room, 
-        status: room.status === RoomStatus.MAINTENANCE ? RoomStatus.AVAILABLE : RoomStatus.MAINTENANCE 
-      };
-      await api.put(`/api/rooms/${id}`, updatedRoom);
-      await refreshData();
-    }
+  const logout = () => { 
+    api.removeToken(); 
+    setIsAuthenticated(false); 
+    setCurrentUser(null); 
+    setUserRole('Staff'); 
   };
 
   const addBooking = async (payload: any): Promise<Booking> => {
-    const res = await api.post<any>('/api/bookings', payload);
+    const res = await api.post<Booking>('/api/bookings', payload);
     await refreshData();
     return res;
   };
-
-  const updateBooking = async (id: string, updates: Partial<Booking>) => { await api.put(`/api/bookings/${id}`, updates); await refreshData(); };
-  const updatePaymentStatus = async (id: string, status: PaymentStatus) => { await api.put(`/api/bookings/${id}`, { paymentStatus: status }); await refreshData(); };
-  const confirmTransfer = async (code: string) => { await api.post(`/api/bookings/${code}/confirm-transfer`); await refreshData(); };
-  const checkInBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedIn' } }); await refreshData(); };
-  const checkOutBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedOut' } }); await refreshData(); };
-  const checkInBookingByCode = async (code: string) => { const b = bookings.find(x => x.bookingCode === code); if (b) await checkInBooking(b.id); };
-  const cancelBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); await refreshData(); };
-  const addGuest = async (g: any) => { const res = await api.post<any>('/api/Auth/register', g); await refreshData(); return res.email; };
-  const updateGuest = async (id: string, updates: Partial<Guest>) => { await api.put(`/api/profile/me`, updates); await refreshData(); };
 
   const isRoomAvailable = (roomId: string, checkIn: string, checkOut: string, excludeBookingId?: string): boolean => {
     const start = new Date(checkIn);
     const end = new Date(checkOut);
     return !bookings.some(b => {
-      const isCorrectRoom = b.roomId === roomId;
-      const isNotExcluded = b.id !== excludeBookingId;
-      const isActive = b.status !== BookingStatus.CANCELLED && b.status !== BookingStatus.CHECKED_OUT;
-      if (!isCorrectRoom || !isNotExcluded || !isActive) return false;
+      if (b.roomId !== roomId || b.id === excludeBookingId) return false;
+      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.CHECKED_OUT) return false;
       const bStart = new Date(b.checkIn);
       const bEnd = new Date(b.checkOut);
       return (start < bEnd && end > bStart);
     });
   };
 
-  const dismissNotification = (id: string) => { setNotifications(prev => prev.filter(n => n.id !== id)); };
-  const markNotificationAsRead = async (id: string) => { await api.patch(`/api/notifications/${id}/read`); setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n)); };
-  const markAllNotificationsRead = async () => { await Promise.all(notifications.filter(n => !n.isRead).map(n => api.patch(`/api/notifications/${n.id}/read`))); setNotifications(prev => prev.map(n => ({ ...n, isRead: true }))); };
-  const addStaff = async (p: any) => { await api.post('/api/admin/management/onboard-staff', p); await refreshData(); };
-  const updateStaff = async (id: string, updates: Partial<StaffUser>) => { await api.put(`/api/admin/management/employees/${id}`, updates); await refreshData(); };
-  const toggleStaffStatus = async (id: string) => { const s = staff.find(x => x.id === id); if (s) await api.post(`/api/admin/management/accounts/${id}/${s.status === 'Active' ? 'deactivate' : 'activate'}`); await refreshData(); };
-  const updateCurrentUserProfile = async (updates: Partial<AppUser>) => { await api.put('/api/profile/me', updates); if (currentUser) setCurrentUser({ ...currentUser, ...updates }); };
-
   const value = {
     rooms, bookings, guests, staff, notifications, auditLogs, visitHistory,
     userRole, currentUser, isAuthenticated, isInitialLoading, isSidebarCollapsed, activeTab,
     selectedBookingId, setSelectedBookingId, selectedGuestId, setSelectedGuestId, selectedRoomId, setSelectedRoomId,
     setActiveTab, toggleSidebar: () => setIsSidebarCollapsed(!isSidebarCollapsed), login, logout, setUserRole,
-    addRoom, updateRoom, deleteRoom, toggleRoomMaintenance, addBooking, updateBooking, updatePaymentStatus, confirmTransfer,
-    checkInBooking, checkOutBooking, checkInBookingByCode, cancelBooking, addGuest, updateGuest, isRoomAvailable,
-    dismissNotification, markNotificationAsRead, markAllNotificationsRead, addStaff, updateStaff, toggleStaffStatus, updateCurrentUserProfile, refreshData
+    addRoom: async (r: any) => { await api.post('/api/rooms', r); refreshData(); },
+    updateRoom: async (id: any, u: any) => { await api.put(`/api/rooms/${id}`, u); refreshData(); },
+    deleteRoom: async (id: any) => { await api.delete(`/api/rooms/${id}`); refreshData(); },
+    toggleRoomMaintenance: async (id: any) => { 
+      const room = rooms.find(r => r.id === id);
+      if (room) {
+        await api.put(`/api/rooms/${id}`, { ...room, status: room.status === RoomStatus.MAINTENANCE ? RoomStatus.AVAILABLE : RoomStatus.MAINTENANCE });
+        refreshData();
+      }
+    },
+    addBooking,
+    updateBooking: async (id: any, u: any) => { await api.put(`/api/bookings/${id}`, u); refreshData(); },
+    updatePaymentStatus: async (id: any, s: any) => { await api.put(`/api/bookings/${id}`, { paymentStatus: s }); refreshData(); },
+    confirmTransfer: async (c: any) => { await api.post(`/api/bookings/${c}/confirm-transfer`); refreshData(); },
+    checkInBooking: async (id: any) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedIn' } }); refreshData(); },
+    checkOutBooking: async (id: any) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedOut' } }); refreshData(); },
+    checkInBookingByCode: async (code: any) => { const b = bookings.find(x => x.bookingCode === code); if (b) await api.put(`/api/bookings/${b.id}/status`, null, { params: { status: 'CheckedIn' } }); refreshData(); },
+    cancelBooking: async (id: any) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); refreshData(); },
+    addGuest: async (g: any) => { const res = await api.post<any>('/api/Auth/register', g); refreshData(); return res.email; },
+    updateGuest: async (id: any, u: any) => { await api.put(`/api/profile/me`, u); refreshData(); },
+    isRoomAvailable,
+    dismissNotification: (id: any) => setNotifications(n => n.filter(x => x.id !== id)),
+    markNotificationAsRead: async (id: any) => { await api.patch(`/api/notifications/${id}/read`); refreshData(); },
+    markAllNotificationsRead: async () => { await api.patch(`/api/notifications/read-all`); refreshData(); },
+    addStaff: async (s: any) => { await api.post('/api/admin/management/onboard-staff', s); refreshData(); },
+    updateStaff: async (id: any, u: any) => { await api.put(`/api/admin/management/employees/${id}`, u); refreshData(); },
+    toggleStaffStatus: async (id: any) => { 
+      const s = staff.find(x => x.id === id);
+      if (s) await api.post(`/api/admin/management/accounts/${id}/${s.status === 'Active' ? 'deactivate' : 'activate'}`);
+      refreshData();
+    },
+    updateCurrentUserProfile: async (u: any) => { await api.put('/api/profile/me', u); refreshData(); },
+    refreshData
   };
 
   return <HotelContext.Provider value={value}>{children}</HotelContext.Provider>;

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Calendar, Zap, FileCheck, Printer, Check, AlertCircle, Loader2, User, Bed, Info } from 'lucide-react';
+import { X, Calendar, Zap, FileCheck, Printer, Check, AlertCircle, Loader2, CreditCard, ArrowRight, Bed, ShieldCheck } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
-import { RoomStatus } from '../types';
+import { RoomStatus, Booking } from '../types';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ interface BookingModalProps {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn = false, initialData = null }) => {
-  const { rooms, addBooking, isRoomAvailable } = useHotel();
+  const { rooms, addBooking, isRoomAvailable, setActiveTab } = useHotel();
   
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -24,7 +24,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
   const [step, setStep] = useState<'details' | 'confirm' | 'success'>('details');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [finalBookingCode, setFinalBookingCode] = useState('');
+  const [finalBooking, setFinalBooking] = useState<Booking | null>(null);
   
   const [formData, setFormData] = useState({
     roomId: '',
@@ -53,25 +53,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
   const availableRooms = useMemo(() => {
     return rooms.filter(room => {
-      const isFreeForDates = isRoomAvailable(room.id, formData.checkIn, formData.checkOut);
+      const isFree = isRoomAvailable(room.id, formData.checkIn, formData.checkOut);
       const isPhysicallyReady = isWalkIn ? room.status === RoomStatus.AVAILABLE : room.status !== RoomStatus.MAINTENANCE;
-      return isFreeForDates && isPhysicallyReady;
+      return isFree && isPhysicallyReady;
     });
   }, [rooms, formData.checkIn, formData.checkOut, isRoomAvailable, isWalkIn]);
 
   useEffect(() => {
-    if (formData.roomId) {
-      const stillAvailable = availableRooms.some(r => r.id === formData.roomId);
-      if (!stillAvailable) {
-        setFormData(prev => ({ ...prev, roomId: '' }));
-      }
-    }
-  }, [formData.checkIn, formData.checkOut, availableRooms]);
-
-  useEffect(() => {
     if (isOpen) {
       setStep('details');
-      setFinalBookingCode('');
+      setFinalBooking(null);
       setFormData({
         roomId: '',
         guestFirstName: initialData?.guestFirstName || '',
@@ -84,57 +75,47 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
         notes: ''
       });
       setError(null);
-      setIsSubmitting(false);
     }
-  }, [isOpen, isWalkIn, initialData, today, tomorrow, dayAfter]);
+  }, [isOpen, isWalkIn, initialData]);
 
   if (!isOpen) return null;
 
-  const validateAndShowConfirm = (e: React.FormEvent) => {
+  const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
-    if (!formData.guestFirstName || !formData.guestLastName || !formData.guestEmail) {
-      setError("Occupant identity enrollment is incomplete.");
-      return;
-    }
-
-    if (new Date(formData.checkOut) <= new Date(formData.checkIn)) {
-      setError("Check-out date must follow Check-in.");
-      return;
-    }
-
     if (!formData.roomId) {
-      setError("Asset allocation is required.");
+      setError("Please select a room unit.");
       return;
     }
-
+    if (!formData.guestFirstName || !formData.guestLastName) {
+      setError("Guest name is mandatory.");
+      return;
+    }
     setStep('confirm');
+    setError(null);
   };
 
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
-
     try {
-      const submissionData = {
+      const payload = {
         ...formData,
-        // Map UI labels to strict backend enum values
         paymentMethod: formData.paymentMethod === 'Bank Transfer' ? 'DirectTransfer' : formData.paymentMethod
       };
-
-      // Wrap in 'request' property as required by backend DTO
-      const submissionPayload = { request: submissionData };
-      
-      const newBooking = await addBooking(submissionPayload);
-      setFinalBookingCode(newBooking.bookingCode || 'SUCCESS');
+      const res = await addBooking(payload);
+      setFinalBooking(res);
       setStep('success');
     } catch (err: any) {
-      setError(`Ledger rejection: ${err.message}`);
+      setError(err.message || "Property ledger synchronization failed.");
       setStep('details');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGoToSettlements = () => {
+    setActiveTab('settlements');
+    onClose();
   };
 
   return (
@@ -143,31 +124,57 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
         
         {step === 'success' && (
           <div className="flex-1 bg-slate-950 p-12 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center mb-8 border border-emerald-500/30">
-              <Check size={48} className="text-emerald-500" />
+            <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mb-6 border border-emerald-500/30">
+              <Check size={40} className="text-emerald-500" />
             </div>
-            <h2 className="text-4xl font-black text-white uppercase italic tracking-tight mb-4">Folio Synchronized</h2>
-            <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl p-10">
-               <div className="flex justify-between items-center mb-8">
+            <h2 className="text-4xl font-black text-white uppercase italic tracking-tight mb-4">Folio Confirmed</h2>
+            <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-[2rem] p-8 space-y-6">
+               <div className="flex justify-between items-center">
                   <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Dossier Code</span>
-                  <span className="text-4xl font-black text-blue-500 tracking-tighter italic">{finalBookingCode}</span>
+                  <span className="text-3xl font-black text-blue-500 tracking-tighter italic">{finalBooking?.bookingCode}</span>
                </div>
                <div className="flex justify-between pt-6 border-t border-white/5">
                   <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Settlement</span>
                   <span className="text-3xl font-black text-white tracking-tighter">₦{totalAmount.toLocaleString()}</span>
                </div>
             </div>
-            <button onClick={onClose} className="mt-12 py-5 px-12 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-widest hover:text-white transition-all">Close Dossier</button>
+            
+            <div className="flex flex-col gap-3 w-full max-w-md mt-10">
+              {formData.paymentMethod === 'Bank Transfer' ? (
+                <button 
+                  onClick={handleGoToSettlements}
+                  className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[12px] uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 animate-pulse ring-4 ring-blue-500/20"
+                >
+                  <ShieldCheck size={20} /> Verify Settlement Now
+                </button>
+              ) : (
+                <button className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-[12px] uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3">
+                  <Printer size={20} /> Print Folio Receipt
+                </button>
+              )}
+              <button onClick={onClose} className="w-full py-5 border border-white/10 text-slate-500 hover:text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all">Close Dossier</button>
+            </div>
           </div>
         )}
 
         {step === 'confirm' && (
            <div className="flex-1 bg-slate-950 p-12 flex flex-col items-center justify-center animate-in fade-in duration-300">
-              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-4">Verify Dossier</h3>
+              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-4">Authorize Entry</h3>
               <div className="w-full max-w-2xl text-left bg-white/5 p-10 rounded-[2rem] border border-white/5 space-y-6">
                   <div>
                      <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Occupant</label>
                      <p className="text-2xl font-black text-white italic uppercase tracking-tighter">{formData.guestFirstName} {formData.guestLastName}</p>
+                  </div>
+                  <div className="flex items-center gap-10">
+                    <div>
+                      <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Check-In</label>
+                      <p className="text-xl font-black text-white">{new Date(formData.checkIn).toLocaleDateString()}</p>
+                    </div>
+                    <ArrowRight className="text-slate-800" size={24} />
+                    <div>
+                      <label className="text-[10px] text-slate-600 font-black uppercase tracking-widest block mb-1.5">Check-Out</label>
+                      <p className="text-xl font-black text-white">{new Date(formData.checkOut).toLocaleDateString()}</p>
+                    </div>
                   </div>
                   <div className="flex justify-between pt-6 border-t border-white/5">
                      <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Total Value</span>
@@ -214,39 +221,48 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
                <div className="space-y-10">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <input placeholder="First Name" value={formData.guestFirstName} onChange={e => setFormData({...formData, guestFirstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                    <input placeholder="Last Name" value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                    <input placeholder="Email" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                    <input placeholder="Phone" value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
+                    <input placeholder="First Name" value={formData.guestFirstName} onChange={e => setFormData({...formData, guestFirstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                    <input placeholder="Last Name" value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                    <input placeholder="Email address" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                    <input placeholder="Contact Phone" value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                     <input type="date" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                     <input type="date" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none" />
-                     <select 
-                        value={formData.paymentMethod} 
-                        onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-blue-400 font-black uppercase outline-none appearance-none"
-                      >
-                        <option value="Paystack">Paystack</option>
-                        <option value="Bank Transfer">Bank Transfer</option>
-                      </select>
+                     <div className="space-y-1">
+                        <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Check-In</label>
+                        <input type="date" value={formData.checkIn} readOnly={isWalkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className={`w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm outline-none ${isWalkIn ? 'text-slate-500 opacity-50' : 'text-white'}`} />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Check-Out</label>
+                        <input type="date" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Payment</label>
+                        <select value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-blue-400 font-black uppercase outline-none appearance-none">
+                          <option value="Paystack">Paystack</option>
+                          <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                    {availableRooms.map(room => (
-                      <button key={room.id} onClick={() => setFormData({...formData, roomId: room.id})} className={`p-4 rounded-2xl border transition-all ${formData.roomId === room.id ? 'bg-blue-600 border-blue-500 text-white shadow-xl' : 'bg-white/5 border-white/5 text-slate-600'}`}>
-                         <p className="text-[14px] font-black leading-tight">{room.roomNumber}</p>
-                      </button>
-                    ))}
+                  <div className="space-y-3">
+                    <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Allocated Unit ({availableRooms.length} available)</label>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                      {availableRooms.map(room => (
+                        <button key={room.id} onClick={() => setFormData({...formData, roomId: room.id})} className={`p-4 rounded-2xl border transition-all ${formData.roomId === room.id ? 'bg-blue-600 border-blue-500 text-white shadow-xl' : 'bg-white/5 border-white/5 text-slate-600 hover:border-white/20'}`}>
+                           <p className="text-[14px] font-black leading-tight">{room.roomNumber}</p>
+                           <p className="text-[8px] font-bold uppercase opacity-60">{room.category.slice(0, 4)}</p>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-tight flex items-center gap-3"><AlertCircle size={18}/> {error}</div>}
+                  {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-tight flex items-center gap-3 animate-in shake"><AlertCircle size={18}/> {error}</div>}
 
                   <button 
-                    onClick={validateAndShowConfirm} 
+                    onClick={handleDetailsSubmit} 
                     disabled={!formData.roomId}
-                    className="w-full py-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] bg-blue-600 text-white shadow-2xl active:scale-95 transition-all"
+                    className="w-full py-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] bg-blue-600 text-white shadow-2xl active:scale-95 transition-all disabled:opacity-30"
                   >
                     Continue to Verification
                   </button>
