@@ -23,17 +23,19 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
           <div className="absolute bottom-6 left-6">
+            {/* Fix: Fixed casing for RoomStatus enum members */}
             <span className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 border mb-3 ${
-              room.status === RoomStatus.AVAILABLE ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' :
-              room.status === RoomStatus.OCCUPIED ? 'bg-blue-500/20 text-blue-400 border-blue-500/40' :
-              room.status === RoomStatus.CLEANING ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' :
-              room.status === RoomStatus.MAINTENANCE ? 'bg-rose-500/20 text-rose-400 border-rose-500/40' :
+              room.status === RoomStatus.Available ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' :
+              room.status === RoomStatus.Occupied ? 'bg-blue-500/20 text-blue-400 border-blue-500/40' :
+              room.status === RoomStatus.Cleaning ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' :
+              room.status === RoomStatus.Maintenance ? 'bg-rose-500/20 text-rose-400 border-rose-500/40' :
               'bg-slate-500/20 text-slate-400 border-slate-500/20'
             }`}>
+              {/* Fix: Fixed casing for RoomStatus enum members */}
               <span className={`w-1 h-1 rounded-full ${
-                 room.status === RoomStatus.AVAILABLE ? 'bg-emerald-400 animate-pulse' :
-                 room.status === RoomStatus.OCCUPIED ? 'bg-blue-400' : 
-                 room.status === RoomStatus.CLEANING ? 'bg-amber-400' : 'bg-rose-400'
+                 room.status === RoomStatus.Available ? 'bg-emerald-400 animate-pulse' :
+                 room.status === RoomStatus.Occupied ? 'bg-blue-400' : 
+                 room.status === RoomStatus.Cleaning ? 'bg-amber-400' : 'bg-rose-400'
               }`}></span>
               {room.status}
             </span>

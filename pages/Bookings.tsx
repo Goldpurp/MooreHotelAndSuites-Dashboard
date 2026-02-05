@@ -1,14 +1,15 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useHotel } from '../store/HotelContext';
-import { BookingStatus, Booking, Guest, Room } from '../types';
+import { BookingStatus, Booking, Guest, Room, PaymentStatus } from '../types';
 import { 
-  Search, Plus, ArrowRight, Zap, XCircle, Users, Calendar, X, Mail, Phone, 
-  ChevronLeft, ChevronRight, Loader2, Filter, FileUp, CheckCircle, AlertCircle
+  Search, Plus, ArrowRight, Zap, CheckCircle, 
+  XCircle, Calendar, User, X, Mail, Phone, ChevronLeft, ChevronRight,
+  ShieldCheck, Lock, Clock, History, AlertCircle, Bookmark, CreditCard
 } from 'lucide-react';
 import BookingModal from '../components/BookingModal';
 import VoidBookingModal from '../components/VoidBookingModal';
 import CheckInConfirmModal from '../components/CheckInConfirmModal';
-import { api } from '../lib/api';
 
 const Bookings: React.FC = () => {
   const hotel = useHotel();
@@ -25,67 +26,108 @@ const Bookings: React.FC = () => {
   const [preFillData, setPreFillData] = useState<any>(null);
   
   const [lookupId, setLookupId] = useState('');
-  const [lookupResult, setLookupResult] = useState<Booking | null>(null);
-  const [lookupError, setLookupError] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [bookingToVoid, setBookingToVoid] = useState<Booking | null>(null);
 
   const [isCheckInConfirmOpen, setIsCheckInConfirmOpen] = useState(false);
   const [bookingToCheckIn, setBookingToCheckIn] = useState<Booking | null>(null);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 15;
 
-  // Reset page on filter change
+  const getStatusConfig = (status: string) => {
+    const s = status?.toLowerCase() || '';
+    switch (s) {
+      case 'checkedin':
+      case 'inhouse':
+        return {
+          bg: 'bg-emerald-500/10',
+          text: 'text-emerald-400',
+          border: 'border-emerald-500/20',
+          band: 'border-emerald-500/50 bg-emerald-500/5',
+          icon: <Zap size={10} fill="currentColor" />,
+          label: 'CHECKED-IN'
+        };
+      case 'confirmed':
+        return {
+          bg: 'bg-blue-500/10',
+          text: 'text-blue-400',
+          border: 'border-blue-500/20',
+          band: 'border-blue-500/50 bg-blue-500/5',
+          icon: <CheckCircle size={10} />,
+          label: 'CONFIRMED'
+        };
+      case 'pending':
+        return {
+          bg: 'bg-amber-500/10',
+          text: 'text-amber-400',
+          border: 'border-amber-500/20',
+          band: 'border-amber-500/50 bg-amber-500/5',
+          icon: <Clock size={10} className="animate-pulse" />,
+          label: 'PENDING'
+        };
+      case 'reserved':
+        return {
+          bg: 'bg-indigo-500/10',
+          text: 'text-indigo-400',
+          border: 'border-indigo-500/20',
+          band: 'border-indigo-500/50 bg-indigo-500/5',
+          icon: <Bookmark size={10} />,
+          label: 'RESERVED'
+        };
+      case 'cancelled':
+      case 'voided':
+        return {
+          bg: 'bg-rose-500/10',
+          text: 'text-rose-400',
+          border: 'border-rose-500/20',
+          band: 'border-rose-500/50 bg-rose-500/5',
+          icon: <XCircle size={10} />,
+          label: 'CANCELLED'
+        };
+      case 'checkedout':
+        return {
+          bg: 'bg-slate-800',
+          text: 'text-slate-500',
+          border: 'border-slate-700',
+          band: 'border-slate-700/50 bg-slate-900/5',
+          icon: <History size={10} />,
+          label: 'CHECKED-OUT'
+        };
+      default:
+        return {
+          bg: 'bg-slate-900',
+          text: 'text-slate-400',
+          border: 'border-white/5',
+          band: 'border-transparent',
+          icon: <AlertCircle size={10} />,
+          label: 'UNKNOWN'
+        };
+    }
+  };
+
   useEffect(() => {
     setCurrentPage(1);
   }, [filter, lookupId]);
 
-  // Deep Ledger Lookup Logic (API Integration)
-  const handleFolioLookup = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!lookupId.trim()) return;
-    
-    setIsSearching(true);
-    setLookupError(null);
-    try {
-      const res = await api.get<Booking>('/api/bookings/lookup', {
-        params: { code: lookupId }
-      });
-      if (res && res.id) {
-        setSelectedBooking(res);
-        setSelectedBookingId(res.id);
-        setLookupResult(res);
-      }
-    } catch (err: any) {
-      setLookupError(err.message || "Dossier not found in property ledger.");
-      setLookupResult(null);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Local filtering logic for immediate results
   const filteredBookings = useMemo(() => {
     const q = lookupId.trim().toLowerCase();
     return (bookings || []).filter(b => {
-      const matchesStatus = filter === 'All' || b.status === filter;
+      const bStatus = b.status?.toLowerCase();
+      const matchesStatus = filter === 'All' || bStatus === filter.toLowerCase();
       const matchesSearch = !q || 
         (b.bookingCode || '').toLowerCase().includes(q) || 
-        (b.id || '').toLowerCase().includes(q) ||
         `${b.guestFirstName || ''} ${b.guestLastName || ''}`.toLowerCase().includes(q);
       return matchesStatus && matchesSearch;
     });
   }, [bookings, filter, lookupId]);
 
-  const totalPages = Math.ceil(filteredBookings.length / PAGE_SIZE);
   const paginatedBookings = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredBookings.slice(start, start + PAGE_SIZE);
   }, [filteredBookings, currentPage]);
+
+  const totalPages = Math.ceil(filteredBookings.length / PAGE_SIZE);
 
   useEffect(() => {
     if (selectedBookingId) {
@@ -94,32 +136,7 @@ const Bookings: React.FC = () => {
     } else if (bookings && bookings.length > 0 && !selectedBooking) {
       setSelectedBooking(bookings[0]);
     }
-  }, [selectedBookingId, bookings, selectedBooking]);
-
-  // Visual feedback for local matches
-  useEffect(() => {
-    const q = lookupId.trim().toUpperCase();
-    if (q.length >= 3) {
-      const found = (bookings || []).find(b => 
-        b.id.toUpperCase() === q || 
-        b.bookingCode.toUpperCase() === q ||
-        b.bookingCode.toUpperCase().includes(q)
-      );
-      
-      if (found) {
-        if (found.status === BookingStatus.CANCELLED || found.status === BookingStatus.CHECKED_OUT) {
-          setLookupResult(null);
-        } else {
-          setLookupResult(found);
-          setLookupError(null);
-        }
-      } else {
-        setLookupResult(null);
-      }
-    } else {
-      setLookupResult(null);
-    }
-  }, [lookupId, bookings]);
+  }, [selectedBookingId, bookings]);
 
   const handleSelectBooking = (b: Booking) => {
     setSelectedBooking(b);
@@ -160,274 +177,298 @@ const Bookings: React.FC = () => {
   const resolveGuestName = (b: Booking) => {
     const firstName = b.guestFirstName?.trim();
     const lastName = b.guestLastName?.trim();
-    if (firstName || lastName) {
-      return `${firstName || ''} ${lastName || ''}`.trim();
-    }
+    if (firstName || lastName) return `${firstName || ''} ${lastName || ''}`.trim();
     const g = (guests || []).find(x => x.id === b.guestId);
-    if (g) {
-      return `${g.firstName} ${g.lastName}`.trim();
-    }
-    return b.guestId || b.bookingCode || "Guest";
+    if (g) return `${g.firstName} ${g.lastName}`.trim();
+    return b.bookingCode || "Resident Profile";
   };
 
   const selectedRoom = selectedBooking ? rooms.find(r => r.id === selectedBooking.roomId) : null;
 
   return (
-    <div className="flex gap-4 h-[calc(100vh-100px)] animate-in fade-in slide-in-from-bottom-2 duration-500 overflow-hidden">
+    <div className="flex gap-6 h-[calc(100vh-120px)] animate-in fade-in duration-700 overflow-hidden">
       <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div className="flex flex-col md:flex-row items-end justify-between gap-4">
           <div>
-            <h2 className="text-xl font-black text-white tracking-tight uppercase italic">Reservations Ledger</h2>
-            <p className="text-[10px] text-blue-500 font-black uppercase tracking-[0.2em]">Front Desk Operations</p>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-8 h-[2px] bg-brand-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
+              <p className="text-[10px] text-brand-400 font-black uppercase tracking-[0.2em]">Front Desk Command</p>
+            </div>
+            <h2 className="text-3xl font-black text-white tracking-tight uppercase italic">Reservations</h2>
           </div>
 
-          <form onSubmit={handleFolioLookup} className="flex items-center gap-2 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <Search size={12} className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${lookupResult ? 'text-brand-500' : 'text-slate-500'}`} />
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-72 group">
+              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-brand-500 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Search Code, Name or ID..." 
+                placeholder="Lookup Folio or Resident Name..." 
                 value={lookupId}
                 onChange={(e) => setLookupId(e.target.value)}
-                className={`w-full bg-white/5 border rounded-md py-2.5 pl-9 pr-3 text-[10px] text-slate-200 outline-none transition-all placeholder:text-slate-600 ${
-                  lookupResult ? 'border-brand-500/50 bg-brand-500/5 ring-4 ring-brand-500/10 shadow-2xl' : 'border-white/5 focus:bg-white/10'
-                }`}
+                className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-xs text-slate-200 outline-none focus:border-brand-500/40 transition-all font-bold"
               />
-              {isSearching && <Loader2 size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-blue-500" />}
             </div>
             <button 
-              type="button"
               onClick={() => { setPreFillData(null); setIsWalkIn(true); setIsBookingModalOpen(true); }}
-              className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-md text-[9px] font-black uppercase tracking-dash flex items-center gap-2 transition-all shadow-xl shadow-amber-500/10 active:scale-95"
+              className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl active:scale-95 italic"
             >
-              <Zap size={14}/> Walk-In
+              <Zap size={14} fill="currentColor"/> Walk-In
             </button>
             <button 
-              type="button"
               onClick={() => { setPreFillData(null); setIsWalkIn(false); setIsBookingModalOpen(true); }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-md text-[9px] font-black uppercase tracking-dash flex items-center gap-2 transition-all shadow-xl shadow-blue-500/10 active:scale-95"
+              className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl active:scale-95 italic"
             >
-              <Plus size={14}/> New Booking
+              <Plus size={14} strokeWidth={3}/> New Folio
             </button>
-          </form>
+          </div>
         </div>
 
-        {lookupError && (
-          <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 animate-in slide-in-from-top-2">
-            <XCircle size={14} /> {lookupError}
-            <button onClick={() => setLookupError(null)} className="ml-auto p-1 hover:bg-white/5 rounded-full"><X size={10}/></button>
+        <div className="glass-card rounded-[2rem] flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
+          <div className="px-6 py-4 border-b border-white/5 flex flex-wrap justify-between items-center bg-slate-950/60">
+            <div className="flex gap-2 bg-black/40 p-1.5 rounded-xl border border-white/5">
+              {['All', 'CheckedIn', 'Confirmed', 'Reserved', 'Pending', 'CheckedOut', 'Cancelled'].map(f => (
+                <button 
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                    filter === f 
+                    ? (f === 'CheckedIn' ? 'bg-emerald-600 text-white shadow-emerald-500/20 shadow-lg' : 
+                       f === 'Cancelled' ? 'bg-rose-600 text-white shadow-rose-500/20 shadow-lg' : 
+                       f === 'Reserved' ? 'bg-indigo-600 text-white shadow-indigo-500/20 shadow-lg' :
+                       'bg-brand-600 text-white shadow-brand-500/20 shadow-lg') 
+                    : 'text-slate-600 hover:text-slate-300'
+                  }`}
+                >
+                  {f === 'CheckedIn' ? 'IN-HOUSE' : f === 'CheckedOut' ? 'HISTORY' : f}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
 
-        <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-          <div className="glass-card rounded-md flex-1 flex flex-col overflow-hidden shadow-xl border border-white/5">
-            <div className="px-4 py-3 border-b border-white/5 flex justify-between items-center bg-slate-900/40">
-              <div className="flex gap-1 bg-black/20 p-1 rounded-md">
-                {['All', 'Confirmed', 'CheckedIn', 'Pending', 'CheckedOut', 'Cancelled'].map(f => (
-                  <button 
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-4 py-1.5 rounded-md text-[8px] font-black uppercase tracking-dash transition-all ${filter === f ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                  >
-                    {f === 'CheckedIn' ? 'Checked In' : f === 'CheckedOut' ? 'Checked Out' : f}
-                  </button>
-                ))}
-              </div>
-              {lookupId && (
-                <button onClick={() => setLookupId('')} className="text-[8px] font-black uppercase text-rose-500 flex items-center gap-1 hover:text-rose-400">
-                  <X size={10} /> Clear Search
-                </button>
-              )}
-            </div>
-
-            <div className="overflow-y-auto flex-1 custom-scrollbar">
-              <table className="w-full text-left">
-                <thead className="sticky top-0 bg-slate-900 z-10 border-b border-white/5">
-                  <tr className="text-slate-600 text-[8px] font-black uppercase tracking-dash">
-                    <th className="px-5 py-5">Guest & Number</th>
-                    <th className="px-5 py-5">Guest Status</th>
-                    <th className="px-5 py-5">Room Number</th>
-                    <th className="px-5 py-5">Total Amount</th>
-                    <th className="px-5 py-5">Check In/Out</th>
-                    <th className="px-5 py-5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {paginatedBookings.length === 0 ? (
-                    <tr><td colSpan={6} className="py-20 text-center text-slate-700 font-black uppercase tracking-[0.3em] text-[10px]">No dossiers found matching criteria</td></tr>
-                  ) : (
-                    paginatedBookings.map((b) => {
-                      const room = rooms.find(r => r.id === b.roomId);
-                      const isSelected = selectedBooking?.id === b.id;
-                      const guestName = resolveGuestName(b);
-                      
-                      return (
-                        <tr 
-                          key={b.id} 
-                          onClick={() => handleSelectBooking(b)}
-                          className={`cursor-pointer transition-all group border-l-4 ${isSelected ? 'bg-blue-600/10 border-blue-500' : 'hover:bg-white/5 border-transparent'}`}
-                        >
-                          <td className="px-5 py-5">
-                            <div className="flex flex-col">
-                              <span className="text-[14px] font-black text-white group-hover:text-blue-400 transition-colors leading-none mb-1">{guestName}</span>
-                              <span className="text-[9px] text-slate-500 font-bold tracking-widest">{b.bookingCode || b.id.slice(0, 8)}</span>
-                            </div>
-                          </td>
-                          <td className="px-5 py-5">
-                            <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-dash border ${
-                              b.status === BookingStatus.CHECKED_IN ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :
-                              b.status === BookingStatus.CONFIRMED ? 'bg-blue-600/15 text-blue-400 border-blue-600/30' :
-                              b.status === BookingStatus.CHECKED_OUT ? 'bg-slate-500/15 text-slate-500 border-slate-700' :
-                              b.status === BookingStatus.CANCELLED ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' :
-                              'bg-amber-500/15 text-amber-400 border-amber-500/20'
+          <div className="overflow-y-auto flex-1 custom-scrollbar">
+            <table className="w-full text-left">
+              <thead className="sticky top-0 bg-slate-950/90 backdrop-blur-md z-10 border-b border-white/10">
+                <tr className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                  <th className="px-8 py-5">Occupant Dossier</th>
+                  <th className="px-8 py-5">Stay Cycle</th>
+                  <th className="px-8 py-5 text-center">Asset</th>
+                  <th className="px-8 py-5 text-right">Settlement Status</th>
+                  <th className="px-8 py-5 text-right">Operational Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {paginatedBookings.length === 0 ? (
+                  <tr><td colSpan={5} className="py-32 text-center text-slate-700 font-black uppercase tracking-[0.4em] text-[12px] italic">No matching dossiers detected in ledger</td></tr>
+                ) : (
+                  paginatedBookings.map((b) => {
+                    const room = rooms.find(r => r.id === b.roomId);
+                    const isSelected = selectedBooking?.id === b.id;
+                    const guestName = resolveGuestName(b);
+                    const cfg = getStatusConfig(b.status);
+                    const bStatusLower = b.status?.toLowerCase();
+                    const isPaid = (b.paymentStatus || '').toLowerCase() === 'paid';
+                    
+                    return (
+                      <tr 
+                        key={b.id} 
+                        onClick={() => handleSelectBooking(b)}
+                        className={`cursor-pointer transition-all group border-l-4 ${isSelected ? cfg.band : 'hover:bg-white/[0.03] border-transparent'}`}
+                      >
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${
+                              (bStatusLower === 'checkedin' || bStatusLower === 'inhouse') ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-inner' :
+                              'bg-white/5 border-white/5 text-slate-500'
                             }`}>
-                              {b.status === BookingStatus.CHECKED_IN ? 'Checked In' : b.status}
-                            </span>
-                          </td>
-                          <td className="px-5 py-5">
-                            <span className="text-[13px] font-black text-slate-200">Room {room?.roomNumber || '---'}</span>
-                            <p className="text-[8px] text-slate-600 font-bold uppercase mt-0.5">{room?.category}</p>
-                          </td>
-                          <td className="px-5 py-5">
-                            <span className="text-[14px] font-black text-white italic">₦{b.amount.toLocaleString()}</span>
-                            <p className="text-[8px] text-slate-600 font-bold uppercase mt-0.5">Sum Total Pay</p>
-                          </td>
-                          <td className="px-5 py-5">
-                            <div className="flex flex-col gap-0.5">
-                               <div className="flex items-center gap-2">
-                                  <span className="text-[11px] font-bold text-slate-200">{new Date(b.checkIn).toLocaleDateString('en-GB')}</span>
-                                  <ArrowRight size={10} className="text-slate-600" />
-                                  <span className="text-[11px] font-bold text-slate-200">{new Date(b.checkOut).toLocaleDateString('en-GB')}</span>
-                               </div>
-                               <p className="text-[8px] text-slate-600 font-bold uppercase">Stay Duration</p>
+                              <User size={18} />
                             </div>
-                          </td>
-                          <td className="px-5 py-5 text-right">
-                             <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
-                               {b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.PENDING ? (
-                                 <>
-                                   <button 
-                                     onClick={(e) => handleOpenCheckInConfirm(e, b)}
-                                     className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-dash transition-all"
-                                   >
-                                     Check-In
-                                   </button>
-                                   <button 
-                                     onClick={(e) => handleOpenVoidModal(e, b)}
-                                     className="p-2.5 rounded-lg border border-white/10 text-slate-500 hover:text-rose-500 transition-all"
-                                   >
-                                     <XCircle size={16}/>
-                                   </button>
-                                 </>
-                               ) : b.status === BookingStatus.CHECKED_IN ? (
-                                 <button 
-                                   onClick={() => navigateToGuestStay(b.guestId)}
-                                   className="bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-dash border border-blue-500/20 transition-all"
-                                 >
-                                   Manage
-                                 </button>
-                               ) : (
-                                 <button className="bg-white/5 text-slate-400 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-dash border border-white/10 opacity-50">
-                                   Invoice
-                                 </button>
-                               )}
+                            <div>
+                              <p className="text-[15px] font-black text-white group-hover:text-brand-400 transition-colors uppercase italic tracking-tight">{guestName}</p>
+                              <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-0.5">REF: {b.bookingCode}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex flex-col gap-1.5">
+                            <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border w-fit flex items-center gap-2 ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+                              {cfg.icon}
+                              {cfg.label}
+                            </span>
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500">
+                               <span>{new Date(b.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                               <ArrowRight size={10} className="opacity-30" />
+                               <span>{new Date(b.checkOut).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                          <p className="text-[14px] font-black text-white uppercase italic tracking-tighter">Room {room?.roomNumber || '---'}</p>
+                          <p className="text-[8px] text-slate-600 font-bold uppercase tracking-dash mt-0.5">{room?.category}</p>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex flex-col items-end gap-1">
+                             <div className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[9px] font-black uppercase border ${isPaid ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse'}`}>
+                                {isPaid ? <ShieldCheck size={10}/> : <AlertCircle size={10}/>}
+                                {isPaid ? 'Settled' : 'Unpaid'}
                              </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+                             <p className={`text-[15px] font-black italic tracking-tighter ${isPaid ? 'text-white' : 'text-rose-400'}`}>₦{b.amount.toLocaleString()}</p>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                           <div className="flex items-center justify-end gap-2.5" onClick={e => e.stopPropagation()}>
+                             {(bStatusLower === 'confirmed' || bStatusLower === 'pending' || bStatusLower === 'reserved') ? (
+                               <>
+                                 <button 
+                                   onClick={(e) => handleOpenCheckInConfirm(e, b)}
+                                   disabled={!isPaid}
+                                   className={`${!isPaid ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-950/40'} px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 italic`}
+                                 >
+                                   {!isPaid ? <Lock size={12}/> : <Zap size={14} fill="currentColor"/>}
+                                   {isPaid ? 'Check-In' : 'Pending Pay'}
+                                 </button>
+                                 <button 
+                                   onClick={(e) => handleOpenVoidModal(e, b)}
+                                   className="p-2.5 rounded-xl border border-white/5 bg-white/5 text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+                                 >
+                                   <XCircle size={18}/>
+                                 </button>
+                               </>
+                             ) : (bStatusLower === 'checkedin' || bStatusLower === 'inhouse') ? (
+                               <button 
+                                 onClick={() => navigateToGuestStay(b.guestId)}
+                                 className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-brand-950/40 active:scale-95 italic flex items-center gap-2"
+                               >
+                                 <User size={14}/> Manage Stay
+                               </button>
+                             ) : (
+                               <div className="flex items-center justify-end gap-2 text-slate-700 opacity-40 px-4 py-2">
+                                  <Lock size={14} />
+                                  <span className="text-[9px] font-black uppercase tracking-widest">Locked</span>
+                               </div>
+                             )}
+                           </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
-            <div className="px-5 py-3 border-t border-white/5 bg-slate-900/40 flex items-center justify-between">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                Showing {paginatedBookings.length} of {filteredBookings.length} results
-              </span>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <div className="flex items-center px-4 rounded-lg bg-black/20 border border-white/5">
-                  <span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span>
-                </div>
-                <button 
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                  className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                >
-                  <ChevronRight size={16} />
-                </button>
+          <div className="px-8 py-4 border-t border-white/10 bg-slate-950/60 flex items-center justify-between">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">
+              Audit Trace: {filteredBookings.length} Dossiers found
+            </span>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <div className="flex items-center px-4 rounded-lg bg-black/20 border border-white/5">
+                <span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span>
               </div>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="p-2 border border-white/10 rounded-lg text-slate-500 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {selectedBooking && (
-        <div className="w-[330px] flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
-           <div className="glass-card rounded-[2.5rem] p-8 flex flex-col h-full overflow-y-auto custom-scrollbar border border-white/10 bg-[#0a0f1a] relative">
-             <div className="flex justify-between items-start mb-8">
+        <div className="w-[420px] flex flex-col gap-4 animate-in slide-in-from-right-8 duration-500 h-full overflow-hidden shrink-0">
+           <div className="glass-card rounded-[3rem] p-10 flex flex-col h-full overflow-y-auto custom-scrollbar border border-white/10 bg-[#0a0f1a] relative shadow-3xl">
+             <div className="flex justify-between items-start mb-10">
                <div>
-                  <h3 className="text-3xl font-black text-white tracking-tighter uppercase italic">FOLIO</h3>
-                  <p className="text-[11px] text-[#3b82f6] font-black tracking-[0.2em] uppercase mt-1">REF: {selectedBooking.bookingCode}</p>
+                  <h3 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Dossier</h3>
+                  <p className="text-[11px] text-brand-500 font-black tracking-[0.25em] uppercase mt-4">REF: {selectedBooking.bookingCode}</p>
                </div>
-               <button onClick={() => setSelectedBookingId(null)} className="p-3 bg-white/5 rounded-full text-slate-500 hover:text-rose-500 transition-all border border-white/10"><X size={20}/></button>
+               <button onClick={() => hotel.setSelectedBookingId(null)} className="p-3 bg-white/5 rounded-2xl text-slate-600 hover:text-rose-500 transition-all border border-white/5"><X size={20}/></button>
              </div>
 
-             <div className="space-y-6 flex-1">
-                <div className="flex flex-col items-center text-center p-8 bg-[#161d2b] rounded-[2rem] border border-white/5 shadow-inner">
-                   <div className="w-24 h-24 rounded-[2rem] bg-[#05080f] flex items-center justify-center font-black text-white text-4xl italic mb-4 border border-white/5 shadow-2xl relative overflow-hidden">
+             <div className="space-y-8 flex-1">
+                <div className="flex flex-col items-center text-center p-10 bg-[#161d2b] rounded-[2.5rem] border border-white/5 shadow-inner">
+                   <div className="w-28 h-28 rounded-[2rem] bg-[#05080f] flex items-center justify-center font-black text-white text-5xl italic mb-6 border border-white/5 shadow-2xl relative overflow-hidden ring-4 ring-white/5">
                       <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(resolveGuestName(selectedBooking))}&background=05080f&color=fff&size=128`} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="" />
                       {resolveGuestName(selectedBooking).charAt(0)}
                    </div>
-                   <h4 className="text-xl font-black text-white italic uppercase tracking-tighter mb-1 truncate w-full">{resolveGuestName(selectedBooking)}</h4>
-                   <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em] opacity-80">PRIMARY OCCUPANT</p>
+                   <h4 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-1 truncate w-full">{resolveGuestName(selectedBooking)}</h4>
+                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] opacity-80">Resident Identity</p>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center bg-[#0d131f] p-6 rounded-2xl border border-white/5">
-                     <span className="text-[11px] text-slate-500 font-black uppercase tracking-widest">UNIT ID</span>
-                     <span className="text-[15px] font-black text-[#3b82f6] tracking-tight">Room {selectedRoom?.roomNumber || '...'}</span>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className={`p-6 rounded-3xl border flex items-center justify-between transition-all ${getStatusConfig(selectedBooking.status).bg} ${getStatusConfig(selectedBooking.status).border}`}>
+                     <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Protocol State</span>
+                     <span className={`text-[12px] font-black uppercase tracking-widest italic ${getStatusConfig(selectedBooking.status).text}`}>
+                        {getStatusConfig(selectedBooking.status).label}
+                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center bg-[#0d131f] p-6 rounded-2xl border border-white/5">
-                     <span className="text-[11px] text-slate-500 font-black uppercase tracking-widest">TOTAL SETTLEMENT</span>
-                     <span className="text-[15px] font-black text-[#10b981] tracking-tight">₦{selectedBooking.amount.toLocaleString()}</span>
+                  <div className={`p-6 rounded-3xl border flex items-center justify-between transition-all ${(selectedBooking.paymentStatus || '').toLowerCase() === 'paid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400 animate-pulse'}`}>
+                     <span className="text-[10px] opacity-70 font-black uppercase tracking-widest">Settlement</span>
+                     <div className="flex items-center gap-2">
+                        {(selectedBooking.paymentStatus || '').toLowerCase() === 'paid' ? <ShieldCheck size={14}/> : <AlertCircle size={14}/>}
+                        <span className="text-[12px] font-black uppercase tracking-widest italic">
+                           {(selectedBooking.paymentStatus || '').toLowerCase() === 'paid' ? 'SETTLED' : 'PAYMENT DUE'}
+                        </span>
+                     </div>
                   </div>
+                </div>
 
-                  <div className="bg-[#0d131f] p-6 rounded-2xl border border-white/5 space-y-4">
-                     <div className="flex items-center gap-3 text-slate-400">
-                        <Mail size={14} />
-                        <span className="text-[11px] font-medium tracking-tight truncate">{selectedBooking.guestEmail || "No Email"}</span>
-                     </div>
-                     <div className="flex items-center gap-3 text-slate-400">
-                        <Phone size={14} />
-                        <span className="text-[11px] font-medium tracking-tight">{selectedBooking.guestPhone || "---"}</span>
-                     </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#0d131f] p-6 rounded-3xl border border-white/5">
+                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">Asset ID</span>
+                     <span className="text-xl font-black text-brand-500 tracking-tighter italic">Room {selectedRoom?.roomNumber || '---'}</span>
                   </div>
+                  <div className="bg-[#0d131f] p-6 rounded-3xl border border-white/5">
+                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">Total Value</span>
+                     <span className="text-xl font-black text-white tracking-tighter italic">₦{selectedBooking.amount.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="bg-[#0d131f] p-6 rounded-3xl border border-white/5 space-y-5">
+                   <div className="flex items-center gap-4 text-slate-400">
+                      <div className="p-2.5 bg-black rounded-xl border border-white/5 text-slate-600"><Mail size={16}/></div>
+                      <span className="text-[13px] font-bold tracking-tight truncate flex-1">{selectedBooking.guestEmail || "No Digital Record"}</span>
+                   </div>
+                   <div className="flex items-center gap-4 text-slate-400">
+                      <div className="p-2.5 bg-black rounded-xl border border-white/5 text-slate-600"><Phone size={16}/></div>
+                      <span className="text-[13px] font-bold tracking-tight">{selectedBooking.guestPhone || "No Contact"}</span>
+                   </div>
                 </div>
              </div>
 
-             <div className="mt-10">
-                {(selectedBooking.status === BookingStatus.CONFIRMED || selectedBooking.status === BookingStatus.PENDING) ? (
+             <div className="mt-12">
+                {(['confirmed', 'pending', 'reserved'].includes(selectedBooking.status?.toLowerCase())) ? (
                   <button 
                     onClick={(e) => handleOpenCheckInConfirm(e, selectedBooking)}
-                    className="w-full bg-[#059669] hover:bg-[#047857] text-white font-black py-6 rounded-2xl text-[13px] uppercase tracking-[0.2em] transition-all shadow-3xl shadow-emerald-950/60 active:scale-95 flex items-center justify-center gap-3 italic"
+                    disabled={(selectedBooking.paymentStatus || '').toLowerCase() !== 'paid'}
+                    className={`w-full ${(selectedBooking.paymentStatus || '').toLowerCase() !== 'paid' ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : 'bg-[#10b981] hover:bg-[#059669] text-white shadow-3xl shadow-emerald-950/60'} font-black py-7 rounded-[1.5rem] text-[15px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-3 italic`}
                   >
-                    <Zap size={20} fill="currentColor"/> AUTHORIZE CHECK-IN
+                    {(selectedBooking.paymentStatus || '').toLowerCase() !== 'paid' ? <Lock size={22}/> : <Zap size={22} fill="currentColor" strokeWidth={0}/>}
+                    {(selectedBooking.paymentStatus || '').toLowerCase() !== 'paid' ? 'WAITING FOR PAYMENT' : 'AUTHORIZE CHECK-IN'}
+                  </button>
+                ) : (selectedBooking.status?.toLowerCase() === 'checkedin' || selectedBooking.status?.toLowerCase() === 'inhouse') ? (
+                  <button 
+                    onClick={() => navigateToGuestStay(selectedBooking.guestId)}
+                    className="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-7 rounded-[1.5rem] text-[15px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-3 italic shadow-3xl shadow-brand-950/60"
+                  >
+                    <ShieldCheck size={22}/> MANAGE RESIDENCY
                   </button>
                 ) : (
                   <button 
-                    onClick={() => navigateToGuestStay(selectedBooking.guestId)}
-                    className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-black py-6 rounded-2xl text-[13px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-3 italic"
+                    disabled
+                    className="w-full bg-slate-900 text-slate-700 font-black py-7 rounded-[1.5rem] text-[15px] uppercase tracking-[0.2em] border border-white/5 cursor-not-allowed italic"
                   >
-                    <Users size={20}/> MANAGE STAY
+                    <Lock size={22}/> DOSSIER SEALED
                   </button>
                 )}
              </div>
@@ -436,6 +477,7 @@ const Bookings: React.FC = () => {
       )}
 
       <BookingModal isOpen={isBookingModalOpen} onClose={() => setIsBookingModalOpen(false)} isWalkIn={isWalkIn} initialData={preFillData} />
+      
       <VoidBookingModal 
         isOpen={isVoidModalOpen} 
         onClose={() => setIsVoidModalOpen(false)} 
@@ -444,6 +486,7 @@ const Bookings: React.FC = () => {
         guest={bookingToVoid ? { firstName: bookingToVoid.guestFirstName, lastName: bookingToVoid.guestLastName, avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(resolveGuestName(bookingToVoid))}&background=020617&color=fff` } as any : null}
         room={rooms.find(r => r.id === bookingToVoid?.roomId) || null}
       />
+
       <CheckInConfirmModal 
         isOpen={isCheckInConfirmOpen}
         onClose={() => setIsCheckInConfirmOpen(false)}

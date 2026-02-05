@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { X, Wrench, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import { Room, RoomStatus } from '../types';
@@ -14,7 +15,8 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
 
   if (!isOpen || !room) return null;
 
-  const isEnteringMaintenance = room.status !== RoomStatus.MAINTENANCE;
+  // Fix: Fixed casing for RoomStatus enum member
+  const isEnteringMaintenance = room.status !== RoomStatus.Maintenance;
 
   const handleConfirm = async () => {
     setIsSubmitting(true);

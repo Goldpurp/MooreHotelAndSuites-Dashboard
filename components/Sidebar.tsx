@@ -1,8 +1,10 @@
+
 import React from 'react';
-import { LayoutDashboard, CalendarDays, Bed, Users, FileBarChart, Settings, LogOut, ShieldCheck, ChevronLeft, ChevronRight, ClipboardList, CreditCard, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, Bed, Users, FileBarChart, Settings, LogOut, ShieldCheck, ChevronLeft, ChevronRight, ClipboardList, CheckCircle2, UserSquare } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import PermissionWrapper from './PermissionWrapper';
 import Logo from './Logo';
+import { UserRole } from '../types';
 
 const Sidebar: React.FC = () => {
   const { logout, isSidebarCollapsed, toggleSidebar, activeTab, setActiveTab } = useHotel();
@@ -13,7 +15,6 @@ const Sidebar: React.FC = () => {
     { id: 'settlements', label: 'Confirmations', icon: CheckCircle2 },
     { id: 'rooms', label: 'Rooms', icon: Bed },
     { id: 'guests', label: 'Guests', icon: Users },
-    { id: 'reports', label: 'Analytics', icon: FileBarChart },
   ];
 
   return (
@@ -64,6 +65,22 @@ const Sidebar: React.FC = () => {
           </button>
         ))}
 
+        {/* RESTRICTED: Only Admin and Manager can access Analytics */}
+        <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
+              activeTab === 'reports' ? 'bg-brand-600/20 text-white border border-brand-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'
+            }`}
+          >
+            {activeTab === 'reports' && (
+              <div className="absolute left-0 w-1.5 h-6 bg-brand-500 rounded-r-full shadow-[0_0_15px_rgba(59,130,246,0.8)]" />
+            )}
+            <FileBarChart size={22} className={`shrink-0 transition-all ${activeTab === 'reports' ? 'text-brand-500 scale-110' : 'group-hover:text-slate-200'}`} />
+            <span className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? 'opacity-0 invisible -translate-x-10' : 'opacity-100 visible translate-x-0'}`}>Analytics</span>
+          </button>
+        </PermissionWrapper>
+
         <div className="pt-10">
           {!isSidebarCollapsed && (
             <p className="px-4 text-[10px] text-slate-600 font-black uppercase tracking-dash mb-5 flex items-center gap-2">
@@ -72,7 +89,7 @@ const Sidebar: React.FC = () => {
           )}
           
           <div className="space-y-1.5">
-            <PermissionWrapper allowedRoles={['Admin', 'Manager']}>
+            <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
               <button
                 onClick={() => setActiveTab('operation_log')}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
@@ -91,6 +108,16 @@ const Sidebar: React.FC = () => {
               >
                 <ShieldCheck size={22} className={`shrink-0 ${activeTab === 'staff' ? 'text-brand-500' : 'group-hover:text-slate-200'}`} />
                 <span className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? 'opacity-0 invisible -translate-x-10' : 'opacity-100 visible translate-x-0'}`}>Staffing</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('clients')}
+                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
+                  activeTab === 'clients' ? 'bg-brand-600/20 text-white border border-brand-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'
+                }`}
+              >
+                <UserSquare size={22} className={`shrink-0 ${activeTab === 'clients' ? 'text-brand-500' : 'group-hover:text-slate-200'}`} />
+                <span className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? 'opacity-0 invisible -translate-x-10' : 'opacity-100 visible translate-x-0'}`}>Clients</span>
               </button>
             </PermissionWrapper>
 

@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { Room, Booking, Guest, RoomStatus, BookingStatus, AppNotification, UserRole, AppUser, StaffUser, AuditLog, VisitRecord, PaymentStatus, VisitAction } from '../types';
+import { Room, Booking, Guest, RoomStatus, BookingStatus, AppNotification, UserRole, AppUser, StaffUser, AuditLog, VisitRecord, PaymentStatus, VisitAction, ProfileStatus, PaymentMethod, BookingInitResponse } from '../types';
 import { api } from '../lib/api';
 
 interface HotelContextType {
@@ -31,7 +32,7 @@ interface HotelContextType {
   updateRoom: (id: string, updates: Partial<Room>) => Promise<void>;
   deleteRoom: (id: string) => Promise<void>;
   toggleRoomMaintenance: (id: string) => Promise<void>;
-  addBooking: (payload: any) => Promise<Booking>;
+  addBooking: (payload: any) => Promise<BookingInitResponse>;
   updateBooking: (id: string, updates: Partial<Booking>) => Promise<void>;
   updatePaymentStatus: (id: string, status: PaymentStatus) => Promise<void>;
   confirmTransfer: (bookingCode: string) => Promise<void>;
@@ -74,7 +75,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
-  const [userRole, setUserRole] = useState<UserRole>('Staff');
+  const [userRole, setUserRole] = useState<UserRole>(UserRole.Staff);
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -87,26 +88,91 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (Array.isArray(res)) return res;
     if (res.data && Array.isArray(res.data)) return res.data;
     if (res.items && Array.isArray(res.items)) return res.items;
+    if (res.value && Array.isArray(res.value)) return res.value; 
     return [];
+  };
+
+  const toCanonicalStatus = (val: string | undefined): any => {
+    if (!val) return val;
+    const lower = val.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  };
+
+  const normalizeBooking = (b: any): Booking => {
+    return {
+      id: String(b.id || b.Id || ''),
+      bookingCode: String(b.bookingCode || b.BookingCode || ''),
+      roomId: String(b.roomId || b.RoomId || ''),
+      guestId: String(b.guestId || b.GuestId || ''),
+      guestFirstName: b.guestFirstName || b.GuestFirstName || '',
+      guestLastName: b.guestLastName || b.GuestLastName || '',
+      guestEmail: b.guestEmail || b.GuestEmail || '',
+      guestPhone: b.guestPhone || b.GuestPhone || '',
+      checkIn: b.checkIn || b.CheckIn || '',
+      checkOut: b.checkOut || b.CheckOut || '',
+      status: toCanonicalStatus(b.status || b.Status || BookingStatus.Pending) as BookingStatus,
+      amount: Number(b.amount || b.Amount || 0),
+      paymentStatus: toCanonicalStatus(b.paymentStatus || b.PaymentStatus || PaymentStatus.Unpaid) as PaymentStatus,
+      paymentMethod: b.paymentMethod || b.PaymentMethod || '',
+      createdAt: b.createdAt || b.CreatedAt || new Date().toISOString(),
+      notes: b.notes || b.Notes || '',
+      statusHistory: b.statusHistory || b.StatusHistory || []
+    };
+  };
+
+  const normalizeVisitRecord = (v: any): VisitRecord => {
+    const rawAction = String(v.action || v.Action || '').toLowerCase().trim();
+    let canonicalAction = VisitAction.RESERVATION;
+    
+    if (rawAction.includes('checkin') || rawAction.includes('check in') || rawAction.includes('entry')) {
+      canonicalAction = VisitAction.CHECK_IN;
+    } else if (rawAction.includes('checkout') || rawAction.includes('check out') || rawAction.includes('exit')) {
+      canonicalAction = VisitAction.CHECK_OUT;
+    } else if (rawAction.includes('void') || rawAction.includes('cancel') || rawAction.includes('dossier voided')) {
+      canonicalAction = VisitAction.VOID;
+    } else if (rawAction.includes('reservation') || rawAction.includes('made') || rawAction.includes('booking')) {
+      canonicalAction = VisitAction.RESERVATION;
+    }
+
+    return {
+      id: String(v.id || v.Id || ''),
+      guestId: String(v.guestId || v.GuestId || ''),
+      guestName: v.guestName || v.GuestName || 'Anonymous Resident',
+      roomId: String(v.roomId || v.RoomId || ''),
+      roomNumber: String(v.roomNumber || v.RoomNumber || '---'),
+      bookingCode: String(v.bookingCode || v.BookingCode || 'SYS-TRCE'),
+      action: canonicalAction,
+      timestamp: v.timestamp || v.Timestamp || new Date().toISOString(),
+      authorizedBy: v.authorizedBy || v.AuthorizedBy || 'System Protocol'
+    };
   };
 
   const normalizeUser = (raw: any): AppUser | null => {
     if (!raw) return null;
     const data = raw.user || raw.profile || raw.data || raw;
+    if (!data.id && !data.Id && !data.email && !data.Email) return null;
     
-    let role: UserRole = 'Staff';
-    const rawRole = String(data.role || data.Role || 'Staff').toLowerCase();
-    if (rawRole === 'admin') role = 'Admin';
-    else if (rawRole === 'manager') role = 'Manager';
-    else if (rawRole === 'client') role = 'Client';
+    const roleStr = String(data.role || data.Role || 'Staff').toLowerCase();
+    let canonicalRole = UserRole.Staff;
+    
+    if (roleStr.includes('admin')) canonicalRole = UserRole.Admin;
+    else if (roleStr.includes('manager')) canonicalRole = UserRole.Manager;
+    else if (roleStr.includes('client') || roleStr.includes('guest')) canonicalRole = UserRole.Client;
+
+    const statusStr = String(data.status || data.Status || 'Active').toLowerCase();
+    const canonicalStatus = statusStr.includes('suspend') || statusStr.includes('deactivate') || statusStr.includes('locked') 
+      ? ProfileStatus.Suspended 
+      : ProfileStatus.Active;
 
     return {
-      id: String(data.id || data.Id || "").toLowerCase(),
+      id: String(data.id || data.Id || ""),
       name: data.name || data.fullName || data.Name || "Personnel",
       email: data.email || data.Email || "",
-      role: role,
-      avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'P')}&background=020617&color=fff`
-    };
+      role: canonicalRole,
+      status: canonicalStatus,
+      avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'P')}&background=020617&color=fff`,
+      createdAt: data.createdAt || data.CreatedAt || new Date().toISOString()
+    } as any;
   };
 
   const refreshData = useCallback(async () => {
@@ -114,61 +180,65 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!token) return;
 
     try {
-      const [roomsRes, bookingsRes, guestsRes, staffRes, notificationsRes, auditLogsRes, ledgerRes] = await Promise.all([
+      const [roomsRes, bookingsRes, employeesRes, clientsRes, notificationsRes, auditLogsRes, visitHistoryRes] = await Promise.all([
         api.get('/api/rooms').catch(() => []),
         api.get('/api/bookings').catch(() => []),
-        api.get('/api/admin/management/clients').catch(() => []),
         api.get('/api/admin/management/employees').catch(() => []),
+        api.get('/api/admin/management/clients').catch(() => []),
         api.get('/api/notifications/staff').catch(() => []),
         api.get('/api/audit-logs').catch(() => []),
-        api.get('/api/operations/ledger').catch(() => null) 
+        api.get('/api/visit-records').catch(() => [])
       ]);
 
-      setRooms(normalizeData(roomsRes));
-      setBookings(normalizeData(bookingsRes));
-      setStaff(normalizeData(staffRes).map(s => normalizeUser(s) as StaffUser).filter(Boolean));
+      const rawRooms = normalizeData(roomsRes);
+      const normalizedRooms = rawRooms.map((r: any) => {
+        const rawStatus = String(r.status || r.Status || 'Available').toLowerCase();
+        const statusMap: Record<string, RoomStatus> = {
+          'available': RoomStatus.Available,
+          'occupied': RoomStatus.Occupied,
+          'cleaning': RoomStatus.Cleaning,
+          'maintenance': RoomStatus.Maintenance,
+          'reserved': RoomStatus.Reserved
+        };
+
+        const onlineVal = r.isOnline !== undefined ? r.isOnline : r.IsOnline;
+
+        return {
+          ...r,
+          id: String(r.id || r.Id),
+          roomNumber: String(r.roomNumber || r.RoomNumber || ''),
+          category: r.category || r.Category || 'Standard',
+          status: statusMap[rawStatus] || RoomStatus.Available,
+          pricePerNight: Number(r.pricePerNight || r.PricePerNight || 0),
+          isOnline: onlineVal === true || onlineVal === 'true' || onlineVal === 1 || onlineVal === '1'
+        };
+      });
+
+      // Unified Ledger: Normalize every user record to ensure roles like Admin/Manager are caught
+      const allUsersRaw = [
+        ...normalizeData(employeesRes),
+        ...normalizeData(clientsRes)
+      ];
+      
+      const mergedStaff = allUsersRaw
+        .map(u => normalizeUser(u))
+        .filter((u): u is StaffUser => u !== null)
+        .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+
+      setRooms(normalizedRooms);
+      setBookings(normalizeData(bookingsRes).map(normalizeBooking));
+      setStaff(mergedStaff);
       setNotifications(normalizeData(notificationsRes));
       setAuditLogs(normalizeData(auditLogsRes));
-
-      // STRICT DE-DUPLICATION LOGIC
-      const rawGData = normalizeData(guestsRes);
-      const guestMap: Map<string, Guest> = new Map();
-      rawGData.forEach(g => {
-        if (!g) return;
-        const normalizedId = String(g.id || g.Id || '').toLowerCase();
-        if (normalizedId) {
-          guestMap.set(normalizedId, {
-            id: normalizedId,
-            firstName: g.firstName || g.FirstName || 'Guest',
-            lastName: g.lastName || g.LastName || '',
-            email: g.email || g.Email || '',
-            phone: g.phone || g.Phone || '',
-            totalStays: Number(g.totalStays || g.TotalStays || 0),
-            totalSpent: Number(g.totalSpent || g.TotalSpent || 0),
-            avatarUrl: g.avatarUrl || g.AvatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(g.firstName || 'G')}&background=020617&color=fff`,
-            isVIP: Boolean(g.isVIP || g.IsVIP)
-          });
-        }
-      });
-      setGuests(Array.from(guestMap.values()));
-
-      const ledger = normalizeData(ledgerRes);
-      if (ledger.length > 0) {
-        setVisitHistory(ledger.map((l: any) => ({
-          id: l.id || l.Id || Math.random().toString(),
-          guestId: l.guestId || l.GuestId || '',
-          guestName: l.guestName || l.GuestName || 'Occupant',
-          roomId: l.roomId || l.RoomId || '',
-          roomNumber: l.roomNumber || l.RoomNumber || 'N/A',
-          bookingCode: l.bookingCode || l.BookingCode || 'N/A',
-          action: (l.action || 'Activity') as VisitAction,
-          timestamp: l.timestamp || new Date().toISOString(),
-          authorizedBy: l.authorizedBy || 'System'
-        })));
-      }
+      setGuests(normalizeData(clientsRes));
+      setVisitHistory(normalizeData(visitHistoryRes).map(normalizeVisitRecord));
 
     } catch (error: any) {
-      console.error('Context Sync Fault:', error);
+      console.error('Property Synchronization Protocol Failed:', error);
+      if (error.message?.includes('Authorization Required')) {
+        setIsAuthenticated(false);
+        api.removeToken();
+      }
     } finally {
       setIsInitialLoading(false);
     }
@@ -201,78 +271,144 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (token) {
       api.setToken(token);
       const user = normalizeUser(response);
-      if (user) { 
-        setCurrentUser(user); 
-        setUserRole(user.role); 
-      }
+      if (user) { setCurrentUser(user); setUserRole(user.role); }
       setIsAuthenticated(true);
       await refreshData();
+    } else {
+      throw new Error("Authorization protocol failed.");
     }
   };
 
-  const logout = () => { 
-    api.removeToken(); 
-    setIsAuthenticated(false); 
-    setCurrentUser(null); 
-    setUserRole('Staff'); 
+  const logout = () => { api.removeToken(); setIsAuthenticated(false); setCurrentUser(null); setUserRole(UserRole.Staff); };
+  
+  const addRoom = async (room: Omit<Room, 'id'>) => { 
+    await api.post('/api/rooms', room); 
+    await refreshData(); 
+  };
+  
+  const updateRoom = async (id: string, updates: Partial<Room>) => { 
+    const payload = { ...updates, id };
+    await api.put(`/api/rooms/${id}`, payload); 
+    await refreshData(); 
+  };
+  
+  const deleteRoom = async (id: string) => { 
+    await api.delete(`/api/rooms/${id}`); 
+    await refreshData(); 
+  };
+  
+  const toggleRoomMaintenance = async (id: string) => {
+    const room = rooms.find(r => r.id === id);
+    if (room) {
+      const updatedRoom = { 
+        ...room, 
+        status: room.status === RoomStatus.Maintenance ? RoomStatus.Available : RoomStatus.Maintenance 
+      };
+      await updateRoom(id, updatedRoom);
+    }
   };
 
-  const addBooking = async (payload: any): Promise<Booking> => {
-    const res = await api.post<Booking>('/api/bookings', payload);
+  const addBooking = async (p: any): Promise<BookingInitResponse> => {
+    const res = await api.post<any>('/api/bookings', p);
+    const data = res.data || res.value || res;
+    const response: BookingInitResponse = {
+      bookingCode: String(data.bookingCode || data.BookingCode || ''),
+      paymentUrl: data.paymentUrl || data.PaymentUrl || null,
+      paymentInstruction: data.paymentInstruction || data.PaymentInstruction || null,
+      amount: Number(data.amount || data.Amount || 0),
+      status: (data.status || data.Status || BookingStatus.Pending) as BookingStatus,
+      paymentStatus: (data.paymentStatus || data.PaymentStatus || PaymentStatus.Unpaid) as PaymentStatus
+    };
+    
     await refreshData();
-    return res;
+    return response;
+  };
+
+  const updateBooking = async (id: string, updates: Partial<Booking>) => { await api.put(`/api/bookings/${id}`, { ...updates, id }); await refreshData(); };
+  const updatePaymentStatus = async (id: string, status: PaymentStatus) => { await api.put(`/api/bookings/${id}`, { id, paymentStatus: status }); await refreshData(); };
+  const confirmTransfer = async (code: string) => { 
+    await api.post(`/api/bookings/${code}/confirm-transfer`); 
+    await refreshData(); 
+  };
+  const checkInBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedIn' } }); await refreshData(); };
+  const checkOutBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedOut' } }); await refreshData(); };
+  const checkInBookingByCode = async (code: string) => { 
+    const b = bookings.find(x => x.bookingCode === code); 
+    if (b) await checkInBooking(b.id); 
+    else throw new Error("Identifier mismatch: Dossier code not found in current view.");
+  };
+  const cancelBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); await refreshData(); };
+  const addGuest = async (g: any) => { const res = await api.post<any>('/api/Auth/register', g); await refreshData(); return res.email; };
+  const updateGuest = async (id: string, updates: Partial<Guest>) => { await api.put(`/api/profile/me`, updates); await refreshData(); };
+
+  const parseLocalMidnight = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    const s = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d, 0, 0, 0, 0);
   };
 
   const isRoomAvailable = (roomId: string, checkIn: string, checkOut: string, excludeBookingId?: string): boolean => {
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
+    const start = parseLocalMidnight(checkIn);
+    const end = parseLocalMidnight(checkOut);
+
     return !bookings.some(b => {
-      if (b.roomId !== roomId || b.id === excludeBookingId) return false;
-      if (b.status === BookingStatus.CANCELLED || b.status === BookingStatus.CHECKED_OUT) return false;
-      const bStart = new Date(b.checkIn);
-      const bEnd = new Date(b.checkOut);
+      const isCorrectRoom = b.roomId === roomId;
+      const isNotExcluded = b.id !== excludeBookingId;
+      
+      const bStatus = b.status?.toLowerCase();
+      const isActive = bStatus !== 'cancelled' && bStatus !== 'checkedout';
+      
+      if (!isCorrectRoom || !isNotExcluded || !isActive) return false;
+
+      const bStart = parseLocalMidnight(b.checkIn);
+      const bEnd = parseLocalMidnight(b.checkOut);
+
       return (start < bEnd && end > bStart);
     });
   };
+
+  const dismissNotification = (id: string) => { setNotifications(prev => prev.filter(n => n.id !== id)); };
+  const markNotificationAsRead = async (id: string) => { await api.patch(`/api/notifications/${id}/read`); setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n)); };
+  const markAllNotificationsRead = async () => { await Promise.all(notifications.filter(n => !n.isRead).map(n => api.patch(`/api/notifications/${n.id}/read`))); setNotifications(prev => prev.map(n => ({ ...n, isRead: true }))); };
+  
+  const addStaff = async (p: any) => { 
+    const payload = {
+      fullName: p.name,
+      email: p.email,
+      temporaryPassword: p.password,
+      assignedRole: String(p.role).toLowerCase(),
+      status: String(p.status).toLowerCase()
+    };
+    await api.post('/api/admin/management/onboard-staff', payload); 
+    await refreshData(); 
+  };
+
+  const updateStaff = async (id: string, updates: Partial<StaffUser>) => { 
+    await api.put(`/api/admin/management/employees/${id}`, { ...updates, id }); 
+    await refreshData(); 
+  };
+
+  const toggleStaffStatus = async (id: string) => { 
+    const s = staff.find(x => x.id === id); 
+    if (s) {
+      const isActive = s.status === ProfileStatus.Active || String(s.status).toLowerCase() === 'active';
+      const endpoint = isActive ? 'deactivate' : 'activate';
+      await api.post(`/api/admin/management/accounts/${id}/${endpoint}`, null); 
+      await refreshData(); 
+    }
+  };
+
+  const updateCurrentUserProfile = async (updates: Partial<AppUser>) => { await api.put('/api/profile/me', updates); if (currentUser) setCurrentUser({ ...currentUser, ...updates }); };
 
   const value = {
     rooms, bookings, guests, staff, notifications, auditLogs, visitHistory,
     userRole, currentUser, isAuthenticated, isInitialLoading, isSidebarCollapsed, activeTab,
     selectedBookingId, setSelectedBookingId, selectedGuestId, setSelectedGuestId, selectedRoomId, setSelectedRoomId,
     setActiveTab, toggleSidebar: () => setIsSidebarCollapsed(!isSidebarCollapsed), login, logout, setUserRole,
-    addRoom: async (r: any) => { await api.post('/api/rooms', r); refreshData(); },
-    updateRoom: async (id: any, u: any) => { await api.put(`/api/rooms/${id}`, u); refreshData(); },
-    deleteRoom: async (id: any) => { await api.delete(`/api/rooms/${id}`); refreshData(); },
-    toggleRoomMaintenance: async (id: any) => { 
-      const room = rooms.find(r => r.id === id);
-      if (room) {
-        await api.put(`/api/rooms/${id}`, { ...room, status: room.status === RoomStatus.MAINTENANCE ? RoomStatus.AVAILABLE : RoomStatus.MAINTENANCE });
-        refreshData();
-      }
-    },
-    addBooking,
-    updateBooking: async (id: any, u: any) => { await api.put(`/api/bookings/${id}`, u); refreshData(); },
-    updatePaymentStatus: async (id: any, s: any) => { await api.put(`/api/bookings/${id}`, { paymentStatus: s }); refreshData(); },
-    confirmTransfer: async (c: any) => { await api.post(`/api/bookings/${c}/confirm-transfer`); refreshData(); },
-    checkInBooking: async (id: any) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedIn' } }); refreshData(); },
-    checkOutBooking: async (id: any) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedOut' } }); refreshData(); },
-    checkInBookingByCode: async (code: any) => { const b = bookings.find(x => x.bookingCode === code); if (b) await api.put(`/api/bookings/${b.id}/status`, null, { params: { status: 'CheckedIn' } }); refreshData(); },
-    cancelBooking: async (id: any) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); refreshData(); },
-    addGuest: async (g: any) => { const res = await api.post<any>('/api/Auth/register', g); refreshData(); return res.email; },
-    updateGuest: async (id: any, u: any) => { await api.put(`/api/profile/me`, u); refreshData(); },
-    isRoomAvailable,
-    dismissNotification: (id: any) => setNotifications(n => n.filter(x => x.id !== id)),
-    markNotificationAsRead: async (id: any) => { await api.patch(`/api/notifications/${id}/read`); refreshData(); },
-    markAllNotificationsRead: async () => { await api.patch(`/api/notifications/read-all`); refreshData(); },
-    addStaff: async (s: any) => { await api.post('/api/admin/management/onboard-staff', s); refreshData(); },
-    updateStaff: async (id: any, u: any) => { await api.put(`/api/admin/management/employees/${id}`, u); refreshData(); },
-    toggleStaffStatus: async (id: any) => { 
-      const s = staff.find(x => x.id === id);
-      if (s) await api.post(`/api/admin/management/accounts/${id}/${s.status === 'Active' ? 'deactivate' : 'activate'}`);
-      refreshData();
-    },
-    updateCurrentUserProfile: async (u: any) => { await api.put('/api/profile/me', u); refreshData(); },
-    refreshData
+    addRoom, updateRoom, deleteRoom, toggleRoomMaintenance, addBooking, updateBooking, updatePaymentStatus, confirmTransfer,
+    checkInBooking, checkOutBooking, checkInBookingByCode, cancelBooking, addGuest, updateGuest, isRoomAvailable,
+    dismissNotification, markNotificationAsRead, markAllNotificationsRead, addStaff, updateStaff, toggleStaffStatus, updateCurrentUserProfile, refreshData
   };
 
   return <HotelContext.Provider value={value}>{children}</HotelContext.Provider>;

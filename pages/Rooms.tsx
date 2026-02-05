@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
-import { Room, RoomStatus } from '../types';
-import { LayoutGrid, List, Search, Pencil, Trash2, Plus, Eye, SearchX, Wrench, RefreshCw, Square } from 'lucide-react';
+import { Room, RoomStatus, UserRole } from '../types';
+import { LayoutGrid, List, Search, Pencil, Trash2, Plus, Eye, SearchX, Wrench, RefreshCw, Square, Globe } from 'lucide-react';
 import RoomModal from '../components/RoomModal';
 import RoomDetailModal from '../components/RoomDetailModal';
 import DeleteRoomModal from '../components/DeleteRoomModal';
@@ -44,9 +45,9 @@ const Rooms: React.FC = () => {
 
   const stats = useMemo(() => [
     { label: 'Inventory', value: rooms.length, color: 'text-blue-400' },
-    { label: 'Occupied', value: rooms.filter(r => r.status === RoomStatus.OCCUPIED).length, color: 'text-emerald-400' },
-    { label: 'Ready', value: rooms.filter(r => r.status === RoomStatus.AVAILABLE).length, color: 'text-blue-400' },
-    { label: 'Service', value: rooms.filter(r => r.status === RoomStatus.CLEANING || r.status === RoomStatus.MAINTENANCE).length, color: 'text-rose-400' },
+    { label: 'Occupied', value: rooms.filter(r => r.status === RoomStatus.Occupied).length, color: 'text-emerald-400' },
+    { label: 'Ready', value: rooms.filter(r => r.status === RoomStatus.Available).length, color: 'text-blue-400' },
+    { label: 'Service', value: rooms.filter(r => r.status === RoomStatus.Cleaning || r.status === RoomStatus.Maintenance).length, color: 'text-rose-400' },
   ], [rooms]);
 
   const filteredRooms = useMemo(() => {
@@ -59,14 +60,18 @@ const Rooms: React.FC = () => {
     });
   }, [rooms, searchQuery, categoryFilter]);
 
-  const handleSaveRoom = (roomData: Omit<Room, 'id'>) => {
-    if (editingRoom) {
-      updateRoom(editingRoom.id, roomData);
-    } else {
-      addRoom(roomData);
+  const handleSaveRoom = async (roomData: Omit<Room, 'id'>) => {
+    try {
+      if (editingRoom) {
+        await updateRoom(editingRoom.id, roomData);
+      } else {
+        await addRoom(roomData);
+      }
+      setEditingRoom(null);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Room synchronization failure:", error);
     }
-    setEditingRoom(null);
-    setIsModalOpen(false);
   };
 
   const handleOpenDeleteModal = (e: React.MouseEvent, room: Room) => {
@@ -81,8 +86,8 @@ const Rooms: React.FC = () => {
     setIsMaintenanceModalOpen(true);
   };
 
-  const handleDeleteConfirm = (id: string) => {
-    deleteRoom(id);
+  const handleDeleteConfirm = async (id: string) => {
+    await deleteRoom(id);
     setIsDeleteModalOpen(false);
     setRoomToDelete(null);
   };
@@ -98,6 +103,23 @@ const Rooms: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const getStatusClasses = (status: RoomStatus) => {
+    switch (status) {
+      case RoomStatus.Available:
+        return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20';
+      case RoomStatus.Occupied:
+        return 'bg-blue-500/15 text-blue-400 border-blue-500/20';
+      case RoomStatus.Cleaning:
+        return 'bg-amber-500/15 text-amber-400 border-amber-500/20';
+      case RoomStatus.Maintenance:
+        return 'bg-rose-500/15 text-rose-400 border-rose-500/20';
+      case RoomStatus.Reserved:
+        return 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20';
+      default:
+        return 'bg-slate-500/15 text-slate-400 border-slate-500/20';
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-end justify-between gap-4">
@@ -110,7 +132,8 @@ const Rooms: React.FC = () => {
           <p className="text-slate-500 text-[11px] mt-0.5 font-bold uppercase tracking-widest italic opacity-70">Secured Hardware Node Management</p>
         </div>
         
-        <PermissionWrapper allowedRoles={['Admin', 'Manager']}>
+        {/* Fix: Using UserRole enum members instead of strings */}
+        <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
           <button 
             onClick={openAddModal}
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all shadow-2xl shadow-blue-500/20 active:scale-95 group"
@@ -193,7 +216,14 @@ const Rooms: React.FC = () => {
                           <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=100'} className="w-16 h-12 rounded-xl object-cover ring-2 ring-white/5 group-hover:ring-blue-500/40 transition-all shadow-md" alt=""/>
                           <div>
                              <p className="text-[16px] font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">Room {room.roomNumber}</p>
-                             <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash mt-0.5">{room.name}</p>
+                             <div className="flex items-center gap-2 mt-0.5">
+                               <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash">{room.name}</p>
+                               {room.isOnline && (
+                                 <span className="flex items-center gap-1 text-[8px] text-emerald-500 font-black uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/10 shadow-sm">
+                                   <Globe size={10} /> Online
+                                 </span>
+                               )}
+                             </div>
                           </div>
                         </div>
                       </td>
@@ -202,13 +232,7 @@ const Rooms: React.FC = () => {
                           <p className="text-[10px] text-slate-600 font-bold uppercase tracking-dash mt-0.5">{room.floor.replace(/([A-Z])/g, ' $1')}</p>
                       </td>
                       <td className="px-6 py-5 text-center">
-                          <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${
-                            room.status === RoomStatus.AVAILABLE ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' :
-                            room.status === RoomStatus.OCCUPIED ? 'bg-blue-500/15 text-blue-400 border-blue-500/20' :
-                            room.status === RoomStatus.CLEANING ? 'bg-amber-500/15 text-amber-400 border-amber-500/20' :
-                            room.status === RoomStatus.MAINTENANCE ? 'bg-rose-500/15 text-rose-400 border-rose-500/20' :
-                            'bg-slate-500/15 text-slate-400 border-slate-500/20'
-                          }`}>
+                          <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${getStatusClasses(room.status)}`}>
                             {room.status}
                           </span>
                       </td>
@@ -218,8 +242,9 @@ const Rooms: React.FC = () => {
                       </td>
                       <td className="px-6 py-5 text-right">
                           <div className="flex justify-end gap-2.5" onClick={e => e.stopPropagation()}>
-                             <PermissionWrapper allowedRoles={['Admin', 'Manager']}>
-                               <button onClick={(e) => handleOpenMaintenanceModal(e, room)} className={`p-3 rounded-xl border transition-all ${room.status === RoomStatus.MAINTENANCE ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg' : 'bg-white/5 text-slate-500 border-white/10 hover:text-amber-500'}`} title="Toggle Maintenance">
+                             {/* Fix: Using UserRole enum members instead of strings */}
+                             <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
+                               <button onClick={(e) => handleOpenMaintenanceModal(e, room)} className={`p-3 rounded-xl border transition-all ${room.status === RoomStatus.Maintenance ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg' : 'bg-white/5 text-slate-500 border-white/10 hover:text-amber-500'}`} title="Toggle Maintenance">
                                   <Wrench size={18}/>
                                </button>
                                <button onClick={(e) => openEditModal(e, room)} className="p-3 bg-white/5 text-slate-500 hover:text-blue-400 rounded-xl border border-white/10 transition-all"><Pencil size={18}/></button>
@@ -238,13 +263,15 @@ const Rooms: React.FC = () => {
                   <div key={room.id} onClick={() => { setViewingRoom(room); setIsDetailOpen(true); }} className="group glass-card rounded-2xl overflow-hidden hover:border-blue-500/40 transition-all cursor-pointer shadow-xl border border-white/10">
                     <div className="aspect-[16/10] relative overflow-hidden">
                       <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=600'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt=""/>
-                      <div className="absolute top-4 right-4">
-                         <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border backdrop-blur-md transition-all ${
-                           room.status === RoomStatus.AVAILABLE ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' :
-                           'bg-slate-900/80 text-slate-400 border-white/10'
-                         }`}>
+                      <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+                         <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border backdrop-blur-md transition-all ${getStatusClasses(room.status)}`}>
                            {room.status}
                          </span>
+                         {room.isOnline && (
+                           <span className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-500/20 bg-emerald-500/20 text-emerald-400 backdrop-blur-md flex items-center gap-2">
+                             <Globe size={12} className="animate-pulse" /> Instant Bookable
+                           </span>
+                         )}
                       </div>
                     </div>
                     <div className="p-5 flex justify-between items-start">

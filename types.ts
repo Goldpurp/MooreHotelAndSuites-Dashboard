@@ -1,18 +1,19 @@
 
 export enum RoomStatus {
-  AVAILABLE = 'Available',
-  OCCUPIED = 'Occupied',
-  CLEANING = 'Cleaning',
-  MAINTENANCE = 'Maintenance',
-  RESERVED = 'Reserved'
+  Available = 'Available',
+  Occupied = 'Occupied',
+  Cleaning = 'Cleaning',
+  Maintenance = 'Maintenance',
+  Reserved = 'Reserved'
 }
 
 export enum BookingStatus {
-  PENDING = 'Pending',
-  CONFIRMED = 'Confirmed',
-  CHECKED_IN = 'CheckedIn',
-  CHECKED_OUT = 'CheckedOut',
-  CANCELLED = 'Cancelled'
+  Pending = 'Pending',
+  Confirmed = 'Confirmed',
+  CheckedIn = 'CheckedIn',
+  CheckedOut = 'CheckedOut',
+  Cancelled = 'Cancelled',
+  Reserved = 'Reserved'
 }
 
 export enum VisitAction {
@@ -23,13 +24,37 @@ export enum VisitAction {
 }
 
 export type RoomCategory = 'Standard' | 'Business' | 'Executive' | 'Suite';
-export type PropertyFloor = 'GroundFloor' | 'FirstFloor' | 'SecondFloor' | 'ThirdFloor' | 'Penthouse';
+
+export enum PropertyFloor {
+  GroundFloor = 'GroundFloor',
+  FirstFloor = 'FirstFloor',
+  SecondFloor = 'SecondFloor',
+  ThirdFloor = 'ThirdFloor',
+  Penthouse = 'Penthouse'
+}
 
 export enum PaymentStatus {
-  PAID = 'Paid',
-  UNPAID = 'Unpaid',
-  PARTIAL = 'Partial',
-  AWAITING_VERIFICATION = 'AwaitingVerification'
+  Paid = 'Paid',
+  Unpaid = 'Unpaid',
+  Partial = 'Partial',
+  AwaitingVerification = 'AwaitingVerification'
+}
+
+export enum PaymentMethod {
+  Paystack = 'Paystack',
+  DirectTransfer = 'DirectTransfer'
+}
+
+export enum UserRole {
+  Admin = 'Admin',
+  Manager = 'Manager',
+  Staff = 'Staff',
+  Client = 'Client'
+}
+
+export enum ProfileStatus {
+  Active = 'Active',
+  Suspended = 'Suspended'
 }
 
 export interface BookingStatusHistory {
@@ -37,12 +62,13 @@ export interface BookingStatusHistory {
   timestamp: string;
 }
 
-export interface RoomImage {
-  id: string;
-  roomId: string;
-  url: string;
-  isPrimary: boolean;
-  createdAt: string;
+export interface BookingInitResponse {
+  bookingCode: string;
+  paymentUrl: string | null;
+  paymentInstruction: string | null;
+  amount: number;
+  status: BookingStatus;
+  paymentStatus: PaymentStatus;
 }
 
 export interface Room {
@@ -101,6 +127,7 @@ export interface Booking {
   amount: number;
   paymentStatus: PaymentStatus;
   paymentMethod?: string;
+  transactionReference?: string;
   createdAt: string;
   notes?: string;
   statusHistory: BookingStatusHistory[];
@@ -117,8 +144,6 @@ export interface AuditLog {
   createdAt: string;
 }
 
-export type UserRole = 'Admin' | 'Manager' | 'Staff' | 'Client';
-
 export interface AppUser {
   id: string;
   name: string;
@@ -128,7 +153,7 @@ export interface AppUser {
 }
 
 export interface StaffUser extends AppUser {
-  status: 'Active' | 'Suspended';
+  status: ProfileStatus;
   createdAt: string;
   password?: string;
 }
@@ -140,13 +165,4 @@ export interface AppNotification {
   bookingCode?: string;
   isRead: boolean;
   createdAt: string;
-}
-
-export interface HotelStats {
-  totalRevenue: number;
-  occupancyRate: number;
-  pendingCheckIns: number;
-  avgDailyRate: number;
-  revenueGrowth: number;
-  occupancyGrowth: number;
 }
