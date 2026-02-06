@@ -113,7 +113,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex text-slate-50 font-sans selection:bg-brand-500/30">
+    <div className="min-h-screen bg-slate-950 flex text-slate-50 font-sans selection:bg-brand-500/30 overflow-x-hidden">
       <NotificationSystem />
       <Sidebar />
 
@@ -123,8 +123,8 @@ const AppContent: React.FC = () => {
         }`}
       >
         <TopBar />
-        <main className="flex-1 p-4 md:p-8 lg:p-10 overflow-y-auto custom-scrollbar overflow-x-hidden">
-          <div className="max-w-7xl mx-auto w-full pb-32">
+        <main className="flex-1 fluid-padding overflow-y-auto custom-scrollbar overflow-x-hidden">
+          <div className="max-w-[1920px] mx-auto w-full pb-32">
             <Suspense
               fallback={
                 <div className="flex flex-col items-center justify-center h-[60vh] gap-6">

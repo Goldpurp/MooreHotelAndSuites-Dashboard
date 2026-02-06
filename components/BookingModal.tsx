@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Calendar, Zap, FileCheck, Printer, Check, AlertCircle, Loader2, User, Bed, Info, ShieldCheck, Globe, Clock, Brush } from 'lucide-react';
+import { X, Calendar, Zap, FileCheck, Check, AlertCircle, Loader2, User, Bed, ShieldCheck, Globe, Clock, Brush, ChevronRight, Receipt, Wallet } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { RoomStatus, PaymentMethod, BookingInitResponse } from '../types';
 
@@ -62,15 +61,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
   const availableRooms = useMemo(() => {
     return rooms.filter(room => {
-      // 1. MUST BE ONLINE: Rooms in Maintenance are isOnline: false and blocked.
       if (!room.isOnline) return false;
-
-      // 2. DATE OVERLAP CHECK: Overlapping bookings block selection.
-      // This allows walk-ins instantly after checkout as isRoomAvailable ignores 'CheckedOut' dossiers.
       const isFreeForDates = isRoomAvailable(room.id, formData.checkIn, formData.checkOut);
       if (!isFreeForDates) return false;
-
-      // 3. NO OTHER BLOCKS: Per requirement, cleaning or current occupancy does not block reservation creation.
       return true;
     });
   }, [rooms, formData.checkIn, formData.checkOut, isRoomAvailable]);
@@ -78,9 +71,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   useEffect(() => {
     if (formData.roomId) {
       const isValid = availableRooms.some(r => r.id === formData.roomId);
-      if (!isValid) {
-        setFormData(prev => ({ ...prev, roomId: '' }));
-      }
+      if (!isValid) setFormData(prev => ({ ...prev, roomId: '' }));
     }
   }, [availableRooms, formData.roomId]);
 
@@ -137,7 +128,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       }
     } catch (err: any) {
       setError(`Ledger rejection: ${err.message}`);
-      setStep('details');
+      // Don't reset step so they can try again or go back
     } finally {
       setIsSubmitting(false);
     }
@@ -149,205 +140,233 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-xl animate-in fade-in duration-500 overflow-y-auto">
-      <div className="w-full max-w-4xl flex flex-col items-center justify-center min-h-[600px]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/98 backdrop-blur-3xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
+      <div className="w-full max-w-5xl flex flex-col items-center justify-center min-h-[500px] py-4 sm:py-8">
         
         {step === 'success' && initResponse && (
-          <div className="w-full max-w-lg flex flex-col items-center animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center mb-8 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.1)]">
-              <Check size={48} className="text-emerald-500" strokeWidth={4} />
+          <div className="w-full max-w-2xl flex flex-col items-center animate-in zoom-in-95 duration-500 p-4 sm:p-10">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-500/10 flex items-center justify-center mb-6 sm:mb-10 border border-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+              <Check className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-500" strokeWidth={4} />
             </div>
 
-            <h2 className="text-[52px] font-black text-white uppercase italic tracking-tight mb-14 leading-none text-center">FOLIO CONFIRMED</h2>
+            <div className="text-center mb-10 sm:mb-14">
+              <h2 className="text-4xl sm:text-6xl font-black text-white uppercase italic tracking-tighter leading-none mb-4">Folio Verified</h2>
+              <p className="text-[10px] sm:text-[12px] text-emerald-400 font-black uppercase tracking-[0.4em] italic">System Commitment Synchronized</p>
+            </div>
 
-            <div className="w-full bg-[#0a0f1d]/60 border border-white/5 rounded-[2.5rem] p-12 shadow-3xl mb-12 backdrop-blur-md">
-               <div className="flex justify-between items-center pb-8 border-b border-white/5">
-                  <span className="text-[11px] text-slate-500 font-black uppercase tracking-[0.25em]">DOSSIER CODE</span>
-                  <span className="text-[42px] font-black text-brand-500 italic tracking-tighter uppercase leading-none">{initResponse.bookingCode}</span>
+            <div className="w-full bg-[#0a0f1d] border border-white/10 rounded-[2.5rem] sm:rounded-[3.5rem] p-8 sm:p-14 shadow-3xl mb-8 sm:mb-14 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Receipt size={120} className="text-white" />
                </div>
                
-               <div className="flex justify-between items-center pt-8">
-                  <span className="text-[11px] text-emerald-500 font-black uppercase tracking-[0.25em]">SETTLEMENT</span>
-                  <span className="text-[48px] font-black text-white tracking-tighter italic leading-none">₦{initResponse.amount.toLocaleString()}</span>
+               <div className="space-y-10 relative z-10">
+                 <div className="flex flex-col sm:flex-row justify-between items-center pb-8 border-b border-white/5 gap-4">
+                    <div className="text-center sm:text-left">
+                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.25em] block mb-2">Dossier Reference</span>
+                       <span className="text-4xl sm:text-[64px] font-black text-white italic tracking-tighter uppercase leading-none">{initResponse.bookingCode}</span>
+                    </div>
+                    <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                       <span className="text-[10px] text-emerald-400 font-black uppercase italic">Status: Live</span>
+                    </div>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-8">
+                    <div>
+                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.25em] block mb-1">Accounting</span>
+                       <span className="text-2xl sm:text-[42px] font-black text-brand-500 tracking-tighter italic leading-none">₦{initResponse.amount.toLocaleString()}</span>
+                    </div>
+                    <div className="text-right">
+                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.25em] block mb-1">Asset Node</span>
+                       <span className="text-2xl sm:text-3xl font-black text-white italic uppercase leading-none">Room {selectedRoom?.roomNumber}</span>
+                    </div>
+                 </div>
                </div>
             </div>
 
-            <div className="w-full space-y-4">
-               <button 
-                onClick={handleNavigateToSettlements}
-                className="w-full py-7 bg-brand-600 hover:bg-brand-700 text-white rounded-[1.5rem] font-black text-[15px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-all shadow-brand-500/10"
-               >
-                 <ShieldCheck size={22} />
-                 VERIFY SETTLEMENT NOW
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+               <button onClick={handleNavigateToSettlements} className="w-full py-5 sm:py-7 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl sm:rounded-[1.5rem] font-black text-xs sm:text-[15px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-all italic">
+                 <ShieldCheck size={20} /> Verify Settlement
                </button>
-               
-               <button 
-                onClick={onClose}
-                className="w-full py-7 bg-[#05080f] hover:bg-[#0a0f1d] text-slate-500 hover:text-white rounded-[1.5rem] font-black text-[15px] uppercase tracking-[0.2em] border border-white/5 transition-all"
-               >
-                 CLOSE DOSSIER
+               <button onClick={onClose} className="w-full py-5 sm:py-7 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl sm:rounded-[1.5rem] font-black text-xs sm:text-[15px] uppercase tracking-[0.2em] border border-white/5 transition-all italic">
+                 Close Protocol
                </button>
             </div>
           </div>
         )}
 
         {step === 'confirm' && (
-           <div className="w-full max-w-2xl bg-[#0a0f1d] border border-white/5 rounded-[3rem] p-12 flex flex-col items-center animate-in fade-in duration-300">
-              <h3 className="text-3xl font-black text-white uppercase italic tracking-tight mb-10 text-center">Verify Authorization</h3>
+           <div className="w-full max-w-3xl bg-[#0a0f1d] border border-white/10 rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-16 flex flex-col items-center animate-in fade-in zoom-in-95 duration-300 shadow-3xl">
+              <div className="w-16 h-16 bg-brand-500/10 rounded-2xl flex items-center justify-center mb-8 border border-brand-500/20">
+                 <FileCheck size={32} className="text-brand-500" />
+              </div>
               
-              <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-12 text-left mb-12 bg-white/5 p-10 rounded-[2rem]">
-                 <div className="space-y-6">
+              <div className="text-center mb-12">
+                <h3 className="text-3xl sm:text-4xl font-black text-white uppercase italic tracking-tighter mb-3 leading-none">Authorization Required</h3>
+                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.3em]">Verify Folio Intent Before Ledger Commitment</p>
+              </div>
+              
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-1 bg-white/5 border border-white/10 rounded-3xl overflow-hidden mb-12 shadow-inner">
+                 <div className="p-8 sm:p-10 space-y-8 bg-black/20">
                     <div>
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-1">Occupant</label>
-                       <p className="text-2xl font-black text-white italic uppercase tracking-tighter">{formData.guestFirstName} {formData.guestLastName}</p>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Primary Occupant</label>
+                       <p className="text-2xl font-black text-white italic uppercase tracking-tighter leading-tight">{formData.guestFirstName} {formData.guestLastName}</p>
+                       <p className="text-[11px] text-slate-500 font-medium mt-1 truncate">{formData.guestEmail}</p>
                     </div>
                     <div>
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-1">Asset</label>
-                       <p className="text-xl font-black text-slate-400 uppercase">Room {selectedRoom?.roomNumber}</p>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Node Allocation</label>
+                       <div className="flex items-center gap-3">
+                          <Bed size={18} className="text-brand-400" />
+                          <p className="text-xl font-black text-slate-300 uppercase italic">Unit {selectedRoom?.roomNumber}</p>
+                       </div>
                     </div>
                  </div>
-                 <div className="space-y-6 md:text-right">
+                 <div className="p-8 sm:p-10 space-y-8 bg-black/40">
                     <div>
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-1">Duration</label>
-                       <p className="text-2xl font-black text-white">{nights} Night(s)</p>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Stay Metric</label>
+                       <p className="text-2xl font-black text-white italic">{nights} Night(s)</p>
+                       <p className="text-[11px] text-slate-500 font-medium mt-1 italic">{new Date(formData.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} — {new Date(formData.checkOut).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
                     </div>
                     <div>
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-1">Settlement</label>
-                       <p className="text-4xl font-black text-brand-500 tracking-tighter italic">₦{totalAmount.toLocaleString()}</p>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Financial Commitment</label>
+                       <p className="text-4xl font-black text-emerald-500 tracking-tighter italic leading-none">₦{totalAmount.toLocaleString()}</p>
+                       <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mt-2 flex items-center gap-2"><Wallet size={10} /> {formData.paymentMethod}</p>
                     </div>
                  </div>
               </div>
 
-              <div className="flex gap-4 w-full">
-                <button onClick={() => setStep('details')} className="flex-1 py-5 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-widest hover:text-white transition-all">Back</button>
-                <button onClick={handleFinalSubmit} disabled={isSubmitting} className="flex-[2] py-5 bg-brand-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95">
-                   {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <FileCheck size={18} />}
-                   Commit to Ledger
+              {error && (
+                <div className="w-full p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-tight flex items-center gap-4 mb-8 animate-in shake">
+                  <AlertCircle size={20}/> 
+                  <div>
+                    <p className="font-black">Ledger Rejection</p>
+                    <p className="opacity-80 mt-0.5">{error}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-4 w-full">
+                <button onClick={() => setStep('details')} disabled={isSubmitting} className="flex-1 py-5 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-[0.2em] hover:text-white hover:bg-white/5 transition-all italic">Abort</button>
+                <button onClick={handleFinalSubmit} disabled={isSubmitting} className="flex-[2] py-5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 italic">
+                   {isSubmitting ? (
+                     <>
+                        <Loader2 size={18} className="animate-spin" /> 
+                        Synchronizing Protocol...
+                     </>
+                   ) : (
+                     <>
+                        <FileCheck size={18} /> Commit to Global Ledger
+                     </>
+                   )}
                 </button>
               </div>
            </div>
         )}
 
         {step === 'details' && (
-          <div className="w-full flex flex-col md:flex-row glass-card rounded-[3rem] overflow-hidden border border-white/10 shadow-3xl">
-            <div className={`hidden lg:flex lg:w-80 bg-gradient-to-br p-12 flex-col justify-between shrink-0 ${isWalkIn ? 'from-amber-600 to-orange-800' : 'from-brand-600 to-indigo-800'}`}>
-               <div className="space-y-12">
-                  <div className="w-16 h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white shadow-2xl backdrop-blur-md">
-                    {isWalkIn ? <Zap size={32}/> : <Calendar size={32}/>}
+          <div className="w-full flex flex-col lg:flex-row glass-card rounded-[1.5rem] sm:rounded-[4rem] overflow-hidden border border-white/10 shadow-3xl max-h-[92vh] sm:max-h-[90vh]">
+            {/* Left Visual Sidebar - Responsive Stacking */}
+            <div className={`flex lg:w-80 bg-gradient-to-br p-6 sm:p-10 lg:p-12 flex-col justify-between shrink-0 ${isWalkIn ? 'from-amber-600 to-orange-800' : 'from-brand-600 to-indigo-800'}`}>
+               <div className="space-y-4 sm:space-y-12">
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white shadow-2xl backdrop-blur-md">
+                    {isWalkIn ? <Zap size={24}/> : <Calendar size={24}/>}
                   </div>
-                  <h2 className="text-5xl font-black text-white uppercase italic leading-[0.85] tracking-tighter">
+                  <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase italic leading-[0.85] tracking-tighter">
                     {isWalkIn ? 'STAFF\nWALK\nIN' : 'NEW\nFOLIO\nSYNC'}
                   </h2>
                </div>
 
-               <div className="bg-black/30 p-8 rounded-[2rem] border border-white/15 space-y-6 backdrop-blur-md">
+               <div className="bg-black/30 p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/15 space-y-4 sm:space-y-8 backdrop-blur-md mt-6 lg:mt-0 shadow-2xl">
                   <div className="flex justify-between items-center">
-                     <span className="text-[10px] text-white/50 font-black uppercase tracking-widest">Nights</span>
-                     <span className="text-lg text-white font-black">{nights}</span>
+                     <span className="text-[9px] text-white/50 font-black uppercase tracking-widest">Nights</span>
+                     <span className="text-lg sm:text-xl text-white font-black italic">{nights}</span>
                   </div>
-                  <div className="flex justify-between items-center border-t border-white/10 pt-6">
-                     <div>
-                       <span className="text-[10px] text-white/50 font-black uppercase tracking-widest block mb-1">Total Value</span>
-                       <span className="text-3xl font-black text-white tracking-tighter italic">₦{totalAmount.toLocaleString()}</span>
+                  <div className="flex justify-between items-center border-t border-white/10 pt-4 sm:pt-8">
+                     <div className="w-full">
+                       <span className="text-[9px] text-white/50 font-black uppercase tracking-widest block mb-1">Projected Settlement</span>
+                       <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter italic">₦{totalAmount.toLocaleString()}</span>
                      </div>
                   </div>
                </div>
             </div>
 
-            <div className="flex-1 bg-[#05080f] p-12 flex flex-col">
-               <div className="flex justify-between items-center mb-12">
-                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Manual Enrollment Protocol</span>
-                  <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-2xl text-slate-600 transition-all"><X size={24}/></button>
+            {/* Right Form Content - Responsive Padding */}
+            <div className="flex-1 bg-[#05080f] p-6 sm:p-10 lg:p-16 flex flex-col overflow-y-auto custom-scrollbar">
+               <div className="flex justify-between items-center mb-8 sm:mb-16">
+                  <div className="flex items-center gap-3">
+                     <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] italic">Manual Enrollment Protocol</span>
+                  </div>
+                  <button onClick={onClose} className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
                </div>
 
-               <div className="flex-1 space-y-10">
-                  <div className="space-y-6">
-                      <h4 className="text-[11px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-2"><User size={14} /> Identity Enrollment</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <input placeholder="First Name" value={formData.guestFirstName} onChange={e => setFormData({...formData, guestFirstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                        <input placeholder="Last Name" value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                        <input placeholder="Email Address" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
-                        <input placeholder="Phone" value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+               <div className="flex-1 space-y-8 sm:space-y-14">
+                  <div className="space-y-4 sm:space-y-8">
+                      <h4 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2 leading-none italic"><User size={14} /> Identity Enrollment</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div className="space-y-2">
+                           <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">First Name</label>
+                           <input placeholder="John" value={formData.guestFirstName} onChange={e => setFormData({...formData, guestFirstName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold italic" />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Last Name</label>
+                           <input placeholder="Doe" value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold italic" />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Enterprise Email</label>
+                           <input placeholder="john.doe@enterprise.com" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Secure Line</label>
+                           <input placeholder="+234..." value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
+                        </div>
                       </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Check-In</label>
-                          <span className="text-[8px] text-blue-500 font-black uppercase flex items-center gap-1"><Clock size={8}/> 15:00</span>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Arrival</label>
+                          <span className="text-[8px] text-blue-500 font-black uppercase flex items-center gap-1 leading-none"><Clock size={8}/> 15:00</span>
                         </div>
-                        <input type="date" min={today} readOnly={isWalkIn} value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                        <input type="date" min={today} readOnly={isWalkIn} value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold italic" />
                      </div>
                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Check-Out</label>
-                          <span className="text-[8px] text-rose-500 font-black uppercase flex items-center gap-1"><Clock size={8}/> 11:30</span>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Departure</label>
+                          <span className="text-[8px] text-rose-500 font-black uppercase flex items-center gap-1 leading-none"><Clock size={8}/> 11:30</span>
                         </div>
-                        <input type="date" min={formData.checkIn} value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                        <input type="date" min={formData.checkIn} value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold italic" />
                      </div>
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol</label>
-                        <select 
-                          value={formData.paymentMethod} 
-                          onChange={e => setFormData({...formData, paymentMethod: e.target.value as PaymentMethod})}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-brand-400 font-black uppercase tracking-widest outline-none appearance-none"
-                        >
-                          <option value={PaymentMethod.Paystack}>Paystack</option>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Tariff Protocol</label>
+                        <select value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value as PaymentMethod})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm text-brand-400 font-black uppercase tracking-widest outline-none appearance-none cursor-pointer hover:bg-white/10 transition-all">
+                          <option value={PaymentMethod.Paystack}>Paystack Gateway</option>
                           <option value={PaymentMethod.DirectTransfer}>Bank Transfer</option>
                         </select>
                      </div>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-8">
                      <div className="flex justify-between items-center">
-                        <h4 className="text-[11px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2"><Bed size={14} /> Asset Allocation</h4>
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-dash italic">{availableRooms.length} Units Available</span>
+                        <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] flex items-center gap-2 leading-none italic"><Bed size={14} /> Asset Allocation</h4>
+                        <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest italic">{availableRooms.length} Nodes Online</span>
                      </div>
-                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 overflow-y-auto max-h-40 custom-scrollbar pr-2 p-1">
+                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 overflow-y-auto max-h-48 sm:max-h-64 custom-scrollbar pr-3 p-1">
                         {availableRooms.map(room => (
-                          <button 
-                            type="button" 
-                            key={room.id} 
-                            onClick={() => setFormData({...formData, roomId: room.id})} 
-                            className={`p-4 rounded-2xl border text-center transition-all relative overflow-hidden ${
-                              formData.roomId === room.id 
-                                ? 'bg-brand-600 border-brand-500 text-white shadow-xl scale-105' 
-                                : 'bg-white/5 border-white/5 text-slate-600 hover:border-white/20 hover:bg-white/[0.07]'
-                            }`}
-                          >
-                             {room.isOnline && (
-                               <div className="absolute top-1 right-1">
-                                 <Globe size={8} className="text-emerald-500 animate-pulse" />
-                               </div>
-                             )}
-                             {room.status === RoomStatus.Cleaning && (
-                               <div className="absolute bottom-1 left-1">
-                                 <Brush size={8} className="text-amber-500" />
-                               </div>
-                             )}
-                             <p className="text-[14px] font-black leading-tight">Room {room.roomNumber}</p>
-                             <p className={`text-[8px] font-bold uppercase mt-1 ${room.status === RoomStatus.Cleaning ? 'text-amber-500' : 'opacity-60'}`}>
-                                {room.status === RoomStatus.Cleaning ? 'Cleaning' : `₦${(room.pricePerNight/1000).toFixed(0)}k`}
-                             </p>
+                          <button type="button" key={room.id} onClick={() => setFormData({...formData, roomId: room.id})} className={`p-4 sm:p-5 rounded-2xl border text-center transition-all relative overflow-hidden group/room ${formData.roomId === room.id ? 'bg-brand-600 border-brand-500 text-white shadow-xl scale-105' : 'bg-white/5 border-white/5 text-slate-600 hover:border-white/20 hover:bg-white/[0.07]'}`}>
+                             {room.isOnline && <div className="absolute top-2 right-2"><Globe size={10} className={`${formData.roomId === room.id ? 'text-white' : 'text-emerald-500'} animate-pulse`} /></div>}
+                             <p className="text-[12px] sm:text-[14px] font-black leading-tight uppercase italic tracking-tighter">Unit {room.roomNumber}</p>
+                             <p className="text-[8px] font-bold uppercase mt-1 opacity-60">₦{(room.pricePerNight/1000).toFixed(0)}k / night</p>
                           </button>
                         ))}
                      </div>
                   </div>
 
-                  {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-tight flex items-center gap-3 animate-in shake"><AlertCircle size={18}/> {error}</div>}
-
-                  <button 
-                    type="button"
-                    onClick={validateAndShowConfirm} 
-                    disabled={!formData.roomId || availableRooms.length === 0}
-                    className={`w-full py-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all ${
-                      !formData.roomId ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 
-                      isWalkIn ? 'bg-amber-600 text-white hover:bg-amber-700' : 'bg-brand-600 text-white hover:bg-brand-700'
-                    }`}
-                  >
-                    Proceed to Authorization
-                  </button>
+                  <div className="pt-6 sm:pt-10 border-t border-white/5">
+                     <button type="button" onClick={validateAndShowConfirm} disabled={!formData.roomId || availableRooms.length === 0} className={`w-full py-5 sm:py-7 rounded-2xl sm:rounded-[2rem] font-black text-[11px] sm:text-[13px] uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 italic ${!formData.roomId ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : isWalkIn ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-amber-900/20' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-900/20'}`}>
+                        Initialize Authorization Protocol <ChevronRight size={18} strokeWidth={3} />
+                     </button>
+                  </div>
                </div>
             </div>
           </div>

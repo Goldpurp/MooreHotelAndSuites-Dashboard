@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Room, Booking, Guest, RoomStatus, BookingStatus, AppNotification, UserRole, AppUser, StaffUser, AuditLog, VisitRecord, PaymentStatus, VisitAction, ProfileStatus, PaymentMethod, BookingInitResponse } from '../types';
 import { api } from '../lib/api';
@@ -146,6 +147,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   };
 
+  // Fixed normalizeUser to include phone mapping
   const normalizeUser = (raw: any): AppUser | null => {
     if (!raw) return null;
     const data = raw.user || raw.profile || raw.data || raw;
@@ -167,6 +169,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: String(data.id || data.Id || ""),
       name: data.name || data.fullName || data.Name || "Personnel",
       email: data.email || data.Email || "",
+      // Extracted phone/phoneNumber from raw data
+      phone: data.phone || data.Phone || data.phoneNumber || data.PhoneNumber || "",
       role: canonicalRole,
       status: canonicalStatus,
       department: data.department || data.Department || "",

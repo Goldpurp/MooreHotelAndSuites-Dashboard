@@ -1,4 +1,5 @@
 
+
 export enum RoomStatus {
   Available = 'Available',
   Occupied = 'Occupied',
@@ -151,6 +152,8 @@ export interface AppUser {
   role: UserRole;
   avatarUrl?: string;
   department?: string;
+  // Added phone property to resolve type errors in management views
+  phone?: string;
 }
 
 export interface StaffUser extends AppUser {

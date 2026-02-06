@@ -1,13 +1,9 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { 
-  UserPlus, Search, ShieldAlert, 
-  ShieldCheck, ShieldOff, Users, Activity, 
-  Fingerprint, RefreshCw, Mail, Calendar, 
-  Lock, ChevronLeft, ChevronRight, Database, 
-  SearchX, UserMinus, Filter,
-  UserCheck, Building2
+  UserPlus, Search, ShieldAlert, ShieldCheck, ShieldOff, Users, Activity, 
+  Fingerprint, RefreshCw, Mail, Calendar, Lock, ChevronLeft, ChevronRight, Database, 
+  SearchX, UserMinus, Filter, UserCheck, Building2, Save, X
 } from 'lucide-react';
 import RoleBadge from '../components/RoleBadge';
 import PermissionWrapper from '../components/PermissionWrapper';
@@ -20,9 +16,12 @@ const StaffManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuspensionOpen, setIsSuspensionOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState<StaffUser | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Suspended'>('All');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -30,44 +29,40 @@ const StaffManagement: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  /**
-   * REGISTRY RESOLUTION
-   * Includes internal roles only (Admin, Manager, Staff).
-   * Excludes Clients for role-based segregation.
-   */
   const filteredStaff = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     const allStaff = (staff || []).filter(s => s && s.role !== UserRole.Client);
-    
-    return allStaff.filter(s => {
-      const matchesSearch = (s.name || '').toLowerCase().includes(q) || 
-                            (s.email || '').toLowerCase().includes(q) ||
-                            (s.role || '').toLowerCase().includes(q) ||
-                            (s.department || '').toLowerCase().includes(q);
-      
-      const sStatus = String(s.status).toLowerCase();
-      const matchesStatus = statusFilter === 'All' || 
-                            (statusFilter === 'Active' && sStatus === 'active') ||
-                            (statusFilter === 'Suspended' && sStatus === 'suspended');
-      
-      return matchesSearch && matchesStatus;
-    });
+    return allStaff
+      .filter(s => {
+        const matchesSearch = (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q) || (s.department || '').toLowerCase().includes(q);
+        const sStatus = String(s.status).toLowerCase();
+        const matchesStatus = statusFilter === 'All' || (statusFilter === 'Active' && sStatus === 'active') || (statusFilter === 'Suspended' && sStatus === 'suspended');
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [staff, searchQuery, statusFilter]);
 
-  /**
-   * SECURITY PROTOCOL: SUSPENSION ELIGIBILITY
-   * 1. Only Admins can perform activation/deactivation.
-   * 2. Admins CANNOT be suspended (including oneself).
-   */
+  const paginatedStaff = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredStaff.slice(start, start + PAGE_SIZE);
+  }, [filteredStaff, currentPage]);
+
+  const totalPages = Math.ceil(filteredStaff.length / PAGE_SIZE);
+
+  useEffect(() => {
+    if (paginatedStaff.length > 0 && !selectedStaffId) {
+      setSelectedStaffId(paginatedStaff[0].id);
+    }
+  }, [paginatedStaff, selectedStaffId]);
+
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
+
+  const selectedStaff = useMemo(() => staff.find(s => s.id === selectedStaffId), [staff, selectedStaffId]);
+
   const canPerformSuspension = (targetUser: StaffUser) => {
     if (!currentUser || currentUser.role !== UserRole.Admin) return false;
-    // Admins are immune to suspension protocols
     if (targetUser.role === UserRole.Admin) return false;
     return true;
-  };
-
-  const handleCreate = () => {
-    setIsModalOpen(true);
   };
 
   const handleToggleAccessRequest = (user: StaffUser) => {
@@ -76,244 +71,161 @@ const StaffManagement: React.FC = () => {
     setIsSuspensionOpen(true);
   };
 
-  const isAdminActor = currentUser?.role === UserRole.Admin;
+  const getRoleDescription = (role: string) => {
+    switch(role?.toLowerCase()) {
+      case 'admin': return "System Administrator: Core infrastructure and security protocol oversight.";
+      case 'manager': return "Property Manager: Operational yields and personnel registry management.";
+      case 'staff': return "Operations Staff: Direct guest relations and asset availability control.";
+      default: return "Hospitality professional.";
+    }
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-8 h-[2px] bg-brand-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.6)]"></span>
-            <p className="text-[10px] text-brand-400 font-black uppercase tracking-[0.25em]">Personnel Protocol Registry</p>
+    <div className="flex flex-row gap-6 h-[calc(100vh-120px)] animate-in fade-in duration-700 overflow-hidden">
+      <div className="split-main flex flex-col gap-4">
+        <div className="flex items-end justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
+              <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">Personnel Directory</p>
+            </div>
+            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Staff Registry</h2>
           </div>
-          <h2 className="text-4xl font-black text-white tracking-tight uppercase italic leading-none">Internal Staff Ledger</h2>
-          <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-3 italic">Administrative Oversight — Personnel Hierarchy Only</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={handleManualRefresh}
-            className={`p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all shadow-xl active:scale-95 ${isRefreshing ? 'animate-spin' : ''}`}
-          >
-            <RefreshCw size={20} />
-          </button>
-          <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
-            <button 
-              onClick={handleCreate}
-              className="bg-brand-600 hover:bg-brand-700 text-white px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 transition-all shadow-3xl shadow-brand-950/40 active:scale-95 italic"
-            >
-              <UserPlus size={18} strokeWidth={3} /> Onboard Personnel
-            </button>
-          </PermissionWrapper>
-        </div>
-      </div>
-
-      {/* Statistical Nodes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {[
-          { label: 'Verified Staff', value: (staff || []).filter(s => s.role !== UserRole.Client && String(s.status).toLowerCase() === 'active').length, color: 'text-emerald-400', icon: ShieldCheck, sub: 'Active Nodes' },
-          { label: 'Internal Reach', value: (staff || []).filter(s => s.role !== UserRole.Client).length, color: 'text-brand-400', icon: Users, sub: 'Total Registry' },
-          { label: 'Revoked Access', value: (staff || []).filter(s => s.role !== UserRole.Client && String(s.status).toLowerCase() === 'suspended').length, color: 'text-rose-400', icon: ShieldOff, sub: 'Locked Nodes' }
-        ].map((node) => (
-          <div key={node.label} className="glass-card p-6 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden group bg-slate-900/20">
-             <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <node.icon size={100} />
-             </div>
-             <div className="flex justify-between items-start mb-6">
-                <div className="p-3 bg-slate-950 rounded-2xl border border-white/10 shadow-inner">
-                   <node.icon size={20} className={node.color} />
-                </div>
-                <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Internal Scan</span>
-             </div>
-             <div>
-                <span className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] block mb-1">{node.label}</span>
-                <div className="flex items-baseline gap-2">
-                   <h4 className={`text-4xl font-black italic tracking-tighter ${node.color}`}>{node.value}</h4>
-                   <span className="text-[9px] text-slate-700 font-bold uppercase tracking-widest">{node.sub}</span>
-                </div>
-             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Registry Table */}
-      <div className="glass-card rounded-[2.5rem] flex flex-col overflow-hidden border border-white/5 shadow-3xl bg-slate-900/10 backdrop-blur-3xl">
-        <div className="px-8 py-6 border-b border-white/5 flex flex-wrap justify-between items-center gap-6 bg-slate-950/60">
-          <div className="relative flex-1 max-w-xl group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-brand-500 transition-colors" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search Personnel Identity or Department..." 
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-black/60 border border-white/5 rounded-2xl py-4.5 pl-14 pr-6 text-[13px] text-slate-200 outline-none focus:bg-slate-950 transition-all font-black uppercase tracking-tight placeholder:text-slate-700"
-            />
-          </div>
-          <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/5 overflow-hidden">
-                {(['All', 'Active', 'Suspended'] as const).map(f => (
-                  <button 
-                    key={f}
-                    onClick={() => setStatusFilter(f)}
-                    className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                      statusFilter === f 
-                        ? 'bg-brand-600 text-white shadow-lg' 
-                        : 'text-slate-600 hover:text-slate-300'
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-             </div>
-             <div className="hidden lg:flex items-center gap-4 px-6 py-3 rounded-2xl border border-white/5 bg-black/40">
-                <Fingerprint size={16} className="text-brand-500" />
-                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Personnel Compliance</p>
-             </div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
+            <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
+              <button onClick={() => setIsModalOpen(true)} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg italic whitespace-nowrap"><UserPlus size={16} /> Onboard Personnel</button>
+            </PermissionWrapper>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-separate border-spacing-0">
-            <thead className="sticky top-0 bg-slate-950/90 backdrop-blur-md z-10">
-              <tr className="text-slate-500 text-[10px] font-black uppercase tracking-[0.25em]">
-                <th className="px-10 py-6 border-b border-white/10">Authorized Personnel</th>
-                <th className="px-10 py-6 border-b border-white/10">Hierarchy Level</th>
-                <th className="px-10 py-6 border-b border-white/10">Enrollment Date</th>
-                <th className="px-10 py-6 border-b border-white/10 text-center">Status</th>
-                <th className="px-10 py-6 border-b border-white/10 text-right">Administrative</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filteredStaff.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-48 text-center">
-                    <div className="flex flex-col items-center gap-6 opacity-20">
-                       <SearchX size={64} className="text-slate-700" />
-                       <p className="text-[15px] font-black uppercase tracking-[0.5em] text-slate-600 italic">No personnel records detected</p>
-                    </div>
-                  </td>
+        <div className="glass-card rounded-2xl flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
+          <div className="px-6 py-4 border-b border-white/5 bg-slate-950/60 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="relative w-full md:flex-1 max-w-md group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
+              <input type="text" placeholder="Lookup Personnel Identity..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none font-medium" />
+            </div>
+            <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-xl border border-white/5">
+               {(['All', 'Active', 'Suspended'] as const).map(f => (
+                 <button key={f} onClick={() => setStatusFilter(f)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${statusFilter === f ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300'}`}>{f}</button>
+               ))}
+            </div>
+          </div>
+
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-left min-w-[700px]">
+              <thead className="sticky top-0 bg-slate-950/90 z-10 border-b border-white/10">
+                <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
+                  <th className="responsive-table-padding">Authorized Personnel</th>
+                  <th className="responsive-table-padding">Hierarchy Level</th>
+                  <th className="responsive-table-padding col-priority-med">Enrollment</th>
+                  <th className="responsive-table-padding text-center">Status</th>
+                  <th className="responsive-table-padding text-right">Actions</th>
                 </tr>
-              ) : (
-                filteredStaff.map((user) => {
-                  if (!user) return null;
-                  const isActive = String(user.status).toLowerCase() === 'active';
-                  const isSelf = user.id === currentUser?.id;
-                  const suspensionAllowed = canPerformSuspension(user);
-                  
-                  return (
-                    <tr key={user.id} className="hover:bg-brand-500/[0.04] transition-all group border-l-4 border-transparent hover:border-brand-500">
-                      <td className="px-10 py-7">
-                        <div className="flex items-center gap-5">
-                          <div className="relative">
-                            <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=020617&color=fff`} className="w-12 h-12 rounded-2xl object-cover ring-2 ring-white/5 group-hover:ring-brand-500/40 transition-all shadow-xl" alt=""/>
-                            {isActive && <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-[3px] border-slate-950 shadow-sm animate-pulse"></div>}
-                          </div>
-                          <div>
-                            <p className="text-[16px] font-black text-white group-hover:text-brand-400 transition-colors uppercase italic tracking-tight">
-                              {user.name} {isSelf && <span className="ml-2 text-[9px] bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded italic not-uppercase font-bold tracking-normal border border-brand-500/20 shadow-sm">(You)</span>}
-                            </p>
-                            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
-                               <div className="flex items-center gap-2">
-                                  <Mail size={10} className="text-slate-600" />
-                                  <p className="text-[10px] text-slate-500 font-bold tracking-tight lowercase">{user.email}</p>
-                               </div>
-                               {user.department && (
-                                 <div className="flex items-center gap-1.5">
-                                    <Building2 size={10} className="text-brand-500/60" />
-                                    <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest italic">{user.department}</p>
-                                 </div>
-                               )}
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {paginatedStaff.length === 0 ? (
+                  <tr><td colSpan={5} className="py-32 text-center text-slate-700 adaptive-text-xs font-black uppercase tracking-widest italic">No matching personnel records detected</td></tr>
+                ) : (
+                  paginatedStaff.map((user) => {
+                    const isActive = String(user.status).toLowerCase() === 'active';
+                    return (
+                      <tr key={user.id} onClick={() => setSelectedStaffId(user.id)} className={`hover:bg-brand-500/[0.02] transition-all group border-l-4 ${selectedStaffId === user.id ? 'bg-white/[0.04] border-brand-500' : 'border-transparent'}`}>
+                        <td className="responsive-table-padding">
+                          <div className="flex items-center gap-4">
+                            <img src={user.avatarUrl} className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl object-cover ring-2 ring-white/5" alt=""/>
+                            <div className="min-w-0">
+                              <p className="adaptive-text-sm font-black text-white uppercase italic truncate leading-none mb-1.5">{user.name}</p>
+                              <p className="text-[8px] text-slate-600 font-bold lowercase truncate">{user.email}</p>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-10 py-7">
-                        <RoleBadge role={user.role} />
-                      </td>
-                      <td className="px-10 py-7">
-                        <div className="flex items-center gap-2.5">
-                           <Calendar size={14} className="text-slate-600" />
-                           <p className="text-[12px] font-black text-slate-300 uppercase italic tracking-tighter">
-                             {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'SYS-ENTRY'}
-                           </p>
-                        </div>
-                      </td>
-                      <td className="px-10 py-7">
-                        <div className="flex justify-center">
-                          <span className={`px-5 py-2 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border transition-all flex items-center gap-2.5 ${
-                            isActive 
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
-                              : 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)]'
-                          }`}>
-                            {isActive ? <ShieldCheck size={10} /> : <ShieldOff size={10} />}
-                            {isActive ? 'Active' : 'Suspended'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-10 py-7 text-right">
-                        <div className="flex justify-end gap-3" onClick={e => e.stopPropagation()}>
-                           {isAdminActor ? (
-                             <button 
-                               onClick={() => handleToggleAccessRequest(user)}
-                               disabled={!suspensionAllowed}
-                               className={`p-4 rounded-2xl border transition-all active:scale-90 flex items-center justify-center ${
-                                 !suspensionAllowed 
-                                   ? 'bg-slate-900/40 text-slate-700 border-white/5 cursor-not-allowed opacity-30 shadow-none'
-                                   : isActive 
-                                      ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-600 hover:text-white border-rose-500/20 shadow-xl shadow-rose-950/20' 
-                                      : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-600 hover:text-white border-emerald-500/20 shadow-xl shadow-emerald-950/20'
-                               }`}
-                               title={!suspensionAllowed ? 'Administrative Immunity Active' : isActive ? 'Authorize Deactivation' : 'Authorize Activation'}
-                             >
-                               {isActive ? <UserMinus size={22} strokeWidth={2.5} /> : <UserCheck size={22} strokeWidth={2.5} />}
-                             </button>
-                           ) : (
-                             <div className="p-4 bg-white/5 rounded-2xl border border-white/5 text-slate-800 opacity-20" title="Administrative Access Required">
-                               <Lock size={20} />
-                             </div>
-                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Table Footer */}
-        <div className="px-10 py-8 bg-slate-950/80 border-t border-white/5 flex items-center justify-between">
-           <div className="flex items-center gap-4">
-              <Database size={20} className="text-brand-500" />
-              <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.35em] italic">Personnel Registry Node • Operational Mode Active</p>
-           </div>
-           <div className="flex gap-4">
-              <button onClick={handleManualRefresh} className="p-4 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all bg-white/5 hover:bg-white/10">
-                <ChevronLeft size={20} />
-              </button>
-              <div className="flex items-center px-8 rounded-2xl bg-black/40 border border-white/10">
-                <span className="text-[12px] font-black text-white tracking-widest uppercase italic pt-1 leading-none">Node Alpha</span>
-              </div>
-              <button onClick={handleManualRefresh} className="p-4 border border-white/10 rounded-2xl text-slate-600 hover:text-white transition-all bg-white/5 hover:bg-white/10">
-                <ChevronRight size={20} />
-              </button>
-           </div>
+                        </td>
+                        <td className="responsive-table-padding"><RoleBadge role={user.role} /></td>
+                        <td className="responsive-table-padding col-priority-med">
+                           <p className="text-[11px] font-black text-slate-500 uppercase italic whitespace-nowrap">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}</p>
+                        </td>
+                        <td className="responsive-table-padding text-center">
+                          <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border ${isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.1)]' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>{isActive ? 'Authorized' : 'Locked'}</span>
+                        </td>
+                        <td className="responsive-table-padding text-right">
+                           <div className="flex justify-end" onClick={e => e.stopPropagation()}>
+                             {currentUser?.role === UserRole.Admin && user.role !== UserRole.Admin ? (
+                               <button onClick={() => handleToggleAccessRequest(user)} className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isActive ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>{isActive ? <ShieldOff size={16} /> : <ShieldCheck size={16} />}</button>
+                             ) : <Lock size={16} className="text-slate-800 opacity-20 mr-2" />}
+                           </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-8 py-4 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
+             <div className="text-[10px] text-slate-600 font-black uppercase italic tracking-widest">{filteredStaff.length} Total Registered Personnel</div>
+             <div className="flex gap-2">
+                <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={18} /></button>
+                <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[11px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
+                <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={18} /></button>
+             </div>
+          </div>
         </div>
       </div>
 
-      <CreateUserModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
+      {selectedStaff && (
+        <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
+          <div className="glass-card rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
+            <div className="flex justify-between items-start mb-10">
+              <div className="space-y-1">
+                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase italic leading-none">Personnel Info</h3>
+                 <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">Credential Snapshot</p>
+              </div>
+              <button onClick={() => setSelectedStaffId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
+            </div>
 
-      <StaffSuspensionModal
-        isOpen={isSuspensionOpen}
-        onClose={() => setIsSuspensionOpen(false)}
-        onConfirm={toggleStaffStatus}
-        user={userToToggle}
-      />
+            <div className="flex flex-col items-center mb-10 pt-4">
+              <div className="relative mb-6">
+                 <img src={selectedStaff.avatarUrl} className="w-24 h-24 rounded-3xl object-cover ring-4 ring-white/10 shadow-2xl" alt=""/>
+                 {String(selectedStaff.status).toLowerCase() === 'active' && <div className="absolute -bottom-1 -right-1 p-2 bg-emerald-600 rounded-xl border-4 border-slate-950 text-white shadow-xl animate-pulse"><ShieldCheck size={16} /></div>}
+              </div>
+              <h3 className="adaptive-text-lg font-black text-white italic uppercase text-center leading-[1.1] tracking-tighter px-2 mb-2">{selectedStaff.name}</h3>
+              <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-4">{selectedStaff.department || 'General Operations'}</p>
+              <div className="px-4 py-1.5 bg-white/5 border border-white/5 rounded-xl flex items-center gap-2"><Fingerprint size={12} className="text-slate-600" /><p className="text-[8px] text-slate-600 font-black uppercase tracking-widest truncate max-w-[120px]">{selectedStaff.id}</p></div>
+            </div>
+
+            <div className="space-y-8 flex-1">
+              <div className="bg-[#0d131f] p-6 rounded-3xl space-y-5 border border-white/5">
+                 <div className="flex items-center gap-4 text-slate-400">
+                    <div className="p-2 bg-black rounded-xl border border-white/5 text-slate-700 shrink-0"><Mail size={16}/></div>
+                    <span className="adaptive-text-sm font-bold truncate leading-none lowercase">{selectedStaff.email}</span>
+                 </div>
+                 <div className="flex items-center gap-4 text-slate-400 pt-5 border-t border-white/5">
+                    <div className="p-2 bg-black rounded-xl border border-white/5 text-slate-700 shrink-0"><Building2 size={16}/></div>
+                    <span className="adaptive-text-sm font-black uppercase italic leading-none">{selectedStaff.department || 'Operational Flow'}</span>
+                 </div>
+              </div>
+
+              <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-4">
+                 <div className="flex justify-between items-center"><p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Authority Role</p><RoleBadge role={selectedStaff.role} /></div>
+                 <p className="text-[11px] leading-relaxed text-slate-500 italic font-medium">{getRoleDescription(selectedStaff.role)}</p>
+              </div>
+            </div>
+
+            <div className="mt-10 pt-6 border-t border-white/10">
+              <PermissionWrapper allowedRoles={[UserRole.Admin]}>
+                {selectedStaff.role !== UserRole.Admin ? (
+                  <button onClick={() => handleToggleAccessRequest(selectedStaff)} className={`w-full py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl italic ${String(selectedStaff.status).toLowerCase() === 'active' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}>
+                    {String(selectedStaff.status).toLowerCase() === 'active' ? <ShieldOff size={20}/> : <Activity size={20}/>} {String(selectedStaff.status).toLowerCase() === 'active' ? 'REVOKE SYSTEM ACCESS' : 'RESTORE SYSTEM ACCESS'}
+                  </button>
+                ) : <div className="p-5 bg-slate-900/50 rounded-2xl text-center border border-white/5"><p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.2em] italic">ROOT AUTHORITY PROTECTED</p></div>}
+              </PermissionWrapper>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <CreateUserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <StaffSuspensionModal isOpen={isSuspensionOpen} onClose={() => setIsSuspensionOpen(false)} onConfirm={toggleStaffStatus} user={userToToggle} />
     </div>
   );
 };
