@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Room, Booking, Guest, RoomStatus, BookingStatus, AppNotification, UserRole, AppUser, StaffUser, AuditLog, VisitRecord, PaymentStatus, VisitAction, ProfileStatus, PaymentMethod, BookingInitResponse } from '../types';
 import { api } from '../lib/api';
@@ -170,6 +169,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       email: data.email || data.Email || "",
       role: canonicalRole,
       status: canonicalStatus,
+      department: data.department || data.Department || "",
       avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'P')}&background=020617&color=fff`,
       createdAt: data.createdAt || data.CreatedAt || new Date().toISOString()
     } as any;
@@ -378,7 +378,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       email: p.email,
       temporaryPassword: p.password,
       assignedRole: String(p.role).toLowerCase(),
-      status: String(p.status).toLowerCase()
+      status: String(p.status).toLowerCase(),
+      department: p.department || ""
     };
     await api.post('/api/admin/management/onboard-staff', payload); 
     await refreshData(); 

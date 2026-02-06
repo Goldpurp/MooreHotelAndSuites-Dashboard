@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, ShieldAlert, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound } from 'lucide-react';
+import { X, UserPlus, ShieldAlert, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2 } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { UserRole, StaffUser, ProfileStatus } from '../types';
 
@@ -19,7 +19,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
     email: '',
     password: '',
     role: UserRole.Staff,
-    status: ProfileStatus.Active
+    status: ProfileStatus.Active,
+    department: ''
   });
 
   useEffect(() => {
@@ -29,11 +30,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
         email: editingUser.email,
         password: '', 
         role: editingUser.role,
-        status: editingUser.status
+        status: editingUser.status,
+        department: editingUser.department || ''
       });
     } else {
       setFormData({
-        name: '', email: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active
+        name: '', email: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
       });
     }
   }, [editingUser, isOpen]);
@@ -88,7 +90,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-500">
-      <div className="w-full max-w-4xl flex flex-col md:flex-row glass-card rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(59,130,246,0.15)] animate-in zoom-in-95 duration-300 h-[680px]">
+      <div className="w-full max-w-4xl flex flex-col md:flex-row glass-card rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(59,130,246,0.15)] animate-in zoom-in-95 duration-300 h-[720px]">
         
         {/* Left Visual Sidebar */}
         <div className={`hidden lg:flex lg:w-80 bg-gradient-to-br p-12 flex-col justify-between shrink-0 ${editingUser ? 'from-indigo-600 to-blue-900' : 'from-brand-600 to-emerald-900'}`}>
@@ -159,6 +161,24 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                           placeholder="name@moorehotels.com"
                         />
                       </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Allocated Department</label>
+                    <div className="relative">
+                      <Building2 className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" size={16} />
+                      <select 
+                        required 
+                        value={formData.department} 
+                        onChange={e => setFormData({...formData, department: e.target.value})} 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm text-white focus:bg-white/10 transition-all outline-none appearance-none cursor-pointer font-bold"
+                      >
+                        <option value="" disabled className="bg-[#0a0f1d]">Select Department</option>
+                        <option value="Housekeeping" className="bg-[#0a0f1d]">Housekeeping</option>
+                        <option value="Reception" className="bg-[#0a0f1d]">Reception</option>
+                        <option value="FrontDesk" className="bg-[#0a0f1d]">Front Desk</option>
+                        <option value="Concierge" className="bg-[#0a0f1d]">Concierge</option>
+                      </select>
                     </div>
                   </div>
               </div>

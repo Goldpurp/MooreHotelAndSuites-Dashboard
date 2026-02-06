@@ -150,6 +150,7 @@ export interface AppUser {
   email: string;
   role: UserRole;
   avatarUrl?: string;
+  department?: string;
 }
 
 export interface StaffUser extends AppUser {

@@ -7,7 +7,7 @@ import {
   Fingerprint, RefreshCw, Mail, Calendar, 
   Lock, ChevronLeft, ChevronRight, Database, 
   SearchX, UserMinus, Filter,
-  UserCheck
+  UserCheck, Building2
 } from 'lucide-react';
 import RoleBadge from '../components/RoleBadge';
 import PermissionWrapper from '../components/PermissionWrapper';
@@ -42,7 +42,8 @@ const StaffManagement: React.FC = () => {
     return allStaff.filter(s => {
       const matchesSearch = (s.name || '').toLowerCase().includes(q) || 
                             (s.email || '').toLowerCase().includes(q) ||
-                            (s.role || '').toLowerCase().includes(q);
+                            (s.role || '').toLowerCase().includes(q) ||
+                            (s.department || '').toLowerCase().includes(q);
       
       const sStatus = String(s.status).toLowerCase();
       const matchesStatus = statusFilter === 'All' || 
@@ -143,7 +144,7 @@ const StaffManagement: React.FC = () => {
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-brand-500 transition-colors" size={16} />
             <input 
               type="text" 
-              placeholder="Search Personnel Identity..." 
+              placeholder="Search Personnel Identity or Department..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full bg-black/60 border border-white/5 rounded-2xl py-4.5 pl-14 pr-6 text-[13px] text-slate-200 outline-none focus:bg-slate-950 transition-all font-black uppercase tracking-tight placeholder:text-slate-700"
@@ -212,9 +213,17 @@ const StaffManagement: React.FC = () => {
                             <p className="text-[16px] font-black text-white group-hover:text-brand-400 transition-colors uppercase italic tracking-tight">
                               {user.name} {isSelf && <span className="ml-2 text-[9px] bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded italic not-uppercase font-bold tracking-normal border border-brand-500/20 shadow-sm">(You)</span>}
                             </p>
-                            <div className="flex items-center gap-2 mt-1">
-                               <Mail size={10} className="text-slate-600" />
-                               <p className="text-[10px] text-slate-500 font-bold tracking-tight lowercase">{user.email}</p>
+                            <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
+                               <div className="flex items-center gap-2">
+                                  <Mail size={10} className="text-slate-600" />
+                                  <p className="text-[10px] text-slate-500 font-bold tracking-tight lowercase">{user.email}</p>
+                               </div>
+                               {user.department && (
+                                 <div className="flex items-center gap-1.5">
+                                    <Building2 size={10} className="text-brand-500/60" />
+                                    <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest italic">{user.department}</p>
+                                 </div>
+                               )}
                             </div>
                           </div>
                         </div>

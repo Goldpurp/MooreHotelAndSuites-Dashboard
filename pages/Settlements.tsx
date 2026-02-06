@@ -1,16 +1,18 @@
 
 import React, { useState, useMemo } from 'react';
 import { useHotel } from '../store/HotelContext';
-import { PaymentStatus, Booking, Guest, BookingStatus } from '../types';
+import { PaymentStatus, Booking, Guest, BookingStatus, UserRole } from '../types';
 import { 
   CreditCard, Search, CheckCircle, Clock, 
   RefreshCw, ShieldCheck, Loader2, User, 
   Info, FileCheck, Hash, Lock, Banknote,
-  RotateCcw, AlertTriangle, ChevronLeft, ChevronRight
+  RotateCcw, AlertTriangle, ChevronLeft, ChevronRight,
+  ShieldAlert
 } from 'lucide-react';
+import PermissionWrapper from '../components/PermissionWrapper';
 
 const Settlements: React.FC = () => {
-  const { bookings, guests, confirmTransfer, refreshData } = useHotel();
+  const { bookings, guests, confirmTransfer, refreshData, currentUser } = useHotel();
   const [activeTab, setActiveTab] = useState<'queue' | 'refunds'>('queue');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,7 +33,6 @@ const Settlements: React.FC = () => {
         // QUEUE PROTOCOL:
         // 1. Must be a Direct Transfer.
         // 2. Must NOT be cancelled (unless already paid, but standard queue focuses on active/confirmed).
-        // 3. User specifically asked to hide cancelled if NOT confirmed.
         if (isCancelled && !isPaid) return false;
         return isTransfer;
       } else {
@@ -155,13 +156,15 @@ const Settlements: React.FC = () => {
             Settlement Queue
             {activeTab === 'queue' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>}
           </button>
-          <button 
-            onClick={() => setActiveTab('refunds')}
-            className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'refunds' ? 'text-rose-400' : 'text-slate-600 hover:text-slate-400'}`}
-          >
-            Refund Protocol
-            {activeTab === 'refunds' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]"></div>}
-          </button>
+          <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
+            <button 
+              onClick={() => setActiveTab('refunds')}
+              className={`pb-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'refunds' ? 'text-rose-400' : 'text-slate-600 hover:text-slate-400'}`}
+            >
+              Refund Protocol
+              {activeTab === 'refunds' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]"></div>}
+            </button>
+          </PermissionWrapper>
       </div>
 
       <div className="glass-card rounded-3xl border border-white/5 overflow-hidden shadow-3xl bg-slate-900/20 backdrop-blur-3xl">
@@ -173,7 +176,7 @@ const Settlements: React.FC = () => {
                 placeholder={`Search ${activeTab === 'queue' ? 'Settlements' : 'Refunds'}...`} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-[14px] text-white outline-none focus:bg-slate-950 focus:border-brand-500/30 transition-all font-medium"
+                className="w-full bg-black/60 border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-[14px] text-white outline-none focus:bg-slate-950 focus:border-brand-500/30 transition-all font-medium"
               />
            </div>
            <div className={`flex items-center gap-4 px-6 py-2 rounded-2xl border ${activeTab === 'queue' ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-rose-500/5 border-rose-500/10'}`}>
@@ -267,11 +270,14 @@ const Settlements: React.FC = () => {
                               <span className="text-[9px] font-black uppercase tracking-widest">FOLIO SEALED</span>
                            </div>
                          ) : activeTab === 'refunds' ? (
-                           <button className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-3xl shadow-rose-950/40 active:scale-95">
-                              <RotateCcw size={16} />
-                              REVERSE CAPITAL
-                           </button>
+                           <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
+                             <button className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-3xl shadow-rose-950/40 active:scale-95">
+                                <RotateCcw size={16} />
+                                REVERSE CAPITAL
+                             </button>
+                           </PermissionWrapper>
                          ) : (
+                           /* STAFF IS ALLOWED TO VERIFY PAYMENTS */
                            <button 
                              onClick={() => { setSelectedBooking(log); setIsConfirmModalOpen(true); }}
                              disabled={verifyingId === log.bookingCode}
