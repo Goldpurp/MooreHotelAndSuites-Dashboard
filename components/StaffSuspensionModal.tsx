@@ -98,7 +98,8 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                     <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=020617&color=fff`} className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/10" alt="" />
                     <div className="min-w-0">
                        <p className="text-sm md:text-[14px] font-black text-white uppercase italic tracking-tight truncate">{user.name}</p>
-                       <p className="text-[8px] md:text-[9px] text-slate-500 font-bold tracking-widest uppercase">{user.role}</p>
+                       <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase">{user.role}</p>
+                       <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase">{user.department}</p>
                     </div>
                  </div>
                  <div className="pt-4 border-t border-white/5 flex justify-between items-center">

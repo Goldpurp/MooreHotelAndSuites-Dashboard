@@ -3,7 +3,7 @@ import { useHotel } from '../store/HotelContext';
 import { 
   UserPlus, Search, ShieldAlert, ShieldCheck, ShieldOff, Users, Activity, 
   Fingerprint, RefreshCw, Mail, Calendar, Lock, ChevronLeft, ChevronRight, Database, 
-  SearchX, UserMinus, Filter, UserCheck, Building2, Save, X
+  SearchX, UserMinus, Filter, UserCheck, Building2, Save, X, Phone
 } from 'lucide-react';
 import RoleBadge from '../components/RoleBadge';
 import PermissionWrapper from '../components/PermissionWrapper';
@@ -34,7 +34,7 @@ const StaffManagement: React.FC = () => {
     const allStaff = (staff || []).filter(s => s && s.role !== UserRole.Client);
     return allStaff
       .filter(s => {
-        const matchesSearch = (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q) || (s.department || '').toLowerCase().includes(q);
+        const matchesSearch = (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q) || (s.department || '').toLowerCase().includes(q) || (s.phone || '').toLowerCase().includes(q);
         const sStatus = String(s.status).toLowerCase();
         const matchesStatus = statusFilter === 'All' || (statusFilter === 'Active' && sStatus === 'active') || (statusFilter === 'Suspended' && sStatus === 'suspended');
         return matchesSearch && matchesStatus;
@@ -194,14 +194,14 @@ const StaffManagement: React.FC = () => {
             </div>
 
             <div className="space-y-8 flex-1">
-              <div className="bg-[#0d131f] p-6 rounded-3xl space-y-5 border border-white/5">
+              <div className="bg-[#0d131f] p-6 rounded-3xl space-y-5 border border-white/5 shadow-inner">
                  <div className="flex items-center gap-4 text-slate-400">
                     <div className="p-2 bg-black rounded-xl border border-white/5 text-slate-700 shrink-0"><Mail size={16}/></div>
                     <span className="adaptive-text-sm font-bold truncate leading-none lowercase">{selectedStaff.email}</span>
                  </div>
                  <div className="flex items-center gap-4 text-slate-400 pt-5 border-t border-white/5">
-                    <div className="p-2 bg-black rounded-xl border border-white/5 text-slate-700 shrink-0"><Building2 size={16}/></div>
-                    <span className="adaptive-text-sm font-black uppercase italic leading-none">{selectedStaff.department || 'Operational Flow'}</span>
+                    <div className="p-2 bg-black rounded-xl border border-white/10 text-slate-700 shrink-0"><Phone size={16}/></div>
+                    <span className="adaptive-text-sm font-black uppercase italic leading-none">{selectedStaff.phone || 'No Secure Line'}</span>
                  </div>
               </div>
 

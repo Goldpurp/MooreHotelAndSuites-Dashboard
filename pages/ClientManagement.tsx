@@ -168,7 +168,7 @@ const ClientManagement: React.FC = () => {
                  </div>
                  <div className="flex items-center gap-4 text-slate-400 pt-5 border-t border-white/5">
                     <div className="p-2 bg-black rounded-xl border border-white/10 text-slate-700 shrink-0"><Phone size={16}/></div>
-                    {/* <span className="adaptive-text-sm font-black uppercase italic leading-none">{selectedClient.phone || 'No Secure Line'}</span> */}
+                    <span className="adaptive-text-sm font-black uppercase italic leading-none">{selectedClient.phone || 'No Secure Line'}</span>
                  </div>
               </div>
 

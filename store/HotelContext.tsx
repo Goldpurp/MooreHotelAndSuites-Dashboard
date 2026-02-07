@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Room, Booking, Guest, RoomStatus, BookingStatus, AppNotification, UserRole, AppUser, StaffUser, AuditLog, VisitRecord, PaymentStatus, VisitAction, ProfileStatus, PaymentMethod, BookingInitResponse } from '../types';
 import { api } from '../lib/api';
@@ -94,8 +93,18 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toCanonicalStatus = (val: string | undefined): any => {
     if (!val) return val;
-    const lower = val.toLowerCase();
-    return lower.charAt(0).toUpperCase() + lower.slice(1);
+    const lower = val.toLowerCase().replace(/[\s_-]/g, '');
+    if (lower === 'checkedin') return BookingStatus.CheckedIn;
+    if (lower === 'checkedout') return BookingStatus.CheckedOut;
+    if (lower === 'occupied') return RoomStatus.Occupied;
+    if (lower === 'available') return RoomStatus.Available;
+    if (lower === 'cleaning') return RoomStatus.Cleaning;
+    if (lower === 'maintenance') return RoomStatus.Maintenance;
+    if (lower === 'reserved') return BookingStatus.Reserved;
+    if (lower === 'cancelled') return BookingStatus.Cancelled;
+    if (lower === 'pending') return BookingStatus.Pending;
+    if (lower === 'confirmed') return BookingStatus.Confirmed;
+    return val.charAt(0).toUpperCase() + val.slice(1);
   };
 
   const normalizeBooking = (b: any): Booking => {
@@ -147,7 +156,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   };
 
-  // Fixed normalizeUser to include phone mapping
   const normalizeUser = (raw: any): AppUser | null => {
     if (!raw) return null;
     const data = raw.user || raw.profile || raw.data || raw;
@@ -165,17 +173,20 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ? ProfileStatus.Suspended 
       : ProfileStatus.Active;
 
+    // Detect variants for phone and creation date
+    const phoneValue = data.phone || data.Phone || data.phoneNumber || data.PhoneNumber || "";
+    const dateValue = data.onboardingDate || data.OnboardingDate || data.createdAt || data.CreatedAt || new Date().toISOString();
+
     return {
       id: String(data.id || data.Id || ""),
       name: data.name || data.fullName || data.Name || "Personnel",
       email: data.email || data.Email || "",
-      // Extracted phone/phoneNumber from raw data
-      phone: data.phone || data.Phone || data.phoneNumber || data.PhoneNumber || "",
+      phone: phoneValue,
       role: canonicalRole,
       status: canonicalStatus,
       department: data.department || data.Department || "",
       avatarUrl: data.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || 'P')}&background=020617&color=fff`,
-      createdAt: data.createdAt || data.CreatedAt || new Date().toISOString()
+      createdAt: dateValue
     } as any;
   };
 
@@ -196,7 +207,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const rawRooms = normalizeData(roomsRes);
       const normalizedRooms = rawRooms.map((r: any) => {
-        const rawStatus = String(r.status || r.Status || 'Available').toLowerCase();
+        const rawStatus = String(r.status || r.Status || 'Available').toLowerCase().replace(/[\s_-]/g, '');
         const statusMap: Record<string, RoomStatus> = {
           'available': RoomStatus.Available,
           'occupied': RoomStatus.Occupied,
@@ -218,7 +229,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
       });
 
-      // Unified Ledger: Normalize every user record to ensure roles like Admin/Manager are caught
       const allUsersRaw = [
         ...normalizeData(employeesRes),
         ...normalizeData(clientsRes)
@@ -360,7 +370,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const isCorrectRoom = b.roomId === roomId;
       const isNotExcluded = b.id !== excludeBookingId;
       
-      const bStatus = b.status?.toLowerCase();
+      const bStatus = String(b.status || '').toLowerCase();
       const isActive = bStatus !== 'cancelled' && bStatus !== 'checkedout';
       
       if (!isCorrectRoom || !isNotExcluded || !isActive) return false;
@@ -380,6 +390,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const payload = {
       fullName: p.name,
       email: p.email,
+      phoneNumber: p.phone,
+      phone: p.phone, // Include both variants to ensure the backend picks it up
       temporaryPassword: p.password,
       assignedRole: String(p.role).toLowerCase(),
       status: String(p.status).toLowerCase(),

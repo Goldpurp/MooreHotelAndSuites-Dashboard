@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, ShieldAlert, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2 } from 'lucide-react';
+import { X, UserPlus, ShieldAlert, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2, Phone } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { UserRole, StaffUser, ProfileStatus } from '../types';
 
@@ -15,18 +15,18 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
   const [status, setStatus] = useState<'details' | 'success'>('details');
   
   const [formData, setFormData] = useState({
-    name: '', email: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
+    name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
   });
 
   useEffect(() => {
     if (editingUser) {
       setFormData({
-        name: editingUser.name, email: editingUser.email, password: '', 
-        role: editingUser.role, status: editingUser.status, department: editingUser.department || ''
+        name: editingUser.name, email: editingUser.email, phone: editingUser.phone || '', 
+        password: '', role: editingUser.role, status: editingUser.status, department: editingUser.department || ''
       });
     } else {
       setFormData({
-        name: '', email: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
+        name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
       });
     }
     setStatus('details');
@@ -77,6 +77,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
   };
 
   const allowedRoles = getAllowedRoles();
+  const isStaffRole = formData.role === UserRole.Staff;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
@@ -114,7 +115,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                   </div>
                </div>
 
-               <div className="bg-black/30 p-5 sm:p-8 rounded-xl sm:rounded-[2rem] border border-white/15 space-y-2 sm:space-y-4 backdrop-blur-md mt-6 lg:mt-0">
+               <div className="bg-black/30 p-5 sm:p-8 rounded-xl sm:rounded-[2rem] border border-white/15 space-y-2 sm:space-y-4 backdrop-blur-md mt-6 lg:mt-0 shadow-2xl">
                   <p className="text-[9px] text-white/50 font-black uppercase tracking-[0.2em]">Impact Analysis</p>
                   <div className="flex items-center gap-2 sm:gap-3">
                      <ShieldCheck size={16} className="text-white" />
@@ -153,19 +154,28 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                             <input required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} type="email" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="name@moorehotels.com" />
                           </div>
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Allocated Department</label>
-                        <div className="relative">
-                          <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" size={16} />
-                          <select required value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none appearance-none cursor-pointer font-bold">
-                            <option value="" disabled className="bg-[#0a0f1d]">Select Department</option>
-                            <option value="Housekeeping" className="bg-[#0a0f1d]">Housekeeping</option>
-                            <option value="Reception" className="bg-[#0a0f1d]">Reception</option>
-                            <option value="FrontDesk" className="bg-[#0a0f1d]">Front Desk</option>
-                            <option value="Concierge" className="bg-[#0a0f1d]">Concierge</option>
-                          </select>
+                        <div className="space-y-2">
+                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Secure Line (Phone)</label>
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                            <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} type="tel" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="+234..." />
+                          </div>
                         </div>
+                        {isStaffRole && (
+                          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Allocated Department</label>
+                            <div className="relative">
+                              <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" size={16} />
+                              <select required={isStaffRole} value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none appearance-none cursor-pointer font-bold">
+                                <option value="" disabled className="bg-[#0a0f1d]">Select Department</option>
+                                <option value="Housekeeping" className="bg-[#0a0f1d]">Housekeeping</option>
+                                <option value="Reception" className="bg-[#0a0f1d]">Reception</option>
+                                <option value="FrontDesk" className="bg-[#0a0f1d]">Front Desk</option>
+                                <option value="Concierge" className="bg-[#0a0f1d]">Concierge</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </div>
                   </div>
 
