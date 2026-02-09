@@ -2,9 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Guest, Booking, Room, PaymentStatus } from '../types';
 import { 
-  Search, Phone, LogOut, UserCheck, RefreshCw, 
-  Archive, Mail, CreditCard, Bed, ShieldCheck, History, 
-  User, ArrowRight, Calendar, ExternalLink, AlertCircle, Zap, Users, Fingerprint, X, ChevronLeft, ChevronRight,
+  Search, Phone, LogOut, RefreshCw, Mail, Bed, ShieldCheck, History, ArrowRight, Calendar, ExternalLink, AlertCircle, Zap, Users, Fingerprint, X, ChevronLeft, ChevronRight,
   ArrowLeftRight
 } from 'lucide-react';
 import CheckOutModal from '../components/CheckOutModal';

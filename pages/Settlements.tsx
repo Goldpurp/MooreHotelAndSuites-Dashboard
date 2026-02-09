@@ -21,20 +21,24 @@ const Settlements: React.FC = () => {
 
   const [verificationState, setVerificationState] = useState<'idle' | 'committing' | 'success'>('idle');
 
-  const processedData = useMemo(() => {
-    return (bookings || []).filter(b => {
+const processedData = useMemo(() => {
+  return (bookings || [])
+    .filter(b => {
+      // Exclude cancelled bookings
+      if (b.status === BookingStatus.Cancelled) return false;
       const method = (b.paymentMethod || '').toLowerCase();
       const isTransfer = method.includes('transfer') || method.includes('bank') || method.includes('direct');
       const isPaid = b.paymentStatus === PaymentStatus.Paid;
-      
+
       if (activeTab === 'queue') {
         if (isPaid) return false;
         return isTransfer || method === '';
       } else {
         return isPaid;
       }
-    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [bookings, activeTab]);
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}, [bookings, activeTab]);
 
   const resolveGuestName = (b: Booking) => {
     if (b.guestFirstName && b.guestLastName) return `${b.guestFirstName} ${b.guestLastName}`;

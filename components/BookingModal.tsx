@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { X, Calendar, Zap, FileCheck, Check, AlertCircle, Loader2, User, Bed, ShieldCheck, Globe, Clock, Brush, ChevronRight, Receipt, Wallet } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
-import { RoomStatus, PaymentMethod, BookingInitResponse } from '../types';
+import { PaymentMethod, BookingInitResponse } from '../types';
 
 interface BookingModalProps {
   isOpen: boolean;
