@@ -50,12 +50,12 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                 {isActive ? <ShieldOff size={48} /> : <ShieldCheck size={48} />}
              </div>
              <div>
-                <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Protocol Confirmed</h2>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Protocol Confirmed</h2>
                 <p className={`text-[10px] font-black uppercase tracking-[0.3em] mt-3 ${isActive ? 'text-rose-400' : 'text-emerald-400'}`}>
                    {isActive ? 'System Privileges Revoked' : 'Personnel Access Restored'}
                 </p>
              </div>
-             <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest italic max-w-xs leading-relaxed">Identity node updated across all operation sectors.</p>
+             <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest max-w-xs leading-relaxed">Identity node updated across all operation sectors.</p>
           </div>
         ) : (
           <>
@@ -67,7 +67,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                   {isActive ? <ShieldOff size={24} /> : <ShieldCheck size={24} />}
                 </div>
                 <div>
-                  <h2 className="text-lg md:text-xl font-black text-white tracking-tight uppercase italic leading-none">
+                  <h2 className="text-lg md:text-xl font-black text-white tracking-tight uppercase leading-none">
                     {isActive ? 'Deactivate' : 'Activate'}
                   </h2>
                   <p className={`text-[8px] font-black uppercase tracking-[0.2em] mt-1.5 ${isActive ? 'text-rose-400' : 'text-emerald-400'}`}>
@@ -82,7 +82,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
 
             <div className="p-8 md:p-10 space-y-6 md:space-y-8">
               <div className="text-center space-y-3">
-                <h3 className="text-xl md:text-2xl font-black text-white uppercase italic tracking-tighter">
+                <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter">
                   {isActive ? 'Confirm Deactivation?' : 'Confirm Activation?'}
                 </h3>
                 <p className="text-[10px] md:text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
@@ -97,14 +97,14 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                  <div className="flex items-center gap-4">
                     <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=020617&color=fff`} className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/10" alt="" />
                     <div className="min-w-0">
-                       <p className="text-sm md:text-[14px] font-black text-white uppercase italic tracking-tight truncate">{user.name}</p>
+                       <p className="text-sm md:text-[14px] font-black text-white uppercase tracking-tight truncate">{user.name}</p>
                        <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase">{user.role}</p>
                        <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase">{user.department}</p>
                     </div>
                  </div>
                  <div className="pt-4 border-t border-white/5 flex justify-between items-center">
                     <span className="text-[9px] text-slate-600 font-black uppercase">Identity Status</span>
-                    <span className={`text-[10px] font-black uppercase tracking-widest italic ${isActive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-emerald-400' : 'text-rose-400'}`}>
                        {isActive ? 'Verified / Live' : 'Suspended / Locked'}
                     </span>
                  </div>
@@ -118,7 +118,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
             </div>
 
             <div className="px-8 md:px-10 py-6 md:py-8 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
-              <button onClick={handleConfirm} disabled={isSubmitting} className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 italic ${isActive ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-950/40' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-950/40'}`}>
+              <button onClick={handleConfirm} disabled={isSubmitting} className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 ${isActive ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-950/40' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-950/40'}`}>
                 {isSubmitting ? (
                   <>
                     <Loader2 size={18} className="animate-spin" /> 
@@ -131,7 +131,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                   </>
                 )}
               </button>
-              <button onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all italic">Abort Protocol</button>
+              <button onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all">Abort Protocol</button>
             </div>
           </>
         )}

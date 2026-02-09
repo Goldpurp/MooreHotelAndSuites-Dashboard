@@ -4,7 +4,8 @@ import { Guest, Booking, Room, PaymentStatus } from '../types';
 import { 
   Search, Phone, LogOut, UserCheck, RefreshCw, 
   Archive, Mail, CreditCard, Bed, ShieldCheck, History, 
-  User, ArrowRight, Calendar, ExternalLink, AlertCircle, Zap, Users, Fingerprint, X, ChevronLeft, ChevronRight
+  User, ArrowRight, Calendar, ExternalLink, AlertCircle, Zap, Users, Fingerprint, X, ChevronLeft, ChevronRight,
+  ArrowLeftRight
 } from 'lucide-react';
 import CheckOutModal from '../components/CheckOutModal';
 
@@ -102,7 +103,7 @@ const Guests: React.FC = () => {
               <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
               <p className="adaptive-text-xs text-emerald-400 font-black uppercase tracking-widest leading-none">Guest Relations Registry</p>
             </div>
-            <h2 className="adaptive-text-2xl font-black text-white tracking-tight italic uppercase leading-none">{activeTab === 'in-house' ? 'In-House Guests' : 'Guest History'}</h2>
+            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">{activeTab === 'in-house' ? 'In-House Guests' : 'Guest History'}</h2>
           </div>
           <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
         </div>
@@ -132,13 +133,13 @@ const Guests: React.FC = () => {
                     <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
                        <th className="responsive-table-padding">Guest Profile</th>
                        <th className="responsive-table-padding text-center col-priority-med">Occupancy Status</th>
-                       <th className="responsive-table-padding col-priority-low">Arrival/Cycle</th>
+                       <th className="responsive-table-padding col-priority-low">Stay Cycle</th>
                        <th className="responsive-table-padding text-right">Lifetime Billing</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-white/5">
                     {paginatedResidents.length === 0 ? (
-                      <tr><td colSpan={4} className="py-32 text-center text-slate-700 font-black uppercase adaptive-text-sm italic">No guest records found in this view</td></tr>
+                      <tr><td colSpan={4} className="py-32 text-center text-slate-700 font-black uppercase adaptive-text-sm">No guest records found in this view</td></tr>
                     ) : (
                       paginatedResidents.map((resident) => {
                         const active = resident.activeStay;
@@ -152,7 +153,7 @@ const Guests: React.FC = () => {
                                       {active && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
                                    </div>
                                    <div className="min-w-0">
-                                      <p className="adaptive-text-sm font-black text-white group-hover:text-brand-400 transition-colors uppercase italic truncate leading-none mb-1.5">{resident.firstName} {resident.lastName}</p>
+                                      <p className="adaptive-text-sm font-black text-white group-hover:text-brand-400 transition-colors uppercase truncate leading-none mb-1.5">{resident.firstName} {resident.lastName}</p>
                                       <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest truncate">ID: {resident.id}</p>
                                    </div>
                                 </div>
@@ -163,7 +164,7 @@ const Guests: React.FC = () => {
                                 </span>
                              </td>
                              <td className="responsive-table-padding col-priority-low">
-                                <div className="flex items-center gap-2 adaptive-text-xs font-bold text-slate-600 italic">
+                                <div className="flex items-center gap-2 adaptive-text-xs font-bold text-slate-600">
                                    <span>{active ? new Date(active.booking.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '---'}</span>
                                    <ArrowRight size={10} className="opacity-20" />
                                    <span className="uppercase">{active ? 'PRESENT' : 'PAST STAY'}</span>
@@ -171,10 +172,10 @@ const Guests: React.FC = () => {
                              </td>
                              <td className="responsive-table-padding text-right">
                                 <div className="min-w-0">
-                                   <p className={`adaptive-text-sm font-black italic tracking-tighter truncate ${active ? (activeIsPaid ? 'text-emerald-400' : 'text-rose-500') : 'text-slate-400'}`}>
+                                   <p className={`adaptive-text-sm font-black tracking-tighter truncate ${active ? (activeIsPaid ? 'text-emerald-400' : 'text-rose-500') : 'text-slate-400'}`}>
                                       ₦{(active ? active.booking.amount : resident.totalSpent).toLocaleString()}
                                    </p>
-                                   <p className="text-[8px] text-slate-700 font-black uppercase mt-1 italic">{active ? (activeIsPaid ? 'Billing Paid' : 'Billing Due') : 'Total Spend'}</p>
+                                   <p className="text-[8px] text-slate-700 font-black uppercase mt-1">{active ? (activeIsPaid ? 'Billing Paid' : 'Billing Due') : 'Total Spend'}</p>
                                 </div>
                              </td>
                           </tr>
@@ -185,7 +186,7 @@ const Guests: React.FC = () => {
               </table>
            </div>
            <div className="px-8 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
-              <span className="text-[10px] text-slate-600 font-black uppercase italic tracking-widest">{filteredResidents.length} Registered Guests</span>
+              <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest">{filteredResidents.length} Registered Guests</span>
               <div className="flex gap-2">
                  <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={18} /></button>
                  <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[11px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
@@ -200,7 +201,7 @@ const Guests: React.FC = () => {
            <div className="glass-card rounded-2xl p-8 flex flex-col border border-white/10 bg-[#0a0f1a] shadow-2xl h-full overflow-y-auto">
              <div className="flex justify-between items-start mb-3">
                <div className="space-y-1">
-                  <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase italic leading-none">Guest Profile</h3>
+                  <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Guest Profile</h3>
                   <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">System Dossier</p>
                </div>
                <button onClick={() => setSelectedGuestId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
@@ -213,7 +214,7 @@ const Guests: React.FC = () => {
                      <div className="absolute -bottom-1 -right-1 p-1.5 bg-emerald-600 rounded-lg border-2 border-slate-950 text-white shadow-xl"><ShieldCheck size={14} /></div>
                    )}
                 </div>
-                <h3 className="adaptive-text-lg font-black text-white italic uppercase text-center leading-[1] tracking-tighter truncate w-full px-2 mb-2">{selectedResident.firstName} <br/> {selectedResident.lastName}</h3>
+                <h3 className="adaptive-text-lg font-black text-white uppercase text-center leading-[1] tracking-tighter truncate w-full px-2 mb-2">{selectedResident.firstName} <br/> {selectedResident.lastName}</h3>
                 <div className="px-4 py-1.5 bg-white/5 border border-white/5 rounded-xl flex items-center gap-2"><Fingerprint size={12} className="text-slate-600" /><p className="text-[8px] text-slate-600 font-black uppercase tracking-widest truncate max-w-[120px]">{selectedResident.id}</p></div>
              </div>
 
@@ -226,17 +227,17 @@ const Guests: React.FC = () => {
                 {selectedResident.activeStay && (
                   <div className="bg-emerald-500/5 p-5 rounded-2xl border border-emerald-500/20 space-y-4 shadow-xl">
                      <div className="flex justify-between items-center"><span className="text-[9px] text-emerald-500/60 font-black uppercase tracking-widest">Active Stay</span><span className={`px-2 py-1 text-[8px] font-black uppercase rounded border ${(selectedResident.activeStay.booking.paymentStatus || '').toLowerCase() === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>{selectedResident.activeStay.booking.paymentStatus}</span></div>
-                     <div className="flex items-center gap-4"><div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400 shrink-0"><Bed size={20}/></div><div className="min-w-0"><p className="adaptive-text-base font-black text-white italic tracking-tighter leading-none mb-1">Unit {selectedResident.activeStay.room?.roomNumber}</p><p className="text-[8px] text-slate-600 font-bold uppercase truncate">{selectedResident.activeStay.room?.category}</p></div></div>
+                     <div className="flex items-center gap-4"><div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400 shrink-0"><Bed size={20}/></div><div className="min-w-0"><p className="adaptive-text-base font-black text-white tracking-tighter leading-none mb-1">Room {selectedResident.activeStay.room?.roomNumber}</p><p className="text-[8px] text-slate-600 font-bold uppercase truncate">{selectedResident.activeStay.room?.category}</p></div></div>
                   </div>
                 )}
 
                 <div className="space-y-3 pt-2">
                    <div className="flex items-center justify-between px-1"><h4 className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5"><History size={12}/> STAY HISTORY</h4><span className="text-[9px] font-black text-slate-700 bg-white/5 px-2 py-0.5 rounded border border-white/5">{selectedResident.history.length} CYCLES</span></div>
                    <div className="space-y-1.5 max-h-[160px] overflow-y-auto">
-                      {selectedResident.history.length === 0 ? <div className="p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10 opacity-30"><p className="text-[9px] text-slate-600 uppercase font-black italic">No history recorded</p></div> : 
+                      {selectedResident.history.length === 0 ? <div className="p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10 opacity-30"><p className="text-[9px] text-slate-600 uppercase font-black">No history recorded</p></div> : 
                         selectedResident.history.map((stay: Booking) => (
                           <div key={stay.id} className="p-3 bg-white/[0.03] border border-white/5 rounded-xl hover:bg-white/[0.06] transition-all group flex items-center justify-between gap-2">
-                             <div className="min-w-0"><p className="text-[11px] font-black text-white uppercase italic tracking-tighter leading-none mb-1.5">Room {rooms.find(r => r.id === stay.roomId)?.roomNumber || '---'}</p><p className="text-[8px] text-slate-700 font-bold uppercase truncate">{new Date(stay.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
+                             <div className="min-w-0"><p className="text-[11px] font-black text-white uppercase tracking-tighter leading-none mb-1.5">Room {rooms.find(r => r.id === stay.roomId)?.roomNumber || '---'}</p><p className="text-[8px] text-slate-700 font-bold uppercase truncate">{new Date(stay.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
                              <button onClick={() => { setSelectedGuestId(selectedResident.id); setActiveTab('bookings'); setSelectedBookingId(stay.id); }} className="text-brand-500 hover:text-brand-400 opacity-0 group-hover:opacity-100 transition-all font-black shrink-0"><ExternalLink size={12}/></button>
                           </div>
                         ))
@@ -247,9 +248,9 @@ const Guests: React.FC = () => {
 
              <div className="mt-8 pt-6 border-t border-white/10">
                {selectedResident.activeStay ? (
-                 <button onClick={() => { if (selectedResident && selectedResident.activeStay) { setActiveCheckOutData({ guest: selectedResident, booking: selectedResident.activeStay.booking, room: selectedResident.activeStay.room || null }); setIsCheckOutModalOpen(true); } }} className="w-full bg-rose-600 hover:bg-rose-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl italic"><LogOut size={20} strokeWidth={3}/> CHECK-OUT GUEST</button>
+                 <button onClick={() => { if (selectedResident && selectedResident.activeStay) { setActiveCheckOutData({ guest: selectedResident, booking: selectedResident.activeStay.booking, room: selectedResident.activeStay.room || null }); setIsCheckOutModalOpen(true); } }} className="w-full bg-rose-600 hover:bg-rose-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl"><LogOut size={20} strokeWidth={3}/> CHECK-OUT GUEST</button>
                ) : (
-                 <button onClick={() => { setSelectedGuestId(selectedResident.id); setActiveTab('bookings'); }} className="w-full bg-emerald-600 hover:bg-emerald-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 italic"><Users size={20}/> NEW RESERVATION</button>
+                 <button onClick={() => { setSelectedGuestId(selectedResident.id); setActiveTab('bookings'); }} className="w-full bg-emerald-600 hover:bg-emerald-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"><Users size={20}/> NEW RESERVATION</button>
                )}
              </div>
            </div>

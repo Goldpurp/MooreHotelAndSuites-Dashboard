@@ -43,7 +43,7 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
               <BookmarkX size={40} className="text-rose-500" strokeWidth={3} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Reservation Voided</h2>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Reservation Voided</h2>
               <p className="text-[10px] text-rose-400 font-black uppercase tracking-[0.2em] mt-2">Folio {booking.bookingCode} purged from queue</p>
             </div>
             <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full">
@@ -59,7 +59,7 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
                   <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight uppercase italic">Void Reservation</h2>
+                  <h2 className="text-lg font-black text-white tracking-tight uppercase">Void Reservation</h2>
                   <p className="text-[8px] text-rose-400 font-black uppercase tracking-[0.15em]">Protocol: Folio Revocation</p>
                 </div>
               </div>
@@ -73,25 +73,25 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
                 <img src={guest.avatarUrl} className="w-14 h-14 rounded-xl object-cover ring-2 ring-white/10 shadow-lg" alt="" />
                 <div className="min-w-0">
                   <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Occupant Dossier</p>
-                  <p className="text-sm font-black text-white uppercase italic truncate">{guest.firstName} {guest.lastName}</p>
+                  <p className="text-sm font-black text-white uppercase truncate">{guest.firstName} {guest.lastName}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3 p-2">
                 <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-400 leading-relaxed font-bold uppercase tracking-tight">
-                  Proceeding will void <span className="text-white font-black italic">Folio {booking.bookingCode}</span> and release Room {room.roomNumber} back to global inventory immediately.
+                  Proceeding will void <span className="text-white font-black">Folio {booking.bookingCode}</span> and release Room {room.roomNumber} back to global inventory immediately.
                 </p>
               </div>
 
               <div className="bg-slate-900/40 p-5 rounded-2xl border border-white/5 space-y-3">
                 <div className="flex justify-between items-center text-[10px]">
                   <span className="text-slate-500 font-black uppercase tracking-widest">Folio Value</span>
-                  <span className="text-slate-200 font-black italic">₦{booking.amount.toLocaleString()}</span>
+                  <span className="text-slate-200 font-black">₦{booking.amount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] pt-3 border-t border-white/5">
                   <span className="text-slate-500 font-black uppercase tracking-widest">Post-Protocol State</span>
-                  <span className="text-rose-400 font-black uppercase italic">Cancelled</span>
+                  <span className="text-rose-400 font-black uppercase">Cancelled</span>
                 </div>
               </div>
             </div>
@@ -103,7 +103,7 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
               <button 
                 onClick={handleConfirm} 
                 disabled={isSubmitting}
-                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all italic flex items-center justify-center gap-2 disabled:opacity-50"
+                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

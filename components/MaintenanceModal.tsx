@@ -47,12 +47,12 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
               {isEnteringMaintenance ? <Wrench size={40} /> : <ShieldCheck size={40} />}
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Protocol Executed</h2>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Protocol Executed</h2>
               <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
                 Room {room.roomNumber} updated in global registry
               </p>
             </div>
-            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest italic">Inventory nodes synchronized across all zones.</p>
+            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">Inventory nodes synchronized across all zones.</p>
           </div>
         ) : (
           <>
@@ -64,8 +64,8 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
                   {isEnteringMaintenance ? <Wrench size={20} /> : <ShieldCheck size={20} />}
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight uppercase italic">
-                    {isEnteringMaintenance ? 'Decommission Unit' : 'Restore Asset'}
+                  <h2 className="text-lg font-black text-white tracking-tight uppercase">
+                    {isEnteringMaintenance ? 'Decommission Room' : 'Restore Asset'}
                   </h2>
                   <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${isEnteringMaintenance ? 'text-amber-400' : 'text-emerald-400'}`}>
                     Hardware Protocol: {room.roomNumber}
@@ -79,12 +79,12 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
 
             <div className="p-8 space-y-6">
               <div className="text-center space-y-3">
-                <h3 className="text-xl font-black text-white uppercase italic tracking-tight leading-none">
-                  {isEnteringMaintenance ? 'Initialize Maintenance?' : 'Mark Unit as Ready?'}
+                <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none">
+                  {isEnteringMaintenance ? 'Initialize Maintenance?' : 'Mark Room as Ready?'}
                 </h3>
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
                   {isEnteringMaintenance 
-                    ? `Revoking Room ${room.roomNumber} availability will block all future automated asset allocations for this unit.`
+                    ? `Revoking Room ${room.roomNumber} availability will block all future automated asset allocations for this room.`
                     : `Confirm Room ${room.roomNumber} inspection completion. The asset will be restored to the live booking ledger.`
                   }
                 </p>
@@ -92,12 +92,12 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
 
               <div className="bg-white/5 p-6 rounded-[1.5rem] border border-white/5 space-y-4 shadow-inner">
                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Asset Node</span>
-                    <span className="text-sm font-black text-white uppercase tracking-tighter italic">Room {room.roomNumber}</span>
+                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Asset Unit</span>
+                    <span className="text-sm font-black text-white uppercase tracking-tighter">Room {room.roomNumber}</span>
                  </div>
                  <div className="flex justify-between items-center pt-4 border-t border-white/5">
                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Target State</span>
-                    <span className={`text-[11px] font-black uppercase tracking-widest italic ${isEnteringMaintenance ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${isEnteringMaintenance ? 'text-amber-400' : 'text-emerald-400'}`}>
                        {isEnteringMaintenance ? 'MAINTENANCE' : 'AVAILABLE'}
                     </span>
                  </div>
@@ -107,7 +107,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
                 <div className="flex items-start gap-3 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
                    <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
                    <p className="text-[9px] text-amber-300 font-black uppercase leading-tight tracking-tight">
-                     Warning: This unit will be hidden from the client portal and manual reservation pool.
+                     Warning: This room will be hidden from the client portal and manual reservation pool.
                    </p>
                 </div>
               )}
@@ -117,7 +117,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
               <button 
                 onClick={handleConfirm} 
                 disabled={isSubmitting} 
-                className={`w-full py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 italic ${isEnteringMaintenance ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-900/20' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20'}`}
+                className={`w-full py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 ${isEnteringMaintenance ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-900/20' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20'}`}
               >
                 {isSubmitting ? (
                   <>
@@ -131,7 +131,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
                   </>
                 )}
               </button>
-              <button onClick={onClose} disabled={isSubmitting} className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all italic">Abort Protocol</button>
+              <button onClick={onClose} disabled={isSubmitting} className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Abort Protocol</button>
             </div>
           </>
         )}

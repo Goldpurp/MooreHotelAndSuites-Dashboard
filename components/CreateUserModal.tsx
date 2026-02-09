@@ -89,12 +89,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
               <ShieldCheck size={48} className="text-brand-500" strokeWidth={3} />
             </div>
             <div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Identity Provisions Set</h2>
+              <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Identity Provisions Set</h2>
               <p className="text-[11px] text-brand-400 font-black uppercase tracking-[0.3em] mt-3">
                 {editingUser ? 'Account Authorization Updated' : 'New Personnel Enrolled Successfully'}
               </p>
             </div>
-            <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest italic max-w-md">Access credentials and hierarchical permissions have been committed to the security ledger.</p>
+            <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest max-w-md">Access credentials and hierarchical permissions have been committed to the security ledger.</p>
           </div>
         ) : (
           <>
@@ -105,7 +105,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                     {editingUser ? <Activity size={24}/> : <Fingerprint size={24}/>}
                   </div>
                   <div className="space-y-2 sm:space-y-3">
-                    <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase italic leading-[0.85] tracking-tighter">
+                    <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase leading-[0.85] tracking-tighter">
                       {editingUser ? 'MODIFY\nNODE\nAUTH' : 'NEW\nIDENTITY\nPROV'}
                     </h2>
                     <div className="flex items-center gap-2 px-3 py-1 bg-black/20 rounded-lg border border-white/10 w-fit">
@@ -132,7 +132,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                <div className="flex justify-between items-center mb-6 sm:mb-12">
                   <div className="flex items-center gap-3">
                      <span className="w-6 h-[1.5px] bg-brand-500 hidden sm:block"></span>
-                     <span className="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest italic">Provisioning Protocol Secure</span>
+                     <span className="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">Provisioning Protocol Secure</span>
                   </div>
                   <button onClick={onClose} disabled={isSubmitting} type="button" className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
                </div>
@@ -145,7 +145,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
                           <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Full Legal Name</label>
-                          <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 px-4 sm:px-6 text-sm text-white focus:bg-white/10 transition-all outline-none italic font-bold" placeholder="John Doe" />
+                          <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 px-4 sm:px-6 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="John Doe" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Enterprise Email</label>
@@ -206,7 +206,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                       </div>
                       <div className="flex flex-col justify-center bg-white/5 p-4 rounded-xl border border-white/5">
                          <p className="text-[7px] text-slate-500 font-black uppercase mb-1">Status Protocol</p>
-                         <p className="text-[9px] text-slate-400 font-bold italic">Managed via personnel ledger security controls.</p>
+                         <p className="text-[9px] text-slate-400 font-bold">Managed via personnel ledger security controls.</p>
                       </div>
                     </div>
                   </div>
@@ -217,7 +217,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                   <button 
                     type="submit" 
                     disabled={isSubmitting} 
-                    className="flex-[2] bg-brand-600 hover:bg-brand-700 text-white font-black py-3 sm:py-5 rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-3xl flex items-center justify-center gap-3 active:scale-95 italic"
+                    className="flex-[2] bg-brand-600 hover:bg-brand-700 text-white font-black py-3 sm:py-5 rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-3xl flex items-center justify-center gap-3 active:scale-95"
                   >
                     {isSubmitting ? (
                       <>

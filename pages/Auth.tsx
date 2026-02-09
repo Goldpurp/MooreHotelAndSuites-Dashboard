@@ -49,7 +49,7 @@ const Auth: React.FC = () => {
         <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-600 to-indigo-800 p-16 flex-col justify-between relative border-r border-white/5">
           <div className="relative z-10">
             <Logo size="xl" className="mb-8" />
-            <h1 className="text-5xl font-black text-white tracking-tight leading-tight uppercase italic">Moore Hotels <br /> & Suites</h1>
+            <h1 className="text-5xl font-black text-white tracking-tight leading-tight uppercase">Moore Hotels <br /> & Suites</h1>
             <p className="text-blue-100/80 text-lg mt-6 font-medium max-w-sm leading-relaxed">Enterprise Property Management interface. Requires valid node authorization.</p>
           </div>
           <div className="relative z-10">
@@ -64,7 +64,7 @@ const Auth: React.FC = () => {
           <div className="max-w-md mx-auto w-full">
             {mode === 'login' ? (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase italic mb-2">Authorize Access</h2>
+                <h2 className="text-3xl font-black text-white tracking-tight uppercase mb-2">Authorize Access</h2>
                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-10">Secured Personnel Entry</p>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -133,7 +133,7 @@ const Auth: React.FC = () => {
                   <ChevronLeft size={16} /> Back to Authorization
                 </button>
                 
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase italic mb-2">Recover Access</h2>
+                <h2 className="text-3xl font-black text-white tracking-tight uppercase mb-2">Recover Access</h2>
                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-10">Credential Restoration Protocol</p>
 
                 <form onSubmit={handleResetPassword} className="space-y-6">

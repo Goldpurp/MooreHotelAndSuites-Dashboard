@@ -165,7 +165,7 @@ const Dashboard: React.FC = () => {
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
             <p className="adaptive-text-xs text-blue-400 font-black uppercase tracking-widest">Property Overview</p>
           </div>
-          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Management Dashboard</h2>
+          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Management Dashboard</h2>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? "animate-spin" : ""}`}><RefreshCw size={16} /></button>
@@ -186,7 +186,7 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 xl:col-span-8 glass-card adaptive-p rounded-2xl border border-white/5 flex flex-col min-h-[350px]">
-          <h3 className="adaptive-text-lg font-black text-white uppercase italic tracking-tight mb-8 px-2">Revenue Trends</h3>
+          <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8 px-2">Revenue Trends</h3>
           <div className="flex-1 w-full min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueTrendData}>
@@ -207,7 +207,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="col-span-12 xl:col-span-4 glass-card adaptive-p rounded-2xl border border-white/5 flex flex-col min-h-[350px]">
-          <h3 className="adaptive-text-lg font-black text-white uppercase italic tracking-tight mb-4 px-2">Room Inventory</h3>
+          <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-4 px-2">Room Inventory</h3>
           <div className="h-44 relative mb-6">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -218,7 +218,7 @@ const Dashboard: React.FC = () => {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="adaptive-text-2xl font-black text-white italic">{(rooms || []).length}</span>
+              <span className="adaptive-text-2xl font-black text-white">{(rooms || []).length}</span>
               <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest mt-1">Total Rooms</span>
             </div>
           </div>
@@ -240,7 +240,7 @@ const Dashboard: React.FC = () => {
         <div className="adaptive-p border-b border-white/5 flex items-center justify-between bg-slate-900/40 px-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-600/10 rounded-lg text-blue-500"><Clock size={18} /></div>
-            <h3 className="adaptive-text-lg font-black text-white uppercase italic tracking-tight leading-none">Operational Queue</h3>
+            <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight leading-none">Operational Queue</h3>
           </div>
           <button onClick={() => setActiveTab("bookings")} className="bg-white/5 hover:bg-white/10 text-slate-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-white/10 flex items-center gap-2 transition-all">All Bookings <ArrowRight size={14} /></button>
         </div>
@@ -257,7 +257,7 @@ const Dashboard: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-white/5">
               {paginatedQueue.length === 0 ? (
-                <tr><td colSpan={5} className="py-24 text-center text-slate-700 font-black uppercase text-[11px] tracking-widest italic">Operational Queue Clear</td></tr>
+                <tr><td colSpan={5} className="py-24 text-center text-slate-700 font-black uppercase text-[11px] tracking-widest">Operational Queue Clear</td></tr>
               ) : (
                 paginatedQueue.map((booking) => {
                   const room = (rooms || []).find((r) => r.id === booking.roomId);
@@ -269,16 +269,16 @@ const Dashboard: React.FC = () => {
                     <tr key={booking.id} className="group transition-all hover:bg-white/5 cursor-pointer border-l-4 border-transparent hover:border-blue-600" onClick={() => { setSelectedBookingId(booking.id); setActiveTab("bookings"); }}>
                       <td className="responsive-table-padding">
                         <div className="flex items-center gap-4">
-                          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-black italic shrink-0 ${isCheckedIn ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-slate-800 border-white/10 text-slate-500"}`}>{booking.guestFirstName?.charAt(0) || "G"}</div>
+                          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-black shrink-0 ${isCheckedIn ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-slate-800 border-white/10 text-slate-500"}`}>{booking.guestFirstName?.charAt(0) || "G"}</div>
                           <div className="min-w-0">
-                            <p className="adaptive-text-sm font-black text-white truncate leading-none mb-1.5 uppercase tracking-tight italic">{booking.guestFirstName} {booking.guestLastName}</p>
+                            <p className="adaptive-text-sm font-black text-white truncate leading-none mb-1.5 uppercase tracking-tight">{booking.guestFirstName} {booking.guestLastName}</p>
                             <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">Ref: {booking.bookingCode}</p>
                           </div>
                         </div>
                       </td>
                       <td className="responsive-table-padding col-priority-med">
                         <p className={`adaptive-text-sm font-black ${isArrivalToday ? 'text-amber-400' : 'text-slate-300'}`}>{new Date(booking.checkIn).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}</p>
-                        <p className="text-[8px] text-slate-600 font-bold uppercase mt-1 italic">{isArrivalToday ? 'Arrival Today' : 'Incoming'}</p>
+                        <p className="text-[8px] text-slate-600 font-bold uppercase mt-1">{isArrivalToday ? 'Arrival Today' : 'Incoming'}</p>
                       </td>
                       <td className="responsive-table-padding col-priority-low">
                         <p className="adaptive-text-sm font-black text-slate-300 leading-none">Room {room?.roomNumber || "..."}</p>
@@ -300,7 +300,7 @@ const Dashboard: React.FC = () => {
                       <td className="responsive-table-padding text-right">
                         <div className="flex flex-col items-end">
                            <p className={`adaptive-text-base font-black ${isPaid ? 'text-white' : 'text-rose-500'}`}>₦{booking.amount?.toLocaleString() || "0"}</p>
-                           <p className="text-[8px] text-slate-700 font-black uppercase mt-1 italic">{isPaid ? 'Fully Paid' : 'Outstanding'}</p>
+                           <p className="text-[8px] text-slate-700 font-black uppercase mt-1">{isPaid ? 'Fully Paid' : 'Outstanding'}</p>
                         </div>
                       </td>
                     </tr>
@@ -311,7 +311,7 @@ const Dashboard: React.FC = () => {
           </table>
         </div>
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
-           <div className="text-[9px] text-slate-600 font-black uppercase italic tracking-widest">Showing {paginatedQueue.length} of {sortedActionableBookings.length} entries</div>
+           <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Showing {paginatedQueue.length} of {sortedActionableBookings.length} entries</div>
            <div className="flex gap-2">
               <button onClick={() => setQueuePage(p => Math.max(1, p - 1))} disabled={queuePage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
               <button onClick={() => setQueuePage(p => Math.min(totalQueuePages, p + 1))} disabled={queuePage === totalQueuePages || totalQueuePages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>

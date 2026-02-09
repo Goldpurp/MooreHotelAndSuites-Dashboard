@@ -34,7 +34,7 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
               }`}></span>
               {room.status}
             </span>
-            <h2 className="text-3xl font-black text-white tracking-tight uppercase italic leading-none">Room {room.roomNumber}</h2>
+            <h2 className="text-3xl font-black text-white tracking-tight uppercase leading-none">Room {room.roomNumber}</h2>
             <p className="text-blue-400 font-bold uppercase text-[10px] tracking-widest mt-1.5">{room.category} — {room.name}</p>
           </div>
         </div>
@@ -43,7 +43,7 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
           <div className="flex justify-between items-start mb-8">
             <div>
               <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Nightly Tariff</p>
-              <h3 className="text-3xl font-black text-white italic">₦{room.pricePerNight.toLocaleString()}</h3>
+              <h3 className="text-3xl font-black text-white">₦{room.pricePerNight.toLocaleString()}</h3>
             </div>
             <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl transition-all border border-white/5">
               <X size={20} />
@@ -68,7 +68,7 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
           <div className="space-y-8 flex-1">
             <div>
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><Info size={12}/> Overview</h4>
-              <p className="text-sm text-slate-400 leading-relaxed font-medium italic">
+              <p className="text-sm text-slate-400 leading-relaxed font-medium">
                 {room.description || "Luxurious executive suite designed for modern, high-tier hospitality stays."}
               </p>
             </div>
@@ -90,7 +90,7 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
                <Shield size={16} className="text-brand-500" />
                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Managed Asset Layer</span>
             </div>
-            <p className="text-[10px] text-slate-600 font-bold uppercase italic">Node: {room.floor.replace(/([A-Z])/g, ' $1').trim()}</p>
+            <p className="text-[10px] text-slate-600 font-bold uppercase">Room: {room.floor.replace(/([A-Z])/g, ' $1').trim()}</p>
           </div>
         </div>
       </div>

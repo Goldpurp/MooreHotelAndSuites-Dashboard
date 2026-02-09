@@ -41,10 +41,10 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
               <Trash size={40} className="text-rose-500" strokeWidth={3} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Asset Liquidated</h2>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Asset Liquidated</h2>
               <p className="text-[10px] text-rose-400 font-black uppercase tracking-[0.2em] mt-2">Room {room.roomNumber} removed from ledger</p>
             </div>
-            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest italic leading-relaxed">Property hardware updated across all nodes.</p>
+            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">Property hardware updated across all nodes.</p>
           </div>
         ) : (
           <>
@@ -54,7 +54,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
                   <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight uppercase italic">Liquidate Asset</h2>
+                  <h2 className="text-lg font-black text-white tracking-tight uppercase">Liquidate Asset</h2>
                   <p className="text-[8px] text-rose-400 font-black uppercase tracking-[0.15em]">Protocol: Physical Removal</p>
                 </div>
               </div>
@@ -68,7 +68,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
                 <img src={room.images[0]} className="w-16 h-12 rounded-xl object-cover ring-2 ring-white/10 shadow-lg" alt="" />
                 <div className="min-w-0">
                   <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Target Asset</p>
-                  <p className="text-sm font-black text-white uppercase italic truncate">Room {room.roomNumber}</p>
+                  <p className="text-sm font-black text-white uppercase truncate">Room {room.roomNumber}</p>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 truncate">{room.category}</p>
                 </div>
               </div>
@@ -76,7 +76,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
               <div className="flex items-start gap-4 p-2">
                 <AlertTriangle size={24} className="text-rose-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-400 leading-relaxed font-bold uppercase tracking-tight">
-                  Permanent removal will <span className="text-rose-400 font-black">invalidate all current folio references</span> to Unit {room.roomNumber} in the ledger history.
+                  Permanent removal will <span className="text-rose-400 font-black">invalidate all current folio references</span> to Room {room.roomNumber} in the ledger history.
                 </p>
               </div>
             </div>
@@ -88,7 +88,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
               <button 
                 onClick={handleConfirm} 
                 disabled={isSubmitting}
-                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all italic flex items-center justify-center gap-2"
+                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>

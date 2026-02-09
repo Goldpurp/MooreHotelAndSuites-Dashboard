@@ -56,11 +56,11 @@ const OperationLog: React.FC = () => {
             <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
             <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">Security Audit Trail</p>
           </div>
-          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Operational Log</h2>
+          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Operational Log</h2>
         </div>
         <div className="flex gap-2">
            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={18} /></button>
-           <button className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 shadow-lg italic whitespace-nowrap"><FileDown size={18} /> Export Data</button>
+           <button className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 shadow-lg whitespace-nowrap"><FileDown size={18} /> Export Data</button>
         </div>
       </div>
 
@@ -90,7 +90,7 @@ const OperationLog: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-white/5">
               {paginatedLogs.length === 0 ? (
-                <tr><td colSpan={5} className="py-48 text-center text-slate-700 adaptive-text-sm font-black uppercase italic tracking-widest">No telemetry found</td></tr>
+                <tr><td colSpan={5} className="py-48 text-center text-slate-700 adaptive-text-sm font-black uppercase tracking-widest">No telemetry found</td></tr>
               ) : (
                 paginatedLogs.map((log) => {
                   const badge = getActionBadge(log.action);
@@ -100,14 +100,14 @@ const OperationLog: React.FC = () => {
                         <div className="flex items-center gap-4">
                           <div className="p-2 bg-black/60 rounded-xl border border-white/5 text-slate-700 shrink-0"><Clock size={16} /></div>
                           <div>
-                            <p className="adaptive-text-sm font-black text-white italic leading-none mb-1.5">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="adaptive-text-sm font-black text-white leading-none mb-1.5">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                             <p className="text-[9px] text-slate-600 font-bold uppercase">{new Date(log.timestamp).toLocaleDateString('en-GB')}</p>
                           </div>
                         </div>
                       </td>
                       <td className="responsive-table-padding">
                         <div className="min-w-0">
-                           <p className="adaptive-text-sm font-black text-white uppercase italic truncate leading-none mb-1.5">{log.guestName || 'Internal Act'}</p>
+                           <p className="adaptive-text-sm font-black text-white uppercase truncate leading-none mb-1.5">{log.guestName || 'Internal Act'}</p>
                            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Ref: {log.bookingCode || 'SYS-ACT'}</p>
                         </div>
                       </td>
@@ -120,15 +120,15 @@ const OperationLog: React.FC = () => {
                          <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/5 rounded-xl border border-white/5 text-slate-700 shrink-0"><Bed size={16} /></div>
                             <div>
-                               <p className="adaptive-text-sm font-black text-white italic leading-none mb-1.5">Unit {log.roomNumber || '---'}</p>
+                               <p className="adaptive-text-sm font-black text-white leading-none mb-1.5">Room {log.roomNumber || '---'}</p>
                                <p className="text-[8px] text-slate-700 font-bold uppercase tracking-widest">Room Allocation</p>
                             </div>
                          </div>
                       </td>
                       <td className="responsive-table-padding text-right">
                          <div className="min-w-0">
-                            <p className="adaptive-text-sm font-black text-slate-300 italic uppercase truncate leading-none mb-1.5">{log.authorizedBy || 'System'}</p>
-                            <p className="text-[8px] text-emerald-500 font-black uppercase tracking-widest italic">Authorized Session</p>
+                            <p className="adaptive-text-sm font-black text-slate-300 uppercase truncate leading-none mb-1.5">{log.authorizedBy || 'System'}</p>
+                            <p className="text-[8px] text-emerald-500 font-black uppercase tracking-widest">Authorized Session</p>
                          </div>
                       </td>
                     </tr>
@@ -140,7 +140,7 @@ const OperationLog: React.FC = () => {
         </div>
 
         <div className="px-8 py-4 bg-slate-950/80 border-t border-white/5 flex items-center justify-between">
-           <div className="text-[10px] text-slate-600 font-black uppercase italic tracking-widest">Integrity Active • {filteredLogs.length} Records</div>
+           <div className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Integrity Active • {filteredLogs.length} Records</div>
            <div className="flex gap-2">
               <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={18} /></button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[11px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
@@ -153,18 +153,18 @@ const OperationLog: React.FC = () => {
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-500 overflow-hidden">
            <div className="w-full max-w-2xl bg-[#0a0f1d] border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-3xl flex flex-col max-h-[92vh] sm:max-h-[85vh]">
               <div className="px-6 sm:px-10 py-4 sm:py-6 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
-                 <h3 className="text-base sm:adaptive-text-xl font-black text-white uppercase italic leading-none">Dossier Inspector</h3>
+                 <h3 className="text-base sm:adaptive-text-xl font-black text-white uppercase leading-none">Dossier Inspector</h3>
                  <button onClick={() => setInspectingRecord(null)} className="p-2 hover:bg-white/10 text-slate-500 rounded-xl transition-all active:scale-90"><X size={20}/></button>
               </div>
               <div className="p-6 sm:p-10 overflow-y-auto space-y-6 sm:space-y-8 flex-1 custom-scrollbar">
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div className="bg-white/5 p-4 sm:p-6 rounded-xl sm:rounded-3xl border border-white/5 space-y-1"><p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Personnel</p><p className="adaptive-text-base font-black text-brand-400 italic uppercase">{inspectingRecord.authorizedBy}</p></div>
-                    <div className="bg-white/5 p-4 sm:p-6 rounded-xl sm:rounded-3xl border border-white/5 space-y-1"><p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Context</p><p className="adaptive-text-base font-black text-white italic uppercase truncate">{inspectingRecord.guestName}</p></div>
+                    <div className="bg-white/5 p-4 sm:p-6 rounded-xl sm:rounded-3xl border border-white/5 space-y-1"><p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Personnel</p><p className="adaptive-text-base font-black text-brand-400 uppercase">{inspectingRecord.authorizedBy}</p></div>
+                    <div className="bg-white/5 p-4 sm:p-6 rounded-xl sm:rounded-3xl border border-white/5 space-y-1"><p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Context</p><p className="adaptive-text-base font-black text-white uppercase truncate">{inspectingRecord.guestName}</p></div>
                  </div>
                  <div className="bg-[#05080f] rounded-xl sm:rounded-3xl border border-white/5 p-4 sm:p-10 font-mono text-[10px] sm:text-[11px] text-slate-400 leading-relaxed shadow-inner overflow-auto"><pre className="whitespace-pre-wrap break-all">{JSON.stringify(inspectingRecord, null, 2)}</pre></div>
               </div>
               <div className="px-6 sm:px-10 py-4 sm:py-6 bg-slate-950/60 border-t border-white/5 flex justify-end">
-                 <button onClick={() => setInspectingRecord(null)} className="px-8 sm:px-10 py-2 sm:py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-[11px] sm:text-[12px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95 italic">Acknowledge</button>
+                 <button onClick={() => setInspectingRecord(null)} className="px-8 sm:px-10 py-2 sm:py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-[11px] sm:text-[12px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95">Acknowledge</button>
               </div>
            </div>
         </div>

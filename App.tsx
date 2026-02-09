@@ -47,7 +47,7 @@ const AppContent: React.FC = () => {
           </div>
         </div>
         <div className="text-center space-y-3">
-          <h2 className="text-white font-black uppercase tracking-[0.5em] italic text-sm drop-shadow-2xl">
+          <h2 className="text-white font-black uppercase tracking-[0.5em] text-sm drop-shadow-2xl">
             Moore Systems
           </h2>
           <div className="flex flex-col items-center gap-1">
@@ -74,7 +74,7 @@ const AppContent: React.FC = () => {
       <Suspense
         fallback={
           <div className="h-screen bg-slate-950 flex items-center justify-center">
-            <div className="text-slate-600 font-black uppercase tracking-[0.5em] italic text-xs animate-pulse">
+            <div className="text-slate-600 font-black uppercase tracking-[0.5em] text-xs animate-pulse">
               Moore Systems Initializing...
             </div>
           </div>
@@ -129,7 +129,7 @@ const AppContent: React.FC = () => {
               fallback={
                 <div className="flex flex-col items-center justify-center h-[60vh] gap-6">
                   <div className="w-14 h-14 border-[3px] border-brand-500/10 border-t-brand-500 rounded-full animate-spin" />
-                  <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.3em] italic animate-pulse">
+                  <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.3em] animate-pulse">
                     Initializing Interface Layer...
                   </p>
                 </div>

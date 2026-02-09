@@ -27,7 +27,7 @@ const Sidebar: React.FC = () => {
         <Logo size="md" className="shrink-0" />
         {!isSidebarCollapsed && (
           <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-            <h1 className="text-sm font-black text-white tracking-tighter whitespace-nowrap leading-tight uppercase italic">Moore Hotels <br/> & Suites</h1>
+            <h1 className="text-sm font-black text-white tracking-tighter whitespace-nowrap leading-tight uppercase">Moore Hotels <br/> & Suites</h1>
             <p className="text-[9px] text-brand-500 font-black tracking-dash uppercase whitespace-nowrap mt-0.5">Global Operations</p>
           </div>
         )}

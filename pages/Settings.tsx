@@ -84,7 +84,7 @@ const Settings: React.FC = () => {
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
             <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em]">Global Configuration</p>
           </div>
-          <h2 className="adaptive-text-3xl font-black text-white tracking-tight uppercase italic leading-none">System Settings</h2>
+          <h2 className="adaptive-text-3xl font-black text-white tracking-tight uppercase leading-none">System Settings</h2>
           <p className="text-slate-400 text-[11px] font-medium uppercase tracking-widest mt-1 opacity-70">Manage your personal identity and security credentials</p>
         </div>
 
@@ -145,7 +145,7 @@ const Settings: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <h3 className="text-3xl font-black text-white tracking-tight italic uppercase leading-none">{currentUser?.name || "Authenticating..."}</h3>
+                <h3 className="text-3xl font-black text-white tracking-tight uppercase leading-none">{currentUser?.name || "Authenticating..."}</h3>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-lg text-blue-400 text-[10px] font-black uppercase tracking-widest">
                     {(currentUser?.role || userRole).toUpperCase()}
@@ -198,7 +198,7 @@ const Settings: React.FC = () => {
                 <ShieldCheck size={24} className="text-emerald-400" />
               </div>
               <div>
-                <p className="text-[15px] font-black text-white tracking-tight uppercase italic">Enterprise Authentication</p>
+                <p className="text-[15px] font-black text-white tracking-tight uppercase">Enterprise Authentication</p>
                 <p className="text-[11px] text-slate-500 uppercase tracking-widest font-bold mt-1">Secured via enterprise-grade Identity & Access Management (IAM) Protocol.</p>
               </div>
             </div>
@@ -210,7 +210,7 @@ const Settings: React.FC = () => {
         <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8 mt-4 animate-in slide-in-from-right-4 shadow-xl">
           <form onSubmit={handleRotateSecurity} className="space-y-8 max-w-lg">
             <div>
-              <h3 className="text-2xl font-black text-white mb-2 uppercase italic tracking-tight">Security Credentials</h3>
+              <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Security Credentials</h3>
               <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">Rotate your password frequently to maintain property-wide data integrity and ledger security.</p>
             </div>
 
@@ -267,7 +267,7 @@ const Settings: React.FC = () => {
             <button 
               type="submit"
               disabled={isRotating}
-              className="bg-white text-slate-950 font-black px-10 py-4 rounded-xl text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-slate-200 active:scale-95 shadow-2xl shadow-white/5 flex items-center justify-center gap-3 italic"
+              className="bg-white text-slate-950 font-black px-10 py-4 rounded-xl text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-slate-200 active:scale-95 shadow-2xl shadow-white/5 flex items-center justify-center gap-3"
             >
               {isRotating ? <Loader2 size={16} className="animate-spin" /> : <Key size={16} />}
               Rotate Authorization
@@ -278,9 +278,9 @@ const Settings: React.FC = () => {
              <div className="flex items-start gap-4 p-6 bg-rose-500/5 rounded-2xl border border-rose-500/20 shadow-lg">
                 <AlertCircle size={28} className="text-rose-400 mt-1 shrink-0" />
                 <div className="space-y-2">
-                   <p className="text-[16px] font-black text-white uppercase italic tracking-tight">Revoke Account Access</p>
+                   <p className="text-[16px] font-black text-white uppercase tracking-tight">Revoke Account Access</p>
                    <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">Requesting deactivation will lock your profile and expire all active sessions immediately. This action requires Admin confirmation and audit logging.</p>
-                   <button className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 hover:text-rose-300 transition-all pt-2 flex items-center gap-2 italic">Initiate Deactivation Flow <ArrowRight size={14}/></button>
+                   <button className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 hover:text-rose-300 transition-all pt-2 flex items-center gap-2">Initiate Deactivation Flow <ArrowRight size={14}/></button>
                 </div>
              </div>
           </div>

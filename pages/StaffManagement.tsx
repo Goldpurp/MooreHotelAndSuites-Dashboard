@@ -89,12 +89,12 @@ const StaffManagement: React.FC = () => {
               <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
               <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">Personnel Directory</p>
             </div>
-            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Staff Registry</h2>
+            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Staff Registry</h2>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
             <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
-              <button onClick={() => setIsModalOpen(true)} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg italic whitespace-nowrap"><UserPlus size={16} /> Onboard Personnel</button>
+              <button onClick={() => setIsModalOpen(true)} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg whitespace-nowrap"><UserPlus size={16} /> Onboard Personnel</button>
             </PermissionWrapper>
           </div>
         </div>
@@ -125,7 +125,7 @@ const StaffManagement: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {paginatedStaff.length === 0 ? (
-                  <tr><td colSpan={5} className="py-32 text-center text-slate-700 adaptive-text-xs font-black uppercase tracking-widest italic">No matching personnel records detected</td></tr>
+                  <tr><td colSpan={5} className="py-32 text-center text-slate-700 adaptive-text-xs font-black uppercase tracking-widest">No matching personnel records detected</td></tr>
                 ) : (
                   paginatedStaff.map((user) => {
                     const isActive = String(user.status).toLowerCase() === 'active';
@@ -135,14 +135,14 @@ const StaffManagement: React.FC = () => {
                           <div className="flex items-center gap-4">
                             <img src={user.avatarUrl} className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl object-cover ring-2 ring-white/5" alt=""/>
                             <div className="min-w-0">
-                              <p className="adaptive-text-sm font-black text-white uppercase italic truncate leading-none mb-1.5">{user.name}</p>
+                              <p className="adaptive-text-sm font-black text-white uppercase truncate leading-none mb-1.5">{user.name}</p>
                               <p className="text-[8px] text-slate-600 font-bold lowercase truncate">{user.email}</p>
                             </div>
                           </div>
                         </td>
                         <td className="responsive-table-padding"><RoleBadge role={user.role} /></td>
                         <td className="responsive-table-padding col-priority-med">
-                           <p className="text-[11px] font-black text-slate-500 uppercase italic whitespace-nowrap">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}</p>
+                           <p className="text-[11px] font-black text-slate-500 uppercase whitespace-nowrap">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}</p>
                         </td>
                         <td className="responsive-table-padding text-center">
                           <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border ${isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.1)]' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>{isActive ? 'Authorized' : 'Locked'}</span>
@@ -162,7 +162,7 @@ const StaffManagement: React.FC = () => {
             </table>
           </div>
           <div className="px-8 py-4 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
-             <div className="text-[10px] text-slate-600 font-black uppercase italic tracking-widest">{filteredStaff.length} Total Registered Personnel</div>
+             <div className="text-[10px] text-slate-600 font-black uppercase tracking-widest">{filteredStaff.length} Total Registered Personnel</div>
              <div className="flex gap-2">
                 <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={18} /></button>
                 <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[11px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
@@ -177,7 +177,7 @@ const StaffManagement: React.FC = () => {
           <div className="glass-card rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
             <div className="flex justify-between items-start mb-10">
               <div className="space-y-1">
-                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase italic leading-none">Personnel Info</h3>
+                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Personnel Info</h3>
                  <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">Credential Snapshot</p>
               </div>
               <button onClick={() => setSelectedStaffId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
@@ -188,7 +188,7 @@ const StaffManagement: React.FC = () => {
                  <img src={selectedStaff.avatarUrl} className="w-24 h-24 rounded-3xl object-cover ring-4 ring-white/10 shadow-2xl" alt=""/>
                  {String(selectedStaff.status).toLowerCase() === 'active' && <div className="absolute -bottom-1 -right-1 p-2 bg-emerald-600 rounded-xl border-4 border-slate-950 text-white shadow-xl animate-pulse"><ShieldCheck size={16} /></div>}
               </div>
-              <h3 className="adaptive-text-lg font-black text-white italic uppercase text-center leading-[1.1] tracking-tighter px-2 mb-2">{selectedStaff.name}</h3>
+              <h3 className="adaptive-text-lg font-black text-white uppercase text-center leading-[1.1] tracking-tighter px-2 mb-2">{selectedStaff.name}</h3>
               <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-4">{selectedStaff.department || 'General Operations'}</p>
               <div className="px-4 py-1.5 bg-white/5 border border-white/5 rounded-xl flex items-center gap-2"><Fingerprint size={12} className="text-slate-600" /><p className="text-[8px] text-slate-600 font-black uppercase tracking-widest truncate max-w-[120px]">{selectedStaff.id}</p></div>
             </div>
@@ -201,23 +201,23 @@ const StaffManagement: React.FC = () => {
                  </div>
                  <div className="flex items-center gap-4 text-slate-400 pt-5 border-t border-white/5">
                     <div className="p-2 bg-black rounded-xl border border-white/10 text-slate-700 shrink-0"><Phone size={16}/></div>
-                    <span className="adaptive-text-sm font-black uppercase italic leading-none">{selectedStaff.phone || 'No Secure Line'}</span>
+                    <span className="adaptive-text-sm font-black uppercase leading-none">{selectedStaff.phone || 'No Secure Line'}</span>
                  </div>
               </div>
 
               <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-4">
                  <div className="flex justify-between items-center"><p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Authority Role</p><RoleBadge role={selectedStaff.role} /></div>
-                 <p className="text-[11px] leading-relaxed text-slate-500 italic font-medium">{getRoleDescription(selectedStaff.role)}</p>
+                 <p className="text-[11px] leading-relaxed text-slate-500 font-medium">{getRoleDescription(selectedStaff.role)}</p>
               </div>
             </div>
 
             <div className="mt-10 pt-6 border-t border-white/10">
               <PermissionWrapper allowedRoles={[UserRole.Admin]}>
                 {selectedStaff.role !== UserRole.Admin ? (
-                  <button onClick={() => handleToggleAccessRequest(selectedStaff)} className={`w-full py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl italic ${String(selectedStaff.status).toLowerCase() === 'active' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}>
+                  <button onClick={() => handleToggleAccessRequest(selectedStaff)} className={`w-full py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl ${String(selectedStaff.status).toLowerCase() === 'active' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}>
                     {String(selectedStaff.status).toLowerCase() === 'active' ? <ShieldOff size={20}/> : <Activity size={20}/>} {String(selectedStaff.status).toLowerCase() === 'active' ? 'REVOKE SYSTEM ACCESS' : 'RESTORE SYSTEM ACCESS'}
                   </button>
-                ) : <div className="p-5 bg-slate-900/50 rounded-2xl text-center border border-white/5"><p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.2em] italic">ROOT AUTHORITY PROTECTED</p></div>}
+                ) : <div className="p-5 bg-slate-900/50 rounded-2xl text-center border border-white/5"><p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.2em]">ROOT AUTHORITY PROTECTED</p></div>}
               </PermissionWrapper>
             </div>
           </div>

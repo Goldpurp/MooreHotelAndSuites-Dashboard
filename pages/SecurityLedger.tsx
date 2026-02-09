@@ -61,7 +61,7 @@ const SecurityLedger: React.FC = () => {
             <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
             <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em]">Live Security Protocol</p>
           </div>
-          <h2 className="text-3xl font-black text-white tracking-tight italic uppercase">Property Security Ledger</h2>
+          <h2 className="text-3xl font-black text-white tracking-tight uppercase">Property Security Ledger</h2>
           <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-1">Visit History & Authorization Dossier</p>
         </div>
         <div className="flex gap-2">
@@ -201,7 +201,7 @@ const SecurityLedger: React.FC = () => {
         </div>
 
         <div className="px-8 py-4 border-t border-white/5 bg-slate-950/40 flex items-center justify-between">
-           <p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.3em] italic">System Dossier • Moore Property Security Ledger</p>
+           <p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.3em]">System Dossier • Moore Property Security Ledger</p>
            <div className="flex gap-2">
               <button className="p-2 text-slate-600 hover:text-white transition-all"><ChevronLeft size={16}/></button>
               <button className="p-2 text-slate-600 hover:text-white transition-all"><ChevronRight size={16}/></button>

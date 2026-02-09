@@ -78,11 +78,11 @@ const Reports: React.FC = () => {
               <span className="w-8 h-[2px] bg-brand-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.4)]"></span>
               <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-[0.15em]">Analytics Intelligence</p>
             </div>
-            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Intelligence Hub</h2>
+            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Intelligence Hub</h2>
          </div>
          <div className="flex gap-2">
             <button className="bg-white/5 hover:bg-white/10 text-slate-400 p-2 lg:px-4 lg:py-2.5 rounded-lg adaptive-text-xs font-black uppercase border border-white/5 transition-all"><Printer size={14}/></button>
-            <button className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-xl italic whitespace-nowrap"><FileDown size={16}/> Export Ledger</button>
+            <button className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-xl whitespace-nowrap"><FileDown size={16}/> Export Ledger</button>
          </div>
       </div>
 
@@ -107,7 +107,7 @@ const Reports: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-slate-600 text-[8px] font-black uppercase block mb-1">{card.label}</span>
-                    <h3 className="adaptive-text-lg font-black text-white italic truncate leading-none">{card.value}</h3>
+                    <h3 className="adaptive-text-lg font-black text-white truncate leading-none">{card.value}</h3>
                   </div>
               </div>
             ))}
@@ -115,7 +115,7 @@ const Reports: React.FC = () => {
 
           <div className="grid grid-cols-12 gap-4 lg:gap-6">
             <div className="col-span-12 xl:col-span-8 glass-card adaptive-p rounded-xl border border-white/5 bg-slate-900/20">
-                <h3 className="adaptive-text-lg font-black text-white uppercase italic tracking-tight mb-8">Revenue Dynamics</h3>
+                <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8">Revenue Dynamics</h3>
                 <div className="h-64 lg:h-80 w-full">
                   <ReResponsiveContainer width="100%" height="100%">
                       <ReAreaChart data={revenueTrendsData}>
@@ -132,7 +132,7 @@ const Reports: React.FC = () => {
                 </div>
             </div>
             <div className="col-span-12 xl:col-span-4 glass-card adaptive-p rounded-xl border border-white/5 flex flex-col">
-                <h3 className="adaptive-text-lg font-black text-white uppercase italic mb-6">Asset Load</h3>
+                <h3 className="adaptive-text-lg font-black text-white uppercase mb-6">Asset Load</h3>
                 <div className="h-40 relative mb-6">
                   <ReResponsiveContainer width="100%" height="100%">
                       <RePieChart>
@@ -142,7 +142,7 @@ const Reports: React.FC = () => {
                       </RePieChart>
                   </ReResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="adaptive-text-2xl font-black text-white italic">{metrics.occupancyRate}%</span>
+                      <span className="adaptive-text-2xl font-black text-white">{metrics.occupancyRate}%</span>
                       <span className="text-[7px] text-slate-600 font-black uppercase">Load</span>
                   </div>
                 </div>
@@ -153,7 +153,7 @@ const Reports: React.FC = () => {
                           <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }}></div>
                           <p className="text-[9px] font-black text-white uppercase truncate">{cat.name}</p>
                         </div>
-                        <span className="text-[11px] font-black text-slate-300 italic">{cat.value}%</span>
+                        <span className="text-[11px] font-black text-slate-300">{cat.value}%</span>
                     </div>
                   ))}
                 </div>
@@ -178,7 +178,7 @@ const Reports: React.FC = () => {
                   <tr key={log.id} className="hover:bg-white/[0.01] transition-all group border-l-2 border-transparent hover:border-brand-500">
                     <td className="responsive-table-padding">
                       <div className="min-w-0">
-                        <p className="adaptive-text-sm font-black text-white italic truncate leading-none mb-1">{new Date(log.createdAt).toLocaleDateString('en-GB')}</p>
+                        <p className="adaptive-text-sm font-black text-white truncate leading-none mb-1">{new Date(log.createdAt).toLocaleDateString('en-GB')}</p>
                         <p className="text-[7px] text-slate-700 font-bold uppercase truncate">{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </td>
@@ -187,7 +187,7 @@ const Reports: React.FC = () => {
                       <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase border ${log.action === 'INSERT' ? 'bg-emerald-500/10 text-emerald-400' : log.action === 'DELETE' ? 'bg-rose-500/10 text-rose-400' : 'bg-blue-500/10 text-blue-400'}`}>{log.action}</span>
                     </td>
                     <td className="responsive-table-padding">
-                      <p className="adaptive-text-xs font-black text-white uppercase italic leading-none mb-1 truncate">{log.entityType}</p>
+                      <p className="adaptive-text-xs font-black text-white uppercase leading-none mb-1 truncate">{log.entityType}</p>
                       <p className="text-[7px] text-slate-700 font-bold uppercase">ID: {log.entityId.slice(0, 8)}</p>
                     </td>
                     <td className="responsive-table-padding text-right">
@@ -199,7 +199,7 @@ const Reports: React.FC = () => {
             </table>
           </div>
           <div className="px-4 py-2 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
-            <p className="text-[8px] text-slate-700 font-black uppercase italic">Forensic Integrity Active</p>
+            <p className="text-[8px] text-slate-700 font-black uppercase">Forensic Integrity Active</p>
             <div className="flex gap-1.5">
               <button onClick={() => setAuditPage(p => Math.max(1, p - 1))} disabled={auditPage === 1} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronLeft size={12} /></button>
               <button onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))} disabled={auditPage === totalAuditPages} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronRight size={12} /></button>
@@ -212,7 +212,7 @@ const Reports: React.FC = () => {
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-300 overflow-hidden">
            <div className="w-full max-w-2xl bg-[#0a0f1d] border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-3xl flex flex-col max-h-[92vh] sm:max-h-[80vh]">
               <div className="px-5 sm:px-6 py-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
-                 <h3 className="text-base sm:adaptive-text-lg font-black text-white uppercase italic">Forensic Inspector</h3>
+                 <h3 className="text-base sm:adaptive-text-lg font-black text-white uppercase">Forensic Inspector</h3>
                  <button onClick={() => setInspectingLog(null)} className="p-2 hover:bg-white/10 text-slate-500 rounded-xl transition-all active:scale-90"><X size={18}/></button>
               </div>
               <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4 sm:space-y-6">
@@ -225,7 +225,7 @@ const Reports: React.FC = () => {
                  </div>
               </div>
               <div className="px-5 sm:px-6 py-4 bg-slate-950/60 border-t border-white/5 flex justify-end">
-                 <button onClick={() => setInspectingLog(null)} className="px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-xl italic transition-all active:scale-95">Acknowledge</button>
+                 <button onClick={() => setInspectingLog(null)} className="px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95">Acknowledge</button>
               </div>
            </div>
         </div>

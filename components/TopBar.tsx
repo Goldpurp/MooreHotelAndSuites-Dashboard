@@ -143,13 +143,13 @@ const TopBar: React.FC = () => {
           <div ref={resultsRef} className="absolute top-full left-0 mt-3 w-full max-w-xl bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl p-2 z-[100] animate-in fade-in slide-in-from-top-2 overflow-hidden">
             {!hasAnyResults ? (
               <div className="p-12 text-center">
-                <p className="text-[11px] font-black uppercase tracking-dash text-slate-600 italic">No matches found in ledger</p>
+                <p className="text-[11px] font-black uppercase tracking-dash text-slate-600">No matches found in ledger</p>
               </div>
             ) : (
               <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-4">
                 {searchResults?.rooms.length! > 0 && (
                   <div>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Units</p>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Rooms</p>
                     {searchResults?.rooms.map(r => (
                       <button key={r.id} onClick={() => handleNavigate('rooms', r.id)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
                         <div className="flex items-center gap-3">
@@ -222,7 +222,7 @@ const TopBar: React.FC = () => {
                       <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 border border-white/5">
                         <CheckCircle size={24} className="text-slate-700 opacity-40" />
                       </div>
-                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash italic">Operational queue is clear</p>
+                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash">Operational queue is clear</p>
                    </div>
                  ) : (
                    unreadNotifications.map((n) => (
@@ -261,7 +261,7 @@ const TopBar: React.FC = () => {
               </div>
               {unreadCount > 0 && (
                 <div className="p-3 border-t border-white/5 bg-slate-950/40 text-center">
-                   <p className="text-[8px] text-slate-700 font-black uppercase tracking-[0.3em] italic">Moore Property Management Protocol v2.1</p>
+                   <p className="text-[8px] text-slate-700 font-black uppercase tracking-[0.3em]">Moore Property Management Protocol v2.1</p>
                 </div>
               )}
             </div>

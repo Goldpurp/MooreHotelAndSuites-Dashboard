@@ -92,7 +92,7 @@ const Settlements: React.FC = () => {
             <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
             <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">Yield Management</p>
           </div>
-          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Financial Settlements</h2>
+          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Financial Settlements</h2>
         </div>
         <div className="flex items-center gap-2">
            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
@@ -130,7 +130,7 @@ const Settlements: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-white/5">
               {paginatedData.length === 0 ? (
-                <tr><td colSpan={6} className="py-32 text-center text-slate-700 adaptive-text-base font-black uppercase italic tracking-widest">No accounting telemetry found</td></tr>
+                <tr><td colSpan={6} className="py-32 text-center text-slate-700 adaptive-text-base font-black uppercase tracking-widest">No accounting telemetry found</td></tr>
               ) : (
                 paginatedData.map((folio) => {
                   const isPaid = folio.paymentStatus.toLowerCase() === 'paid';
@@ -138,22 +138,22 @@ const Settlements: React.FC = () => {
                     <tr key={folio.id} className="hover:bg-white/[0.02] transition-all border-l-4 border-transparent">
                       <td className="responsive-table-padding">
                         <div>
-                          <p className="adaptive-text-sm font-black text-white italic">{new Date(folio.createdAt).toLocaleDateString('en-GB')}</p>
+                          <p className="adaptive-text-sm font-black text-white">{new Date(folio.createdAt).toLocaleDateString('en-GB')}</p>
                           <p className="text-[8px] text-slate-600 font-bold uppercase mt-1">{new Date(folio.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </td>
                       <td className="responsive-table-padding">
                         <div className="min-w-0">
-                          <p className="adaptive-text-sm font-black text-slate-300 uppercase italic truncate leading-none mb-1">{resolveGuestName(folio)}</p>
+                          <p className="adaptive-text-sm font-black text-slate-300 uppercase truncate leading-none mb-1">{resolveGuestName(folio)}</p>
                           <p className="text-[8px] text-slate-600 font-black uppercase truncate">{folio.guestEmail || 'No Email'}</p>
                         </div>
                       </td>
                       <td className="responsive-table-padding col-priority-med">
                         <p className="text-xs font-black uppercase text-slate-300">{folio.bookingCode}</p>
-                        <p className="text-[8px] text-slate-700 font-mono truncate mt-1 italic">{folio.transactionReference || 'REF-PENDING'}</p>
+                        <p className="text-[8px] text-slate-700 font-mono truncate mt-1">{folio.transactionReference || 'REF-PENDING'}</p>
                       </td>
                       <td className="responsive-table-padding text-right">
-                         <p className={`adaptive-text-sm font-black italic ${isPaid ? 'text-white' : 'text-emerald-400'}`}>₦{folio.amount.toLocaleString()}</p>
+                         <p className={`adaptive-text-sm font-black ${isPaid ? 'text-white' : 'text-emerald-400'}`}>₦{folio.amount.toLocaleString()}</p>
                       </td>
                       <td className="responsive-table-padding text-center">
                          <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase border inline-flex items-center gap-1.5 ${isPaid ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
@@ -163,9 +163,9 @@ const Settlements: React.FC = () => {
                       </td>
                       <td className="responsive-table-padding text-right">
                          {isPaid ? (
-                           <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Sealed</span></div>
+                           <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Sealed</span></div>
                          ) : (
-                           <button onClick={() => { setSelectedBooking(folio); setIsConfirmModalOpen(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto">
+                           <button onClick={() => { setSelectedBooking(folio); setIsConfirmModalOpen(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap flex items-center justify-center ml-auto">
                              <ShieldCheck size={12} className="inline mr-1.5" /> Verify Settlement
                            </button>
                          )}
@@ -179,7 +179,7 @@ const Settlements: React.FC = () => {
         </div>
 
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
-           <div className="text-[9px] text-slate-600 font-black uppercase italic tracking-widest">Forensic Ledger Active • {filteredHistory.length} Records</div>
+           <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Forensic Ledger Active • {filteredHistory.length} Records</div>
            <div className="flex gap-2">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
@@ -196,7 +196,7 @@ const Settlements: React.FC = () => {
                   <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mb-6 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
                     <ShieldCheck size={32} className="text-emerald-500" />
                   </div>
-                  <h3 className="text-xl font-black text-white uppercase italic mb-1">Settled</h3>
+                  <h3 className="text-xl font-black text-white uppercase mb-1">Settled</h3>
                   <p className="text-[9px] text-emerald-500 font-black uppercase tracking-[0.2em]">Ledger Synced Successfully</p>
                 </div>
               ) : (
@@ -204,7 +204,7 @@ const Settlements: React.FC = () => {
                   <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-6 border border-brand-500/20">
                     {verificationState === 'committing' ? <Loader2 size={32} className="text-brand-500 animate-spin" /> : <Wallet size={32} className="text-brand-500" />}
                   </div>
-                  <h3 className="text-xl font-black text-white uppercase italic mb-2 tracking-tighter">
+                  <h3 className="text-xl font-black text-white uppercase mb-2 tracking-tighter">
                     {verificationState === 'committing' ? 'Processing...' : 'Verify Settlement?'}
                   </h3>
                   <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed mb-8">
@@ -215,8 +215,8 @@ const Settlements: React.FC = () => {
                   
                   {verificationState === 'idle' && (
                     <div className="grid grid-cols-2 gap-3">
-                      <button onClick={() => setIsConfirmModalOpen(false)} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Abort</button>
-                      <button onClick={executeConfirmation} className="py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-black adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg italic transition-all active:scale-95">Authorize</button>
+                      <button onClick={() => setIsConfirmModalOpen(false)} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all">Abort</button>
+                      <button onClick={executeConfirmation} className="py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-black adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95">Authorize</button>
                     </div>
                   )}
                 </>

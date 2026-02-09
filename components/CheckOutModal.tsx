@@ -48,7 +48,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
               <ShieldCheck size={40} className="text-emerald-500" strokeWidth={3} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Folio Released</h2>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Folio Released</h2>
               <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] mt-2">Dossier {booking.bookingCode} Archived</p>
             </div>
             <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full">
@@ -64,7 +64,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
                   <LogOut size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight uppercase italic">Authorize Exit</h2>
+                  <h2 className="text-lg font-black text-white tracking-tight uppercase">Authorize Exit</h2>
                   <p className="text-[8px] text-rose-400 font-black uppercase tracking-[0.15em]">Property Check-Out Protocol</p>
                 </div>
               </div>
@@ -77,7 +77,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
               <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
                 <img src={guest.avatarUrl} className="w-14 h-14 rounded-xl object-cover ring-2 ring-white/10" alt="" />
                 <div className="min-w-0">
-                  <p className="text-sm font-black text-white uppercase italic truncate">{guest.firstName} {guest.lastName}</p>
+                  <p className="text-sm font-black text-white uppercase truncate">{guest.firstName} {guest.lastName}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">ID: {guest.id.slice(0,8)}</span>
                     <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
@@ -106,14 +106,14 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
                 </div>
                 <div className="flex justify-between items-end pt-3 border-t border-white/5">
                   <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total Folio Value</span>
-                  <span className="text-2xl font-black text-white tracking-tighter italic">₦{booking.amount.toLocaleString()}</span>
+                  <span className="text-2xl font-black text-white tracking-tighter">₦{booking.amount.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="flex items-start gap-3 p-4 bg-rose-500/10 rounded-xl border border-rose-500/20">
                 <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-rose-300 leading-relaxed font-bold uppercase tracking-tight">
-                  Confirmation will revoke current node access and mark <span className="text-white font-black">Unit {room.roomNumber}</span> for Cleaning.
+                  Confirmation will revoke current room access and mark <span className="text-white font-black">Room {room.roomNumber}</span> for Cleaning.
                 </p>
               </div>
             </div>
@@ -125,7 +125,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
               <button 
                 onClick={handleConfirm} 
                 disabled={isSubmitting}
-                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all italic disabled:bg-rose-900/50 disabled:text-rose-400"
+                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:bg-rose-900/50 disabled:text-rose-400"
               >
                 {isSubmitting ? (
                   <>

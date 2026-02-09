@@ -58,7 +58,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({ isOpen, onClo
 
   const getStatusDisplay = () => {
     if (isUnpaid) return { title: 'SETTLEMENT BLOCKED', sub: 'Payment Verification Required', icon: <Lock size={16}/>, color: 'rose' };
-    if (isBlockedByStatus) return { title: room.status === RoomStatus.Cleaning ? 'UNIT BEING CLEANED' : 'UNIT NOT READY', sub: 'Readiness Check Failed', icon: <Brush size={16}/>, color: 'rose' };
+    if (isBlockedByStatus) return { title: room.status === RoomStatus.Cleaning ? 'ROOM` BEING CLEANED' : 'ROOM` NOT READY', sub: 'Readiness Check Failed', icon: <Brush size={16}/>, color: 'rose' };
     switch(arrivalState) {
       case 'future': return { title: 'FUTURE ARRIVAL', sub: 'Date Mismatch Detected', icon: <CalendarClock size={16}/>, color: 'amber' };
       case 'past': return { title: 'LATE ARRIVAL', sub: 'Folio Recovery Mode', icon: <History size={16} className="rotate-180" />, color: 'blue' };
@@ -82,7 +82,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({ isOpen, onClo
               <Zap size={40} className="text-emerald-500" fill="currentColor" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Identity Verified</h2>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Identity Verified</h2>
               <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] mt-2">Dossier {booking.bookingCode} Activated</p>
             </div>
             <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full">
@@ -103,7 +103,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({ isOpen, onClo
                   {display.icon}
                 </div>
                 <div>
-                  <h2 className="text-base font-black text-white tracking-tight uppercase italic">{display.title}</h2>
+                  <h2 className="text-base font-black text-white tracking-tight uppercase">{display.title}</h2>
                   <p className={`text-[8px] font-black uppercase tracking-[0.1em] ${
                     display.color === 'rose' ? 'text-rose-400' : 
                     display.color === 'amber' ? 'text-amber-400' : 'text-emerald-400'
@@ -118,32 +118,32 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({ isOpen, onClo
                 <div className="text-center space-y-4">
                   <div className="p-6 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex flex-col items-center gap-4">
                      <CreditCard size={40} className="text-rose-500" />
-                     <h3 className="text-lg font-black text-white uppercase italic">PENDING PAYMENT</h3>
-                     <p className="text-[10px] text-rose-300 font-bold uppercase tracking-widest leading-relaxed italic">Property protocol forbids check-in for unpaid folios.</p>
+                     <h3 className="text-lg font-black text-white uppercase">PENDING PAYMENT</h3>
+                     <p className="text-[10px] text-rose-300 font-bold uppercase tracking-widest leading-relaxed">Property protocol forbids check-in for unpaid folios.</p>
                   </div>
-                  <button onClick={handleNavigateToSettlements} className="w-full bg-white/5 hover:bg-white/10 text-white px-4 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 flex items-center justify-center gap-2 transition-all italic">Go to Settlement Page <ExternalLink size={14}/></button>
+                  <button onClick={handleNavigateToSettlements} className="w-full bg-white/5 hover:bg-white/10 text-white px-4 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 flex items-center justify-center gap-2 transition-all">Go to Settlement Page <ExternalLink size={14}/></button>
                 </div>
               ) : isBlockedByStatus ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex flex-col items-center gap-4">
                      {room.status === RoomStatus.Cleaning ? <Brush size={40} className="text-rose-500" /> : <Wrench size={40} className="text-rose-500" />}
-                     <h3 className="text-lg font-black text-white uppercase italic">UNIT NOT READY</h3>
-                     <p className="text-[10px] text-rose-300 font-bold uppercase tracking-widest leading-relaxed italic">Unit status must be <span className="underline font-black text-white uppercase">AVAILABLE</span> to authorize check-in.</p>
+                     <h3 className="text-lg font-black text-white uppercase">ROOM NOT READY</h3>
+                     <p className="text-[10px] text-rose-300 font-bold uppercase tracking-widest leading-relaxed">Room status must be <span className="underline font-black text-white uppercase">AVAILABLE</span> to authorize check-in.</p>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="text-center space-y-3">
-                    <h3 className="text-xl font-black text-white leading-tight uppercase italic">{arrivalState === 'future' ? 'DATE OVERRIDE' : arrivalState === 'early-today' ? 'POLICY OVERRIDE' : 'AUTHORIZE ENTRY'}</h3>
-                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed italic">
+                    <h3 className="text-xl font-black text-white leading-tight uppercase">{arrivalState === 'future' ? 'DATE OVERRIDE' : arrivalState === 'early-today' ? 'POLICY OVERRIDE' : 'AUTHORIZE ENTRY'}</h3>
+                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
                       {arrivalState === 'future' ? `Scheduled for ${new Date(booking.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'long' })}. Override block?`
                         : arrivalState === 'early-today' ? `Standard check-in starts at 15:00. Authorize early access protocol?`
                         : `Authorize digital folio activation for ${guest.firstName} ${guest.lastName}?`}
                     </p>
                   </div>
                   <div className="bg-white/5 p-6 rounded-2xl border border-white/5 space-y-4 shadow-inner">
-                    <div className="flex justify-between items-center"><span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Asset Node</span><span className="text-sm font-black text-white uppercase italic tracking-tighter">Room {room.roomNumber}</span></div>
-                    <div className="flex justify-between items-center pt-4 border-t border-white/5"><span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Scheduled Arrival</span><span className={`text-[11px] font-black uppercase tracking-widest italic ${arrivalState === 'future' ? 'text-amber-500' : 'text-blue-400'}`}>{new Date(booking.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span></div>
+                    <div className="flex justify-between items-center"><span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Asset Unit</span><span className="text-sm font-black text-white uppercase tracking-tighter">Room {room.roomNumber}</span></div>
+                    <div className="flex justify-between items-center pt-4 border-t border-white/5"><span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Scheduled Arrival</span><span className={`text-[11px] font-black uppercase tracking-widest ${arrivalState === 'future' ? 'text-amber-500' : 'text-blue-400'}`}>{new Date(booking.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span></div>
                   </div>
                 </>
               )}
@@ -155,7 +155,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({ isOpen, onClo
               <button 
                 onClick={handleAuthorizedConfirm} 
                 disabled={isSubmitting || isUnpaid || isBlockedByStatus} 
-                className={`w-full py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all italic ${isSubmitting || isUnpaid || isBlockedByStatus ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : display.color === 'amber' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-900/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20'}`}
+                className={`w-full py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all ${isSubmitting || isUnpaid || isBlockedByStatus ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : display.color === 'amber' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-900/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20'}`}
               >
                 {isSubmitting ? (
                   <>
@@ -169,7 +169,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({ isOpen, onClo
                   </>
                 )}
               </button>
-              <button onClick={onClose} disabled={isSubmitting} className="w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5 italic">Abort Protocol</button>
+              <button onClick={onClose} disabled={isSubmitting} className="w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">Abort Protocol</button>
             </div>
           </>
         )}

@@ -9,31 +9,44 @@ interface RoomModalProps {
   editingRoom: Room | null;
 }
 
-const AMENITIES_DATA = [
+export const AMENITIES_DATA = [
   {
-    category: '🛏 Basics',
+    category: "Basics",
     items: [
-      { id: 'Free WiFi', label: 'Free Wi-Fi' },
-      { id: 'Air Conditioning', label: 'Air Conditioning' },
-      { id: 'Workspace', label: 'Work desk' },
-      { id: 'Safe', label: 'Safe Box' },
-      { id: 'Room Service', label: 'Room Service' },
-    ]
+      { id: "wifi", label: "Free Wi-Fi" },
+      { id: "ac", label: "Air Conditioning" },
+      { id: "workspace", label: "Work Desk" },
+      { id: "safe", label: "In-room Safe" },
+      { id: "iron", label: "Iron & Ironing Board" },
+      { id: "bathtub", label: "Bathtub" },
+    ],
   },
+
   {
-    category: '💻 Comms',
+    category: "Entertainment & Tech",
     items: [
-      { id: 'Smart TV', label: 'Smart TV' },
-      { id: 'Telephone', label: 'Direct Dial' },
-    ]
+      { id: "tv", label: "Smart TV" },
+      { id: "telephone", label: "Telephone" },
+    ],
   },
+
   {
-    category: '☕ Extra',
+    category: "Food & Drink",
     items: [
-      { id: 'Mini Bar', label: 'Mini Bar' },
-      { id: 'Balcony', label: 'Balcony' },
-    ]
-  }
+      { id: "mini_bar", label: "Mini Bar" },
+      { id: "fridge", label: "Mini Fridge" },
+    ],
+  },
+
+  {
+    category: "Bed & Comfort",
+    items: [
+      { id: "king_bed", label: "King Bed" },
+      { id: "queen_bed", label: "Queen Bed" },
+      { id: "extra_bed", label: "Extra Bed Available" },
+      { id: "extra_pillows", label: "Extra Pillows" },
+    ],
+  },
 ];
 
 const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingRoom }) => {
@@ -45,7 +58,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
     status: RoomStatus.Available,
     pricePerNight: 0,
     capacity: 2,
-    size: '20 sqm',
+    size: '45 sqm',
     description: '',
     amenities: [],
     images: [],
@@ -146,12 +159,12 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
               <ShieldCheck size={48} className="text-blue-500" strokeWidth={3} />
             </div>
             <div>
-              <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter">Asset Synchronized</h2>
+              <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Asset Synchronized</h2>
               <p className="text-[11px] text-blue-400 font-black uppercase tracking-[0.3em] mt-3">
-                Unit {formData.roomNumber} updated in property ledger
+                Room {formData.roomNumber} updated in property ledger
               </p>
             </div>
-            <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest italic max-w-md">The hardware registry has been updated across all distributed operation nodes.</p>
+            <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest max-w-md">The hardware registry has been updated across all distributed operation nodes.</p>
           </div>
         ) : (
           <>
@@ -161,8 +174,8 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                     {editingRoom ? <Save size={20}/> : <Plus size={20}/>}
                  </div>
                  <div>
-                    <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight italic uppercase">
-                      {editingRoom ? 'Modify Unit' : 'Onboard Asset'}
+                    <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight uppercase">
+                      {editingRoom ? 'Modify Room' : 'Onboard Asset'}
                     </h2>
                     <p className="text-[8px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest mt-0.5">Asset Configuration Protocol</p>
                  </div>
@@ -281,7 +294,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
 
                 <div className="space-y-2">
                     <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Description</label>
-                    <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Detailed unit specifications..." className="w-full bg-slate-950/60 border border-white/10 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-sm text-white focus:bg-slate-900 transition-all outline-none min-h-[100px] resize-none" />
+                    <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Detailed room specifications..." className="w-full bg-slate-950/60 border border-white/10 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-sm text-white focus:bg-slate-900 transition-all outline-none min-h-[100px] resize-none" />
                 </div>
 
                 <div className="pt-6 border-t border-white/5 grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-10">
