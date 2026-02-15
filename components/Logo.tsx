@@ -3,7 +3,7 @@ import React from 'react';
 
 interface LogoProps {
   className?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
 const Logo: React.FC<LogoProps> = ({ className = '', size = 'md' }) => {
@@ -12,6 +12,7 @@ const Logo: React.FC<LogoProps> = ({ className = '', size = 'md' }) => {
     md: 'w-10 h-10 rounded-xl',
     lg: 'w-12 h-12 rounded-xl',
     xl: 'w-16 h-16 rounded-2xl',
+    '2xl': 'w-20 h-20 rounded-2xl',
   };
 
   const textSizes = {
@@ -22,8 +23,11 @@ const Logo: React.FC<LogoProps> = ({ className = '', size = 'md' }) => {
   };
 
   return (
-    <div className={`shrink-0 ${containerSizes[size]} bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-700 flex items-center justify-center shadow-xl shadow-blue-500/20 border border-white/10 ring-1 ring-white/5 ${className}`}>
-      <span className={`text-white ${textSizes[size]} font-black italic tracking-tighter leading-none select-none drop-shadow-md`}>M</span>
+    <div className={`shrink-0 ${containerSizes[size]} bg-[#31458E] flex items-center justify-center shadow-xl shadow-blue-500/20 border border-white/10 ring-1 ring-white/5 ${className}`}>
+            <img
+        src="https://res.cloudinary.com/diovckpyb/image/upload/v1770752129/qkwdjjwzinvo3l6qa3jj.png"
+        alt="Moore Hotels & Suites"
+      />
     </div>
   );
 };
