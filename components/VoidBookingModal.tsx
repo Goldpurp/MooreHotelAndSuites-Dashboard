@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { X, AlertTriangle, ShieldAlert, Loader2, ShieldCheck, BookmarkX } from 'lucide-react';
+import { X, AlertTriangle, ShieldAlert, Loader2, ShieldCheck, BookmarkX, MessageSquare } from 'lucide-react';
 import { Booking, Guest, Room } from '../types';
 
 interface VoidBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (bookingId: string) => void | Promise<void>;
+  onConfirm: (bookingId: string, reason: string) => void | Promise<void>;
   booking: Booking | null;
   guest: Guest | null;
   room: Room | null;
@@ -14,17 +14,19 @@ interface VoidBookingModalProps {
 const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, onConfirm, booking, guest, room }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<'details' | 'success'>('details');
+  const [reason, setReason] = useState('Guest requested cancellation');
 
   if (!isOpen || !booking || !guest || !room) return null;
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      await onConfirm(booking.id);
+      await onConfirm(booking.id, reason);
       setStatus('success');
       setTimeout(() => {
         onClose();
         setStatus('details');
+        setReason('Guest requested cancellation');
       }, 2500);
     } catch (err) {
       console.error(err);
@@ -77,6 +79,18 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
                 </div>
               </div>
 
+              <div className="space-y-2">
+                 <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <MessageSquare size={12}/> Cancellation Reason
+                 </label>
+                 <textarea 
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-xs text-white focus:border-rose-500/40 outline-none min-h-[80px] resize-none"
+                    placeholder="Enter justification for revocation..."
+                 />
+              </div>
+
               <div className="flex items-start gap-3 p-2">
                 <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-400 leading-relaxed font-bold uppercase tracking-tight">
@@ -102,7 +116,7 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
               </button>
               <button 
                 onClick={handleConfirm} 
-                disabled={isSubmitting}
+                disabled={isSubmitting || !reason.trim()}
                 className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (

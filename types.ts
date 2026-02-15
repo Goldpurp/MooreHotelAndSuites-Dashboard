@@ -1,61 +1,61 @@
-
-
 export enum RoomStatus {
-  Available = 'Available',
-  Occupied = 'Occupied',
-  Cleaning = 'Cleaning',
-  Maintenance = 'Maintenance',
-  Reserved = 'Reserved'
+  Available = "Available",
+  Occupied = "Occupied",
+  Cleaning = "Cleaning",
+  Maintenance = "Maintenance",
+  Reserved = "Reserved",
 }
 
 export enum BookingStatus {
-  Pending = 'Pending',
-  Confirmed = 'Confirmed',
-  CheckedIn = 'CheckedIn',
-  CheckedOut = 'CheckedOut',
-  Cancelled = 'Cancelled',
-  Reserved = 'Reserved'
+  Pending = "Pending",
+  Confirmed = "Confirmed",
+  CheckedIn = "CheckedIn",
+  CheckedOut = "CheckedOut",
+  Cancelled = "Cancelled",
+  Reserved = "Reserved",
 }
 
 export enum VisitAction {
-  RESERVATION = 'Reservation Made',
-  CHECK_IN = 'Checked In',
-  CHECK_OUT = 'Checked Out',
-  VOID = 'Dossier Voided'
+  RESERVATION = "Reservation Made",
+  CHECK_IN = "Checked In",
+  CHECK_OUT = "Checked Out",
+  VOID = "Dossier Voided",
 }
 
-export type RoomCategory = 'Standard' | 'Business' | 'Executive' | 'Suite';
+export type RoomCategory = "Standard" | "Business" | "Executive" | "Suite";
 
 export enum PropertyFloor {
-  GroundFloor = 'GroundFloor',
-  FirstFloor = 'FirstFloor',
-  SecondFloor = 'SecondFloor',
-  ThirdFloor = 'ThirdFloor',
-  Penthouse = 'Penthouse'
+  GroundFloor = "GroundFloor",
+  FirstFloor = "FirstFloor",
+  SecondFloor = "SecondFloor",
+  ThirdFloor = "ThirdFloor",
+  Penthouse = "Penthouse",
 }
 
 export enum PaymentStatus {
-  Paid = 'Paid',
-  Unpaid = 'Unpaid',
-  Partial = 'Partial',
-  AwaitingVerification = 'AwaitingVerification'
+  Paid = "Paid",
+  Unpaid = "Unpaid",
+  Partial = "Partial",
+  AwaitingVerification = "AwaitingVerification",
+  RefundPending = "RefundPending",
+  Refunded = "Refunded",
 }
 
 export enum PaymentMethod {
-  Paystack = 'Paystack',
-  DirectTransfer = 'DirectTransfer'
+  Paystack = "Paystack",
+  DirectTransfer = "DirectTransfer",
 }
 
 export enum UserRole {
-  Admin = 'Admin',
-  Manager = 'Manager',
-  Staff = 'Staff',
-  Client = 'Client'
+  Admin = "Admin",
+  Manager = "Manager",
+  Staff = "Staff",
+  Client = "Client",
 }
 
 export enum ProfileStatus {
-  Active = 'Active',
-  Suspended = 'Suspended'
+  Active = "Active",
+  Suspended = "Suspended",
 }
 
 export interface BookingStatusHistory {
@@ -79,7 +79,7 @@ export interface Room {
   category: RoomCategory;
   floor: PropertyFloor;
   status: RoomStatus;
-  pricePerNight: number; 
+  pricePerNight: number;
   capacity: number;
   size: string;
   description: string;
@@ -96,7 +96,7 @@ export interface Guest {
   email: string;
   phone: string;
   totalStays: number;
-  totalSpent: number; 
+  totalSpent: number;
   avatarUrl?: string;
   isVIP?: boolean;
 }
@@ -114,16 +114,16 @@ export interface VisitRecord {
 }
 
 export interface Booking {
-  id: string; 
-  bookingCode: string; 
+  id: string;
+  bookingCode: string;
   roomId: string;
   guestId?: string;
   guestFirstName: string;
   guestLastName: string;
   guestEmail: string;
   guestPhone: string;
-  checkIn: string; 
-  checkOut: string; 
+  checkIn: string;
+  checkOut: string;
   status: BookingStatus;
   amount: number;
   paymentStatus: PaymentStatus;

@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 @theme {
-  /* Moore Executive Branding Palette */
   --color-brand-50: #eff6ff;
   --color-brand-100: #dbeafe;
   --color-brand-200: #bfdbfe;
@@ -16,8 +15,10 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Base resets - RESTORED STABILITY */
-html, body, #root {
+/* Stable Layout Resets */
+html,
+body,
+#root {
   min-height: 100%;
   margin: 0;
   padding: 0;
@@ -26,16 +27,74 @@ html, body, #root {
   font-family: var(--font-sans);
 }
 
-/* Global Scrollbar Hiding - Functional but Invisible */
 * {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
 
+/* Core Animations */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(-15%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+@keyframes critical-blink {
+  0%,
+  100% {
+    background-color: rgba(244, 63, 94, 0.05);
+  }
+  50% {
+    background-color: rgba(244, 63, 94, 0.15);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.animate-critical-blink {
+  animation: critical-blink 1.5s ease-in-out infinite;
+}
+
+/* Standardized Scrollbars */
 *::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .glass-card {
@@ -45,42 +104,78 @@ html, body, #root {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.tracking-dash { 
-  letter-spacing: 0.15em; 
+.tracking-dash {
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   font-size: 0.75rem;
   font-weight: 800;
 }
 
-/* Responsive Scaling System */
+/* Utilities for requested layout updates */
 @layer utilities {
   .fluid-padding {
     padding: clamp(1rem, 2vw, 2.5rem);
   }
-  
-  .adaptive-text-xs { font-size: 0.75rem; }
-  .adaptive-text-sm { font-size: 0.875rem; }
-  .adaptive-text-base { font-size: 1rem; }
-  .adaptive-text-lg { font-size: 1.125rem; }
-  .adaptive-text-xl { font-size: 1.25rem; }
-  .adaptive-text-2xl { font-size: 1.5rem; }
-  .adaptive-text-3xl { font-size: 2rem; }
 
-  .adaptive-p { padding: 1.5rem; }
-  .adaptive-px { padding-left: 1.5rem; padding-right: 1.5rem; }
-  .adaptive-py { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+  .adaptive-text-xs {
+    font-size: 0.75rem;
+  }
+  .adaptive-text-sm {
+    font-size: 0.875rem;
+  }
+  .adaptive-text-base {
+    font-size: 1rem;
+  }
+  .adaptive-text-lg {
+    font-size: 1.125rem;
+  }
+  .adaptive-text-xl {
+    font-size: 1.25rem;
+  }
+  .adaptive-text-2xl {
+    font-size: 1.5rem;
+  }
+  .adaptive-text-3xl {
+    font-size: 2rem;
+  }
+
+  .adaptive-p {
+    padding: 1.5rem;
+  }
+  .adaptive-px {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  .adaptive-py {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
 
   .responsive-table-padding {
+    padding: 1rem 1.5rem;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
     padding-top: 1rem;
     padding-bottom: 1rem;
   }
 
-  .col-priority-high { @apply table-cell; }
-  .col-priority-med { @apply hidden md:table-cell; }
-  .col-priority-low { @apply hidden lg:table-cell; }
+  .col-priority-high {
+    @apply table-cell;
+  }
+  .col-priority-med {
+    @apply hidden md:table-cell;
+  }
+  .col-priority-low {
+    @apply hidden lg:table-cell;
+  }
 
-  .split-main { flex: 4; min-width: 0; }
-  .split-side { flex: 1.3; min-width: 350px; max-width: 480px; }
+  .split-main {
+    flex: 4;
+    min-width: 0;
+  }
+  .split-side {
+    flex: 1.3;
+    min-width: 350px;
+    max-width: 480px;
+  }
 }

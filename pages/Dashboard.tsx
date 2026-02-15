@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from "react";
 import {
   DollarSign,
@@ -12,7 +11,8 @@ import {
   Zap,
   ShieldCheck,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle
 } from "lucide-react";
 import { useHotel } from "../store/HotelContext";
 import StatCard from "../components/StatCard";
@@ -67,9 +67,42 @@ const Dashboard: React.FC = () => {
 
   const sortedActionableBookings = useMemo(() => {
     const actionable = ['confirmed', 'pending', 'checkedin'];
+    const now = new Date();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
     return [...bookings]
-      .filter((b) => actionable.includes(String(b.status || '').toLowerCase()))
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      .filter((b) => {
+        const status = String(b.status || '').toLowerCase();
+        if (!actionable.includes(status)) return false;
+
+        // CRITICAL FILTER: If check-in is in the past and they haven't checked in, treat as invalid
+        if (status === 'confirmed' || status === 'pending') {
+          const bCheckIn = new Date(b.checkIn);
+          bCheckIn.setHours(0, 0, 0, 0);
+          if (bCheckIn < todayStart) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        // Overdue Calculation Utility
+        const getOverdue = (booking: any) => {
+          if (String(booking.status).toLowerCase() !== 'checkedin') return false;
+          const checkoutDate = new Date(booking.checkOut);
+          checkoutDate.setHours(11, 30, 0, 0);
+          return now > checkoutDate;
+        };
+
+        const isOverdueA = getOverdue(a);
+        const isOverdueB = getOverdue(b);
+
+        // Priority 1: Overdue guests at the absolute top for immediate action
+        if (isOverdueA && !isOverdueB) return -1;
+        if (!isOverdueA && isOverdueB) return 1;
+
+        // Priority 2: Arrange by check-in date (closest to now first)
+        return new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime();
+      });
   }, [bookings]);
 
   const paginatedQueue = useMemo(() => {
@@ -134,7 +167,6 @@ const Dashboard: React.FC = () => {
     const periodBookings = validBookings.filter((b) => now.getTime() - new Date(b.createdAt).getTime() <= filterTime);
     const periodRev = periodBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
     
-    // Robust calculation for current in-house guests
     const activeResidentsCount = (bookings || []).filter((b) => String(b.status).toLowerCase() === 'checkedin').length;
     
     const occupiedUnits = (rooms || []).filter((r) => String(r.status).toLowerCase() === 'occupied').length;
@@ -262,23 +294,33 @@ const Dashboard: React.FC = () => {
                 paginatedQueue.map((booking) => {
                   const room = (rooms || []).find((r) => r.id === booking.roomId);
                   const isPaid = String(booking.paymentStatus || '').toLowerCase() === 'paid';
-                  const isArrivalToday = new Date(booking.checkIn).toDateString() === new Date().toDateString();
                   const isCheckedIn = String(booking.status || '').toLowerCase() === 'checkedin';
                   
+                  // Detect overdue check-out
+                  const checkoutDate = new Date(booking.checkOut);
+                  checkoutDate.setHours(11, 30, 0, 0);
+                  const isOverdue = isCheckedIn && new Date() > checkoutDate;
+                  const isIncomingSoon = !isCheckedIn && new Date(booking.checkIn).toLocaleDateString() === new Date().toLocaleDateString();
+
                   return (
-                    <tr key={booking.id} className="group transition-all hover:bg-white/5 cursor-pointer border-l-4 border-transparent hover:border-blue-600" onClick={() => { setSelectedBookingId(booking.id); setActiveTab("bookings"); }}>
+                    <tr key={booking.id} className={`group transition-all cursor-pointer border-l-4 ${isOverdue ? 'bg-rose-500/10 border-rose-500 hover:bg-rose-500/20 animate-pulse' : 'hover:bg-white/5 border-transparent hover:border-blue-600'}`} onClick={() => { setSelectedBookingId(booking.id); setActiveTab(isOverdue ? "guests" : "bookings"); }}>
                       <td className="responsive-table-padding">
                         <div className="flex items-center gap-4">
-                          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-black shrink-0 ${isCheckedIn ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-slate-800 border-white/10 text-slate-500"}`}>{booking.guestFirstName?.charAt(0) || "G"}</div>
+                          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-black shrink-0 ${isOverdue ? "bg-rose-500/20 border-rose-500/40 text-rose-500 animate-pulse" : isCheckedIn ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : isIncomingSoon ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : "bg-slate-800 border-white/10 text-slate-500"}`}>{booking.guestFirstName?.charAt(0) || "G"}</div>
                           <div className="min-w-0">
-                            <p className="adaptive-text-sm font-black text-white truncate leading-none mb-1.5 uppercase tracking-tight">{booking.guestFirstName} {booking.guestLastName}</p>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <p className={`adaptive-text-sm font-black truncate leading-none uppercase tracking-tight ${isOverdue ? 'text-rose-400 animate-pulse' : 'text-white'}`}>{booking.guestFirstName} {booking.guestLastName}</p>
+                              {isOverdue && <AlertTriangle size={12} className="text-rose-500 animate-bounce" />}
+                            </div>
                             <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">Ref: {booking.bookingCode}</p>
                           </div>
                         </div>
                       </td>
                       <td className="responsive-table-padding col-priority-med">
-                        <p className={`adaptive-text-sm font-black ${isArrivalToday ? 'text-amber-400' : 'text-slate-300'}`}>{new Date(booking.checkIn).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}</p>
-                        <p className="text-[8px] text-slate-600 font-bold uppercase mt-1">{isArrivalToday ? 'Arrival Today' : 'Incoming'}</p>
+                        <p className={`adaptive-text-sm font-black ${isOverdue ? 'text-rose-500' : isIncomingSoon ? 'text-blue-400' : 'text-slate-300'}`}>{new Date(isCheckedIn ? booking.checkOut : booking.checkIn).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}</p>
+                        <p className={`text-[8px] font-bold uppercase mt-1 ${isOverdue ? 'text-rose-600 animate-pulse' : 'text-slate-600'}`}>
+                          {isOverdue ? 'EXCEEDED TIME' : isCheckedIn ? 'Departure' : 'Arrival Status'}
+                        </p>
                       </td>
                       <td className="responsive-table-padding col-priority-low">
                         <p className="adaptive-text-sm font-black text-slate-300 leading-none">Room {room?.roomNumber || "..."}</p>
@@ -287,12 +329,13 @@ const Dashboard: React.FC = () => {
                       <td className="responsive-table-padding">
                         <div className="flex flex-col gap-1.5">
                           <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border flex items-center gap-1.5 w-fit ${
+                            isOverdue ? "bg-rose-500/10 text-rose-500 border-rose-500/20" :
                             isCheckedIn ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : 
                             String(booking.status).toLowerCase() === 'confirmed' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
                             "bg-amber-500/10 text-amber-400 border-amber-500/20"
                           }`}>
-                            <span className={`w-1 h-1 rounded-full ${isCheckedIn ? "bg-emerald-400 animate-pulse" : "bg-current"}`}></span>
-                            {isCheckedIn ? "In-House" : booking.status}
+                            <span className={`w-1 h-1 rounded-full ${isOverdue ? 'bg-rose-500 animate-ping' : isCheckedIn ? "bg-emerald-400 animate-pulse" : "bg-current"}`}></span>
+                            {isOverdue ? "EXCEEDED STAY" : isCheckedIn ? "In-House" : booking.status}
                           </span>
                           <span className={`text-[8px] font-bold uppercase tracking-widest px-1 ${isPaid ? 'text-emerald-500' : 'text-rose-500'}`}>{isPaid ? 'Payment Confirmed' : 'Payment Pending'}</span>
                         </div>

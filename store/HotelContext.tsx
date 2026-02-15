@@ -38,7 +38,16 @@ interface HotelContextType {
   checkInBooking: (bookingId: string) => Promise<void>;
   checkOutBooking: (bookingId: string) => Promise<void>;
   checkInBookingByCode: (code: string) => Promise<void>;
-  cancelBooking: (bookingId: string) => Promise<void>;
+  /** 
+   * CHANGE: Updated signature for the new cancellation API.
+   * Targets: POST /api/bookings/{id}/cancel?reason={reason}
+   */
+  cancelBooking: (bookingId: string, reason?: string) => Promise<void>;
+  /** 
+   * CHANGE: New protocol for completing refunds.
+   * Targets: POST /api/bookings/{id}/complete-refund?transactionRef={transactionRef}
+   */
+  completeRefund: (bookingId: string, transactionRef: string) => Promise<void>;
   addGuest: (guest: Omit<Guest, 'id' | 'totalStays' | 'totalSpent'>) => Promise<string>;
   updateGuest: (id: string, updates: Partial<Guest>) => Promise<void>;
   isRoomAvailable: (roomId: string, checkIn: string, checkOut: string, excludeBookingId?: string) => boolean;
@@ -107,6 +116,21 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return val.charAt(0).toUpperCase() + val.slice(1);
   };
 
+  /** 
+   * CHANGE: Added specific normalization for Refund-related payment statuses 
+   * to ensure UI logic recognizes these states correctly.
+   */
+  const toCanonicalPaymentStatus = (val: string | undefined): PaymentStatus => {
+    if (!val) return PaymentStatus.Unpaid;
+    const lower = val.toLowerCase().replace(/[\s_-]/g, '');
+    if (lower === 'paid') return PaymentStatus.Paid;
+    if (lower === 'unpaid') return PaymentStatus.Unpaid;
+    if (lower === 'awaitingverification') return PaymentStatus.AwaitingVerification;
+    if (lower === 'refundpending') return PaymentStatus.RefundPending;
+    if (lower === 'refunded') return PaymentStatus.Refunded;
+    return PaymentStatus.Unpaid;
+  };
+
   const normalizeBooking = (b: any): Booking => {
     return {
       id: String(b.id || b.Id || ''),
@@ -121,8 +145,9 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       checkOut: b.checkOut || b.CheckOut || '',
       status: toCanonicalStatus(b.status || b.Status || BookingStatus.Pending) as BookingStatus,
       amount: Number(b.amount || b.Amount || 0),
-      paymentStatus: toCanonicalStatus(b.paymentStatus || b.PaymentStatus || PaymentStatus.Unpaid) as PaymentStatus,
+      paymentStatus: toCanonicalPaymentStatus(b.paymentStatus || b.PaymentStatus || 'Unpaid'),
       paymentMethod: b.paymentMethod || b.PaymentMethod || '',
+      transactionReference: b.transactionReference || b.TransactionReference || '',
       createdAt: b.createdAt || b.CreatedAt || new Date().toISOString(),
       notes: b.notes || b.Notes || '',
       statusHistory: b.statusHistory || b.StatusHistory || []
@@ -173,7 +198,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ? ProfileStatus.Suspended 
       : ProfileStatus.Active;
 
-    // Detect variants for phone and creation date
     const phoneValue = data.phone || data.Phone || data.phoneNumber || data.PhoneNumber || "";
     const dateValue = data.onboardingDate || data.OnboardingDate || data.createdAt || data.CreatedAt || new Date().toISOString();
 
@@ -340,10 +364,30 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateBooking = async (id: string, updates: Partial<Booking>) => { await api.put(`/api/bookings/${id}`, { ...updates, id }); await refreshData(); };
   const updatePaymentStatus = async (id: string, status: PaymentStatus) => { await api.put(`/api/bookings/${id}`, { id, paymentStatus: status }); await refreshData(); };
+  
   const confirmTransfer = async (code: string) => { 
     await api.post(`/api/bookings/${code}/confirm-transfer`); 
     await refreshData(); 
   };
+
+  /** 
+   * CHANGE: Implemented specialized cancellation API call.
+   * Includes mandatory reason parameter.
+   */
+  const cancelBooking = async (id: string, reason: string = 'Staff Requested Cancellation') => { 
+    await api.post(`/api/bookings/${id}/cancel`, null, { params: { reason } }); 
+    await refreshData(); 
+  };
+
+  /** 
+   * CHANGE: Implemented specialized complete-refund API call.
+   * Includes mandatory transactionRef parameter.
+   */
+  const completeRefund = async (id: string, transactionRef: string) => {
+    await api.post(`/api/bookings/${id}/complete-refund`, null, { params: { transactionRef } });
+    await refreshData();
+  };
+
   const checkInBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedIn' } }); await refreshData(); };
   const checkOutBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'CheckedOut' } }); await refreshData(); };
   const checkInBookingByCode = async (code: string) => { 
@@ -351,7 +395,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (b) await checkInBooking(b.id); 
     else throw new Error("Identifier mismatch: Dossier code not found in current view.");
   };
-  const cancelBooking = async (id: string) => { await api.put(`/api/bookings/${id}/status`, null, { params: { status: 'Cancelled' } }); await refreshData(); };
+
   const addGuest = async (g: any) => { const res = await api.post<any>('/api/Auth/register', g); await refreshData(); return res.email; };
   const updateGuest = async (id: string, updates: Partial<Guest>) => { await api.put(`/api/profile/me`, updates); await refreshData(); };
 
@@ -391,7 +435,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       fullName: p.name,
       email: p.email,
       phoneNumber: p.phone,
-      phone: p.phone, // Include both variants to ensure the backend picks it up
+      phone: p.phone, 
       temporaryPassword: p.password,
       assignedRole: String(p.role).toLowerCase(),
       status: String(p.status).toLowerCase(),
@@ -424,7 +468,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     selectedBookingId, setSelectedBookingId, selectedGuestId, setSelectedGuestId, selectedRoomId, setSelectedRoomId,
     setActiveTab, toggleSidebar: () => setIsSidebarCollapsed(!isSidebarCollapsed), login, logout, setUserRole,
     addRoom, updateRoom, deleteRoom, toggleRoomMaintenance, addBooking, updateBooking, updatePaymentStatus, confirmTransfer,
-    checkInBooking, checkOutBooking, checkInBookingByCode, cancelBooking, addGuest, updateGuest, isRoomAvailable,
+    checkInBooking, checkOutBooking, checkInBookingByCode, cancelBooking, completeRefund, addGuest, updateGuest, isRoomAvailable,
     dismissNotification, markNotificationAsRead, markAllNotificationsRead, addStaff, updateStaff, toggleStaffStatus, updateCurrentUserProfile, refreshData
   };
 

@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
-  Search, Bell, Bed, Users, Calendar, 
-  ShieldCheck, UserCog, Hash, X, CheckCircle, 
-  Info, AlertTriangle, Trash2, Clock, Check
+  Search, Bell, Bed, Users, Calendar, CheckCircle, 
+  Info, Check, ShieldAlert
 } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { AppNotification } from '../types';
@@ -22,6 +20,17 @@ const TopBar: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Critical Tasks Logic (Overdue check-outs)
+  const criticalTasksCount = useMemo(() => {
+    const now = new Date();
+    return (bookings || []).filter(b => {
+      if (String(b.status).toLowerCase() !== 'checkedin') return false;
+      const checkout = new Date(b.checkOut);
+      checkout.setHours(11, 30, 0, 0);
+      return now > checkout;
+    }).length;
+  }, [bookings]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -95,13 +104,11 @@ const TopBar: React.FC = () => {
       await markNotificationAsRead(n.id);
     }
     
-    // Logic to navigate based on bookingCode if present
     if (n.bookingCode) {
       const booking = (bookings || []).find(b => b.bookingCode === n.bookingCode);
       if (booking) {
         handleNavigate('bookings', booking.id);
       } else {
-        // Fallback to bookings tab if booking not found in current local set
         setActiveTab('bookings');
       }
     } else if (n.title.toLowerCase().includes('settlement')) {
@@ -111,7 +118,6 @@ const TopBar: React.FC = () => {
     setShowNotifications(false);
   };
 
-  // Only display unread notifications in the dropdown list as requested
   const unreadNotifications = useMemo(() => 
     (notifications || []).filter(n => !n.isRead)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()), 
@@ -198,6 +204,17 @@ const TopBar: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Critical Overdue Alerts */}
+        {criticalTasksCount > 0 && (
+          <button 
+            onClick={() => setActiveTab('guests')}
+            className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 transition-all animate-pulse shadow-lg shadow-rose-950/20"
+          >
+            <ShieldAlert size={16} />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline">{criticalTasksCount} Overdue Checks</span>
+          </button>
+        )}
+
         <div className="relative" ref={notificationRef}>
           <button onClick={() => setShowNotifications(!showNotifications)} className={`p-2.5 rounded-xl border transition-all duration-300 relative shadow-sm ${showNotifications ? 'bg-brand-600 text-white border-brand-500 shadow-xl' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
             <Bell size={18} />
@@ -234,9 +251,9 @@ const TopBar: React.FC = () => {
                         <div className="absolute top-4 left-0 w-1 h-4 bg-brand-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
                         <div className="flex gap-3">
                            <div className={`p-2 rounded-lg h-fit ${
-                             n.title.toLowerCase().includes('reservation') ? 'bg-emerald-500/10 text-emerald-500' :
-                             n.title.toLowerCase().includes('payment') ? 'bg-amber-500/10 text-amber-500' :
-                             n.title.toLowerCase().includes('error') ? 'bg-rose-500/10 text-rose-500' :
+                             n.title.toLowerCase().includes('reservation') ? 'bg-emerald-500/10 text-emerald-400' :
+                             n.title.toLowerCase().includes('payment') ? 'bg-amber-500/10 text-amber-400' :
+                             n.title.toLowerCase().includes('error') ? 'bg-rose-500/10 text-rose-400' :
                              'bg-brand-500/10 text-brand-500'
                            }`}>
                              {n.title.toLowerCase().includes('reservation') ? <Calendar size={14}/> : 
