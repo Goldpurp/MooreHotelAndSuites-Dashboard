@@ -425,62 +425,66 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   //   await refreshData();
   // };
 
-  const addRoom = async (room: Omit<Room, "id">) => {
-    const formData = new FormData();
-
-    formData.append("roomNumber", room.roomNumber);
-    formData.append("name", room.name);
-    formData.append("category", room.category);
-    formData.append("floor", room.floor);
-    formData.append("status", room.status);
-    formData.append("description", room.description || "");
-
-    if (room.images && room.images.length > 0) {
-      for (const [index, base64String] of room.images.entries()) {
-        const response = await fetch(base64String);
-        const blob = await response.blob();
-        formData.append("files", blob, `room_image_${index}.jpg`);
-      }
-    }
-
-    await api.post("/api/rooms", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    } as any);
-
-    await refreshData();
-  };
-
-const updateRoom = async (id: string, updates: Partial<Room>) => {
+const addRoom = async (room: Omit<Room, "id">) => {
   const formData = new FormData();
-  formData.append("id", id);
 
-  // Append any updated text fields
-  if (updates.roomNumber) formData.append("roomNumber", updates.roomNumber);
-  if (updates.name) formData.append("name", updates.name);
-  if (updates.status) formData.append("status", updates.status);
-
-  // Handle Images
-  if (updates.images) {
-    for (let i = 0; i < updates.images.length; i++) {
-      const img = updates.images[i];
-      if (img.startsWith("data:image")) {
-        // It's a NEW image: send to 'files'
-        const res = await fetch(img);
+  // 1. Map to C# CreateRoomRequest Record (PascalCase)
+  formData.append("RoomNumber", room.roomNumber);
+  formData.append("Name", room.name);
+  formData.append("Category", room.category);
+  formData.append("Floor", room.floor);
+  formData.append("Status", room.status);
+  formData.append("Size", room.size || "");
+  formData.append("Description", room.description || "");
+  formData.append("PricePerNight", String(room.pricePerNight || 0));
+  formData.append("Guest", String(room.capacity || 2));
+  // 3. Amenities (List<string>)
+  if (room.amenities) {
+    room.amenities.forEach((a) => formData.append("Amenities", a));
+  }
+  // 4. Image Conversion (Base64 -> IFormFile)
+  if (room.images && room.images.length > 0) {
+    for (let i = 0; i < room.images.length; i++) {
+      const base64Data = room.images[i];
+      if (base64Data.startsWith("data:image")) {
+        const res = await fetch(base64Data);
         const blob = await res.blob();
-        formData.append("files", blob, `update_${id}_${i}.jpg`);
-      } else {
-        // It's an EXISTING Cloudinary URL: send as a string to keep it
-        formData.append("existingImages", img);
+        formData.append("files", blob, `room_${room.roomNumber}_${i}.jpg`);
       }
     }
   }
 
-  await api.put(`/api/rooms/${id}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  } as any);
+  await api.post("/api/rooms", formData);
+  await refreshData();
+};
 
+
+const updateRoom = async (id: string, updates: Partial<Room>) => {
+  const formData = new FormData();
+  formData.append("Id", id);
+
+  // Map updated fields
+  if (updates.roomNumber) formData.append("RoomNumber", updates.roomNumber);
+  if (updates.name) formData.append("Name", updates.name);
+  if (updates.status) formData.append("Status", updates.status);
+  if (updates.pricePerNight !== undefined) formData.append("PricePerNight", String(updates.pricePerNight));
+  if (updates.capacity !== undefined) formData.append("Guest", String(updates.capacity));
+  if (updates.size) formData.append("Size", updates.size);
+
+  if (updates.images) {
+    for (let i = 0; i < updates.images.length; i++) {
+      const img = updates.images[i];
+      if (img.startsWith("data:image")) {
+        const res = await fetch(img);
+        const blob = await res.blob();
+        formData.append("files", blob, `update_${id}_${i}.jpg`);
+      } else {
+        formData.append("ExistingImages", img);
+      }
+    }
+  }
+
+  await api.put(`/api/rooms/${id}`, formData);
   await refreshData();
 };
 
