@@ -428,7 +428,6 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
 const addRoom = async (room: Omit<Room, "id">) => {
   const formData = new FormData();
 
-  // 1. Map to C# CreateRoomRequest Record (PascalCase)
   formData.append("RoomNumber", room.roomNumber);
   formData.append("Name", room.name);
   formData.append("Category", room.category);
@@ -438,25 +437,27 @@ const addRoom = async (room: Omit<Room, "id">) => {
   formData.append("Description", room.description || "");
   formData.append("PricePerNight", String(room.pricePerNight || 0));
   formData.append("Guest", String(room.capacity || 2));
-  // 3. Amenities (List<string>)
+
   if (room.amenities) {
     room.amenities.forEach((a) => formData.append("Amenities", a));
   }
-  // 4. Image Conversion (Base64 -> IFormFile)
-  if (room.images && room.images.length > 0) {
+
+  if (room.images) {
     for (let i = 0; i < room.images.length; i++) {
-      const base64Data = room.images[i];
-      if (base64Data.startsWith("data:image")) {
-        const res = await fetch(base64Data);
+      if (room.images[i].startsWith("data:image")) {
+        const res = await fetch(room.images[i]);
         const blob = await res.blob();
-        formData.append("files", blob, `room_${room.roomNumber}_${i}.jpg`);
+        formData.append("files", blob, `room_${i}.jpg`);
       }
     }
   }
 
-  await api.post("/api/rooms", formData);
+  // Use the NEW specialized method
+  await api.postForm("/api/rooms", formData);
+
   await refreshData();
 };
+
 
 
 const updateRoom = async (id: string, updates: Partial<Room>) => {

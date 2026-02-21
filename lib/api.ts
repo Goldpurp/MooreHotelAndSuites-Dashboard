@@ -131,4 +131,22 @@ export const api = {
   delete<T>(endpoint: string, options?: ApiCallOptions): Promise<T> {
     return request<T>(endpoint, { method: 'DELETE', ...options });
   },
+
+   // NEW: Method for Multipart/Form-Data (Images)
+  postForm<T>(endpoint: string, formData: FormData, options?: ApiCallOptions): Promise<T> {
+    return request<T>(endpoint, {
+      method: 'POST',
+      body: formData, // Do NOT stringify
+      ...options
+    });
+  },
+
+  // NEW: Method for Multipart/Form-Data Updates
+  putForm<T>(endpoint: string, formData: FormData, options?: ApiCallOptions): Promise<T> {
+    return request<T>(endpoint, {
+      method: 'PUT',
+      body: formData, // Do NOT stringify
+      ...options
+    });
+  },
 };
