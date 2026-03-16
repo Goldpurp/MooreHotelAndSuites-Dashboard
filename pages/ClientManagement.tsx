@@ -4,6 +4,7 @@ import {
   Search, ShieldCheck, RefreshCw, Mail, Phone, ChevronLeft, ChevronRight, 
   Fingerprint, X, UserPlus, Shield
 } from 'lucide-react';
+import { sileo } from 'sileo';
 import RoleBadge from '../components/RoleBadge';
 import StaffSuspensionModal from '../components/StaffSuspensionModal';
 import { StaffUser, UserRole } from '../types';
@@ -22,6 +23,10 @@ const ClientManagement: React.FC = () => {
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
+    sileo.success({
+      title: 'Cloud Registry Synced',
+      description: 'Global guest identity data has been updated from the central node.'
+    });
     setTimeout(() => setIsRefreshing(false), 800);
   };
 

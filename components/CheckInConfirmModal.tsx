@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   X, ShieldCheck, Zap, AlertTriangle, AlertCircle, Loader2, CreditCard, Clock, Lock, ExternalLink, Brush, Wrench, CalendarClock, History
 } from 'lucide-react';
+import { sileo } from 'sileo';
 import { Guest, Booking, Room, PaymentStatus, RoomStatus } from '../types';
 import { useHotel } from '../store/HotelContext';
 
@@ -57,12 +58,16 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     setError(null);
     try {
       await onConfirm(booking.id);
-      setStatus('success');
-      setTimeout(() => {
-        onClose();
-        setStatus('details');
-      }, 2500);
+      sileo.success({
+        title: 'Identity Verified',
+        description: `Dossier ${booking.bookingCode} activated. Room ${room.roomNumber} is now occupied.`
+      });
+      onClose();
     } catch (err: any) {
+      sileo.error({
+        title: 'Activation Protocol Fault',
+        description: err.message || "Ledger synchronization failed."
+      });
       setError(err.message || "Ledger synchronization failed.");
     } finally {
       setIsSubmitting(false);

@@ -14,6 +14,7 @@ import {
   ChevronRight,
   AlertTriangle
 } from "lucide-react";
+import { sileo } from "sileo";
 import { useHotel } from "../store/HotelContext";
 import StatCard from "../components/StatCard";
 import {
@@ -62,6 +63,10 @@ const Dashboard: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     await fetchDashboardData();
+    sileo.success({
+      title: 'Metrics Synchronized',
+      description: 'Dashboard telemetry has been updated to the latest registry state.'
+    });
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 

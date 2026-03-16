@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Room, RoomStatus, RoomCategory, PropertyFloor } from '../types';
 import { X, Check, Camera, Plus, Trash2, Save, Loader2, AlertCircle, Image as ImageIcon, Globe, ShieldCheck } from 'lucide-react';
+import { sileo } from 'sileo';
 
 interface RoomModalProps {
   isOpen: boolean;
@@ -137,13 +138,18 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
     setError(null);
     try {
       await onSave(formData);
-      setStatus('success');
-      setTimeout(() => {
-        onClose();
-        setStatus('details');
-      }, 2500);
+      sileo.success({
+        title: editingRoom ? 'Room Updated' : 'Room Onboarded',
+        description: `Room ${formData.roomNumber} has been successfully synchronized.`
+      });
+      onClose();
     } catch (err: any) {
-      setError(err.message || "Property ledger synchronization failed.");
+      const msg = err.message || "Property ledger synchronization failed.";
+      setError(msg);
+      sileo.error({
+        title: 'Synchronization Failed',
+        description: msg
+      });
     } finally {
       setIsSubmitting(false);
     }

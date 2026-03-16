@@ -5,6 +5,7 @@ import {
   Fingerprint, RefreshCw, Mail, Calendar, Lock, ChevronLeft, ChevronRight, Database, 
   SearchX, UserMinus, Filter, UserCheck, Building2, Save, X, Phone
 } from 'lucide-react';
+import { sileo } from 'sileo';
 import RoleBadge from '../components/RoleBadge';
 import PermissionWrapper from '../components/PermissionWrapper';
 import CreateUserModal from '../components/CreateUserModal';
@@ -26,6 +27,10 @@ const StaffManagement: React.FC = () => {
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
+    sileo.success({
+      title: 'Directory Synchronized',
+      description: 'Personnel and hierarchy data has been updated from the security node.'
+    });
     setTimeout(() => setIsRefreshing(false), 800);
   };
 

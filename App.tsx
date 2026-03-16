@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
-import NotificationSystem from "./components/NotificationSystem";
+import { Toaster } from "sileo";
 import { HotelProvider, useHotel } from "./store/HotelContext";
 
 // Lazy loading pages
@@ -114,7 +114,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 flex text-slate-50 font-sans selection:bg-brand-500/30 overflow-x-hidden">
-      <NotificationSystem />
+      <Toaster />
       <Sidebar />
 
       <div

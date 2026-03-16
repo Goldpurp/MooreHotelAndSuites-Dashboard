@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, ShieldAlert, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2, Phone } from 'lucide-react';
+import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
 import { UserRole, StaffUser, ProfileStatus } from '../types';
 
@@ -41,16 +42,23 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
       if (editingUser) {
         const { status, ...updatePayload } = formData;
         await updateStaff(editingUser.id, updatePayload as any);
+        sileo.success({
+          title: 'Identity Updated',
+          description: `Account authorization for ${formData.name} successfully updated.`
+        });
       } else {
         await addStaff(formData);
+        sileo.success({
+          title: 'Identity Provisioned',
+          description: `Personnel entry for ${formData.name} committed to the security ledger.`
+        });
       }
-      setStatus('success');
-      setTimeout(() => {
-        onClose();
-        setStatus('details');
-      }, 2500);
-    } catch (err) {
-      console.error(err);
+      onClose();
+    } catch (err: any) {
+      sileo.error({
+        title: 'Provisioning Protocol Fault',
+        description: err.message || "Failed to sync identity updates."
+      });
     } finally {
       setIsSubmitting(false);
     }

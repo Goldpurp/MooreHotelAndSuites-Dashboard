@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, LogOut, Bed, Calendar, CreditCard, AlertCircle, CheckCircle, Loader2, ShieldCheck } from 'lucide-react';
+import { sileo } from 'sileo';
 import { Guest, Booking, Room } from '../types';
 
 interface CheckOutModalProps {
@@ -21,14 +22,16 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
     setIsSubmitting(true);
     try {
       await onConfirm(booking.id);
-      setStatus('success');
-      // Auto-close after a brief acknowledgement window
-      setTimeout(() => {
-        onClose();
-        setStatus('details');
-      }, 2500);
-    } catch (err) {
-      console.error(err);
+      sileo.success({
+        title: 'Folio Released',
+        description: `Dossier ${booking.bookingCode} archived. Room ${room.roomNumber} marked for cleaning.`
+      });
+      onClose();
+    } catch (err: any) {
+      sileo.error({
+        title: 'Check-out Protocol Fault',
+        description: err.message || "Folio synchronization failed."
+      });
     } finally {
       setIsSubmitting(false);
     }

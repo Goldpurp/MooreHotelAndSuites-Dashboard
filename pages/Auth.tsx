@@ -11,6 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useHotel } from "../store/HotelContext";
+import { sileo } from "sileo";
 import Logo from "../components/Logo";
 import { api } from "../lib/api";
 
@@ -29,7 +30,15 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     try {
       await login(formData.email, formData.password);
+      sileo.success({
+        title: 'Session Authorized',
+        description: 'Identity verified. Accessing property management node...'
+      });
     } catch (err: any) {
+      sileo.error({
+        title: 'Access Denied',
+        description: err.message || "Could not verify credentials. Access protocol rejected."
+      });
       setError(err.message || "Access Denied: Could not verify credentials.");
     } finally {
       setIsLoading(false);
@@ -43,11 +52,19 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     try {
       await api.post("/api/Auth/forgot-password", { email: resetEmail });
+      sileo.success({
+        title: 'Recovery Initiated',
+        description: 'Enterprise recovery token transmitted. Check your secure inbox.'
+      });
       setSuccess(
         "Recovery protocol initiated. Please check your enterprise inbox for reset instructions.",
       );
       setResetEmail("");
     } catch (err: any) {
+      sileo.error({
+        title: 'Recovery Fault',
+        description: err.message || "Could not process recovery request. Security firewall active."
+      });
       setError(
         err.message || "Recovery Protocol Fault: Could not process request.",
       );

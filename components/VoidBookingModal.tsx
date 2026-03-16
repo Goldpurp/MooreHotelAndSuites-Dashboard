@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle, ShieldAlert, Loader2, ShieldCheck, BookmarkX, MessageSquare } from 'lucide-react';
+import { sileo } from 'sileo';
 import { Booking, Guest, Room } from '../types';
 
 interface VoidBookingModalProps {
@@ -22,14 +23,16 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
     setIsSubmitting(true);
     try {
       await onConfirm(booking.id, reason);
-      setStatus('success');
-      setTimeout(() => {
-        onClose();
-        setStatus('details');
-        setReason('Guest requested cancellation');
-      }, 2500);
-    } catch (err) {
-      console.error(err);
+      sileo.success({
+        title: 'Reservation Voided',
+        description: `Folio ${booking.bookingCode} purged. Room ${room.roomNumber} returned to inventory.`
+      });
+      onClose();
+    } catch (err: any) {
+      sileo.error({
+        title: 'Revocation Protocol Fault',
+        description: err.message || "Failed to void the reservation."
+      });
     } finally {
       setIsSubmitting(false);
     }

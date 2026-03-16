@@ -3,8 +3,9 @@ import {
   FileDown, Printer, ChevronDown, TrendingUp, TrendingDown, 
   Calendar, Building, CreditCard, Users, History, Activity, 
   ChevronLeft, ChevronRight, SearchX, Eye, Code, ArrowRight,
-  Database, ShieldCheck, X, Clock, Fingerprint, AlertCircle
+  Database, ShieldCheck, X, Clock, Fingerprint, AlertCircle, RefreshCw
 } from 'lucide-react';
+import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
 import { BookingStatus, RoomStatus, AuditLog } from '../types';
 
@@ -19,11 +20,22 @@ import {
 } from 'recharts';
 
 const Reports: React.FC = () => {
-  const { bookings, rooms, auditLogs } = useHotel();
+  const { bookings, rooms, auditLogs, refreshData } = useHotel();
   const [reportTab, setReportTab] = useState<'analytics' | 'audit'>('analytics');
   const [inspectingLog, setInspectingLog] = useState<AuditLog | null>(null);
   const [auditPage, setAuditPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const AUDIT_PAGE_SIZE = 12;
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshData();
+    sileo.success({
+      title: 'Intelligence Synchronized',
+      description: 'The property analytics and audit logs have been updated from the central node.'
+    });
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   const metrics = useMemo(() => {
     const validBookings = (bookings || []).filter(b => b.status !== BookingStatus.Cancelled);
@@ -81,6 +93,9 @@ const Reports: React.FC = () => {
             <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Intelligence Hub</h2>
          </div>
          <div className="flex gap-2">
+            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}>
+              <RefreshCw size={18} />
+            </button>
             <button className="bg-white/5 hover:bg-white/10 text-slate-400 p-2 lg:px-4 lg:py-2.5 rounded-lg adaptive-text-xs font-black uppercase border border-white/5 transition-all"><Printer size={14}/></button>
             <button className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-xl whitespace-nowrap"><FileDown size={16}/> Export Ledger</button>
          </div>

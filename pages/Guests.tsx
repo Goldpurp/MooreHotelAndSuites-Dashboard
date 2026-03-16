@@ -24,6 +24,7 @@ import {
   Clock,
   ShieldAlert,
 } from "lucide-react";
+import { sileo } from "sileo";
 import CheckOutModal from "../components/CheckOutModal";
 
 const Guests: React.FC = () => {
@@ -56,6 +57,10 @@ const Guests: React.FC = () => {
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
+    sileo.success({
+      title: 'Registry Synchronized',
+      description: 'Guest lifecycle data has been updated from the security node.'
+    });
     setTimeout(() => setIsRefreshing(false), 800);
   };
 

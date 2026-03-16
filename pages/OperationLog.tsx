@@ -6,6 +6,7 @@ import {
   Calendar, Zap, LogOut, RefreshCw, ChevronLeft, ChevronRight,
   Database, Eye, X, Fingerprint, Code, FileDown
 } from 'lucide-react';
+import { sileo } from 'sileo';
 
 const OperationLog: React.FC = () => {
   const { visitHistory, refreshData } = useHotel();
@@ -36,7 +37,15 @@ const OperationLog: React.FC = () => {
     return filteredLogs.slice(start, start + PAGE_SIZE);
   }, [filteredLogs, currentPage]);
 
-  const handleManualRefresh = async () => { setIsRefreshing(true); await refreshData(); setTimeout(() => setIsRefreshing(false), 800); };
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshData();
+    sileo.success({
+      title: 'Audit Trail Synchronized',
+      description: 'The property security log has been updated from the audit node.'
+    });
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   const getActionBadge = (action: VisitAction) => {
     switch (action) {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Trash2, AlertTriangle, ShieldAlert, Loader2, Trash } from 'lucide-react';
+import { sileo } from 'sileo';
 import { Room } from '../types';
 
 interface DeleteRoomModalProps {
@@ -19,13 +20,16 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
     setIsSubmitting(true);
     try {
       await onConfirm(room.id);
-      setStatus('success');
-      setTimeout(() => {
-        onClose();
-        setStatus('details');
-      }, 2500);
-    } catch (err) {
-      console.error(err);
+      sileo.success({
+        title: 'Asset Liquidated',
+        description: `Room ${room.roomNumber} has been permanently removed from the ledger.`
+      });
+      onClose();
+    } catch (err: any) {
+      sileo.error({
+        title: 'Liquidation Protocol Fault',
+        description: err.message || "Failed to remove the asset."
+      });
     } finally {
       setIsSubmitting(false);
     }

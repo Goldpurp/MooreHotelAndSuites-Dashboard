@@ -5,6 +5,7 @@ import { Search, CheckCircle, Clock,
   RefreshCw, ShieldCheck, Loader2, ChevronLeft, ChevronRight,
   ShieldAlert, Lock, Wallet, RotateCcw, Hash
 } from 'lucide-react';
+import { sileo } from 'sileo';
 
 const Settlements: React.FC = () => {
   const { bookings, guests, confirmTransfer, completeRefund, refreshData, currentUser } = useHotel();
@@ -96,19 +97,26 @@ const Settlements: React.FC = () => {
       if (activeTab === 'refunds') {
         /** CHANGE: Calling the new completeRefund protocol from context */
         await completeRefund(selectedBooking.id, refundRef);
+        sileo.success({
+          title: 'Refund Completed',
+          description: `Folio refund for ${resolveGuestName(selectedBooking)} processed successfully.`
+        });
       } else {
         await confirmTransfer(selectedBooking.bookingCode);
+        sileo.success({
+          title: 'Settlement Verified',
+          description: `Accounting verification for ${resolveGuestName(selectedBooking)} successful.`
+        });
       }
-      setVerificationState('success');
-      setTimeout(() => {
-        setVerificationState('idle');
-        setIsConfirmModalOpen(false);
-        setSelectedBooking(null);
-        setRefundRef('');
-      }, 2000);
+      setIsConfirmModalOpen(false);
+      setSelectedBooking(null);
+      setRefundRef('');
     } 
-    catch (err) { 
-      console.error("Accounting ledger commit failed", err); 
+    catch (err: any) { 
+      sileo.error({
+        title: 'Accounting Fault',
+        description: err.message || "Ledger commit failed."
+      });
       setVerificationState('idle');
     } 
   };

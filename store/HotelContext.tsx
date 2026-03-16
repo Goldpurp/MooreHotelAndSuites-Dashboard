@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import { sileo } from "sileo";
 import {
   Room,
   Booking,
@@ -358,6 +359,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       setVisitHistory(normalizeData(visitHistoryRes).map(normalizeVisitRecord));
     } catch (error: any) {
       console.error("Property Synchronization Protocol Failed:", error);
+      sileo.error({
+        title: 'Synchronization Failed',
+        description: 'Unable to sync property data with the security node.'
+      });
       if (error.message?.includes("Authorization Required")) {
         setIsAuthenticated(false);
         api.removeToken();
@@ -366,6 +371,25 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsInitialLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    // Toast new notifications
+    const unread = notifications.filter(n => !n.isRead);
+    if (unread.length > 0) {
+      const latest = [...unread].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0];
+      
+      const timeDiff = Date.now() - new Date(latest.createdAt).getTime();
+      // Only toast if it's within last 10 seconds (recent)
+      if (timeDiff < 10000) {
+        sileo.show({
+          title: latest.title,
+          description: latest.message,
+        });
+      }
+    }
+  }, [notifications]);
 
   useEffect(() => {
     const token = api.getToken();

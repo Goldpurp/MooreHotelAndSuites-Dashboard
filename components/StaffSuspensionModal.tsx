@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, ShieldCheck, Lock, Activity, Loader2, ShieldOff, ShieldAlert } from 'lucide-react';
+import { sileo } from 'sileo';
 import { StaffUser, ProfileStatus } from '../types';
 
 interface StaffSuspensionModalProps {
@@ -23,13 +24,16 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
     setError(null);
     try {
       await onConfirm(user.id);
-      setStatus('success');
-      setTimeout(() => {
-        onClose();
-        setStatus('details');
-      }, 2500);
+      sileo.success({
+        title: isActive ? 'Privileges Revoked' : 'Access Restored',
+        description: `Personnel status for ${user.name} has been successfully updated.`
+      });
+      onClose();
     } catch (err: any) {
-      console.error("Suspension Protocol Fault:", err);
+      sileo.error({
+        title: 'Security Protocol Fault',
+        description: err.message || "Lifecycle update rejected."
+      });
       setError(err.message || "Credential lifecycle update rejected by API node.");
     } finally {
       setIsSubmitting(false);

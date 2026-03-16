@@ -24,6 +24,7 @@ import {
   CreditCard,
   RefreshCw,
 } from "lucide-react";
+import { sileo } from "sileo";
 import BookingModal from "../components/BookingModal";
 import VoidBookingModal from "../components/VoidBookingModal";
 import CheckInConfirmModal from "../components/CheckInConfirmModal";
@@ -224,9 +225,13 @@ const Bookings: React.FC = () => {
     ? rooms.find((r) => r.id === selectedBooking.roomId)
     : null;
 
-      const handleManualRefresh = async () => {
+  const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
+    sileo.success({
+      title: 'Ledger Synchronized',
+      description: 'Reservation data has been updated from the central node.'
+    });
     setTimeout(() => setIsRefreshing(false), 800);
   };
 

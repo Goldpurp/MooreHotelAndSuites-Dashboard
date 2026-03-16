@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Shield, Key, Mail, User, Info, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2 } from 'lucide-react';
 import RoleBadge from '../components/RoleBadge';
+import { sileo } from 'sileo';
 import { api } from '../lib/api';
 import { UserRole } from '../types';
 
@@ -50,19 +51,24 @@ const Settings: React.FC = () => {
       return;
     }
 
-    try {
-      await api.post('/api/Profile/rotate-security', {
-        oldPassword: securityForm.oldPassword,
-        newPassword: securityForm.newPassword,
-        confirmNewPassword: securityForm.confirmNewPassword
-      });
-      setRotationStatus('success');
-      setSecurityForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
-      setTimeout(() => setRotationStatus('idle'), 5000);
-    } catch (err: any) {
-      setRotationStatus('error');
-      setErrorMessage(err.message || "Credential rotation rejected by property firewall.");
-    } finally {
+      try {
+        await api.post('/api/Profile/rotate-security', {
+          oldPassword: securityForm.oldPassword,
+          newPassword: securityForm.newPassword,
+          confirmNewPassword: securityForm.confirmNewPassword
+        });
+        sileo.success({
+          title: 'Credentials Rotated',
+          description: 'Your security profile has been updated across the property network.'
+        });
+        setSecurityForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
+      } catch (err: any) {
+        sileo.error({
+          title: 'Authorization Fault',
+          description: err.message || "Credential rotation rejected by property firewall."
+        });
+        setErrorMessage(err.message || "Credential rotation rejected by property firewall.");
+      } finally {
       setIsRotating(false);
     }
   };

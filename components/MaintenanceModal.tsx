@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Wrench, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { sileo } from 'sileo';
 import { Room, RoomStatus } from '../types';
 
 interface MaintenanceModalProps {
@@ -21,13 +22,16 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
     setIsSubmitting(true);
     try {
       await onConfirm(room.id);
-      setStatus('success');
-      setTimeout(() => {
-        onClose();
-        setStatus('details');
-      }, 2500);
-    } catch (error) {
-      console.error("Maintenance protocol failure:", error);
+      sileo.success({
+        title: isEnteringMaintenance ? 'Maintenance Initialized' : 'Asset Restored',
+        description: `Room ${room.roomNumber} status has been successfully updated.`
+      });
+      onClose();
+    } catch (error: any) {
+      sileo.error({
+        title: 'Hardware Protocol Fault',
+        description: error.message || "Ledger synchronization failed."
+      });
     } finally {
       setIsSubmitting(false);
     }

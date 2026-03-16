@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Room, RoomStatus, UserRole } from '../types';
 import { LayoutGrid, List, Search, Pencil, Trash2, Plus, Eye, SearchX, Wrench, RefreshCw, Square, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
+import { sileo } from 'sileo';
 import RoomModal from '../components/RoomModal';
 import RoomDetailModal from '../components/RoomDetailModal';
 import DeleteRoomModal from '../components/DeleteRoomModal';
@@ -43,6 +44,10 @@ const Rooms: React.FC = () => {
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
+    sileo.success({
+      title: 'Inventory Synchronized',
+      description: 'Room and asset status data has been updated from the central node.'
+    });
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
