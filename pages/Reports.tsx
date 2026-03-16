@@ -1,22 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import { 
-  FileDown, Printer, ChevronDown, TrendingUp, TrendingDown, 
-  Calendar, Building, CreditCard, Users, History, Activity, 
-  ChevronLeft, ChevronRight, SearchX, Eye, Code, ArrowRight,
-  Database, ShieldCheck, X, Clock, Fingerprint, AlertCircle, RefreshCw
+  FileDown, Printer, Building, CreditCard, Users, Activity, 
+  ChevronLeft, ChevronRight, Eye, X, RefreshCw
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
 import { BookingStatus, RoomStatus, AuditLog } from '../types';
 
 import { 
-  BarChart as ReBarChart, Bar as ReBar, 
   XAxis as ReXAxis, YAxis as ReYAxis, 
   CartesianGrid as ReCartesianGrid, Tooltip as ReTooltip, 
   ResponsiveContainer as ReResponsiveContainer, Cell as ReCell,
   PieChart as RePieChart, Pie as RePie,
-  AreaChart as ReAreaChart, Area as ReArea,
-  Legend as ReLegend
+  AreaChart as ReAreaChart, Area as ReArea
 } from 'recharts';
 
 const Reports: React.FC = () => {
@@ -31,8 +27,8 @@ const Reports: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Intelligence Synchronized',
-      description: 'The property analytics and audit logs have been updated from the central node.'
+      title: 'Business Intelligence Refreshed',
+      description: 'Property analytics, financial yields, and forensic audit logs have been successfully updated to the latest registry state.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };

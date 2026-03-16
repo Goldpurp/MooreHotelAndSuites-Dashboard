@@ -2,9 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { VisitAction, VisitRecord } from '../types';
 import { 
-  Search, Clock, User, Bed, ShieldCheck, 
+  Search, Clock, Bed, 
   Calendar, Zap, LogOut, RefreshCw, ChevronLeft, ChevronRight,
-  Database, Eye, X, Fingerprint, Code, FileDown
+  X, FileDown
 } from 'lucide-react';
 import { sileo } from 'sileo';
 
@@ -41,8 +41,8 @@ const OperationLog: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Audit Trail Synchronized',
-      description: 'The property security log has been updated from the audit node.'
+      title: 'Security Log Refreshed',
+      description: 'The property visit records and operational audit trail have been successfully synchronized with the security surveillance node.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };

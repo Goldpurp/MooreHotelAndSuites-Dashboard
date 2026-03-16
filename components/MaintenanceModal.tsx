@@ -12,7 +12,6 @@ interface MaintenanceModalProps {
 
 const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, onConfirm, room }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<'details' | 'success'>('details');
 
   if (!isOpen || !room) return null;
 
@@ -23,14 +22,14 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
     try {
       await onConfirm(room.id);
       sileo.success({
-        title: isEnteringMaintenance ? 'Maintenance Initialized' : 'Asset Restored',
-        description: `Room ${room.roomNumber} status has been successfully updated.`
+        title: isEnteringMaintenance ? 'Unit Placed Offline' : 'Unit Restored to Inventory',
+        description: `Room ${room.roomNumber} has undergone a status transition. ${isEnteringMaintenance ? 'Maintenance protocols are now active for this unit.' : 'The unit has been verified and returned to authorized status.'}`
       });
       onClose();
     } catch (error: any) {
       sileo.error({
-        title: 'Hardware Protocol Fault',
-        description: error.message || "Ledger synchronization failed."
+        title: 'Maintenance Protocol Fault',
+        description: error.message || "The property security node could not synchronize the maintenance status for Unit ${room.roomNumber}. Hardware lockout may be active."
       });
     } finally {
       setIsSubmitting(false);
@@ -42,23 +41,6 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
       <div className={`glass-card w-full max-w-md rounded-[2rem] shadow-3xl overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 ${
         isEnteringMaintenance ? 'shadow-amber-950/20' : 'shadow-emerald-950/20'
       }`}>
-        
-        {status === 'success' ? (
-          <div className="p-12 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-500">
-            <div className={`w-20 h-20 rounded-full border flex items-center justify-center shadow-lg ${
-              isEnteringMaintenance ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
-            }`}>
-              {isEnteringMaintenance ? <Wrench size={40} /> : <ShieldCheck size={40} />}
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Protocol Executed</h2>
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
-                Room {room.roomNumber} updated in global registry
-              </p>
-            </div>
-            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">Inventory nodes synchronized across all zones.</p>
-          </div>
-        ) : (
           <>
             <div className={`px-8 py-6 border-b border-white/5 flex items-center justify-between ${
               isEnteringMaintenance ? 'bg-amber-500/5' : 'bg-emerald-500/5'
@@ -138,7 +120,6 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
               <button onClick={onClose} disabled={isSubmitting} className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Abort Protocol</button>
             </div>
           </>
-        )}
       </div>
     </div>
   );

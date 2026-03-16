@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useHotel } from "../store/HotelContext";
-import { Guest, Booking, Room, PaymentStatus } from "../types";
+import { Guest, Booking, Room } from "../types";
 import {
   Search,
   Phone,
@@ -11,9 +11,7 @@ import {
   ShieldCheck,
   History,
   ArrowRight,
-  Calendar,
   ExternalLink,
-  AlertCircle,
   Zap,
   Users,
   Fingerprint,
@@ -58,8 +56,8 @@ const Guests: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Registry Synchronized',
-      description: 'Guest lifecycle data has been updated from the security node.'
+      title: 'Guest Database Synchronized',
+      description: 'Guest profiles, stay history, and lifecycle metrics have been successfully retrieved from the secure data node.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };

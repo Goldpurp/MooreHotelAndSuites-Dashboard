@@ -3,7 +3,6 @@ import {
   Mail,
   Lock,
   ArrowRight,
-  ShieldAlert,
   AlertCircle,
   Loader2,
   RefreshCw,
@@ -31,13 +30,13 @@ const Auth: React.FC = () => {
     try {
       await login(formData.email, formData.password);
       sileo.success({
-        title: 'Session Authorized',
-        description: 'Identity verified. Accessing property management node...'
+        title: 'Identity Verified Successfully',
+        description: 'Your security credentials have been accepted. Initializing your personalized management environment.'
       });
     } catch (err: any) {
       sileo.error({
-        title: 'Access Denied',
-        description: err.message || "Could not verify credentials. Access protocol rejected."
+        title: 'Authorization Protocol Failed',
+        description: err.message || "The security node rejected your credentials. Please verify your email and secret PIN before retrying."
       });
       setError(err.message || "Access Denied: Could not verify credentials.");
     } finally {
@@ -53,8 +52,8 @@ const Auth: React.FC = () => {
     try {
       await api.post("/api/Auth/forgot-password", { email: resetEmail });
       sileo.success({
-        title: 'Recovery Initiated',
-        description: 'Enterprise recovery token transmitted. Check your secure inbox.'
+        title: 'Password Recovery Transmitted',
+        description: 'A secure restoration token has been dispatched to your enterprise inbox. Please follow the instructions to reset your PIN.'
       });
       setSuccess(
         "Recovery protocol initiated. Please check your enterprise inbox for reset instructions.",
@@ -62,8 +61,8 @@ const Auth: React.FC = () => {
       setResetEmail("");
     } catch (err: any) {
       sileo.error({
-        title: 'Recovery Fault',
-        description: err.message || "Could not process recovery request. Security firewall active."
+        title: 'Restoration Request Blocked',
+        description: err.message || "The security subsystem could not process your recovery request. This may be due to network congestion or an invalid identifier."
       });
       setError(
         err.message || "Recovery Protocol Fault: Could not process request.",

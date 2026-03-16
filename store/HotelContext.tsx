@@ -360,8 +360,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       console.error("Property Synchronization Protocol Failed:", error);
       sileo.error({
-        title: 'Synchronization Failed',
-        description: 'Unable to sync property data with the security node.'
+        title: 'Property Data Desync',
+        description: 'Global synchronization with the security node interrupted. Some metrics may be temporarily offline or out of date.'
       });
       if (error.message?.includes("Authorization Required")) {
         setIsAuthenticated(false);

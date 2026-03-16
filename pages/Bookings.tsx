@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useHotel } from "../store/HotelContext";
-import { BookingStatus, Booking, Guest, Room, PaymentStatus } from "../types";
+import { Booking, Guest, Room } from "../types";
 import {
   Search,
   Plus,
@@ -8,7 +8,6 @@ import {
   Zap,
   CheckCircle,
   XCircle,
-  Calendar,
   User,
   X,
   Mail,
@@ -21,7 +20,6 @@ import {
   History,
   AlertCircle,
   Bookmark,
-  CreditCard,
   RefreshCw,
 } from "lucide-react";
 import { sileo } from "sileo";
@@ -229,8 +227,8 @@ const Bookings: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Ledger Synchronized',
-      description: 'Reservation data has been updated from the central node.'
+      title: 'Reservation Ledger Refreshed',
+      description: 'The central reservation database has been successfully synchronized. All current and upcoming stays are now up to date.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };

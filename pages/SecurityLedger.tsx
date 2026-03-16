@@ -5,7 +5,7 @@ import { useHotel } from '../store/HotelContext';
 import { VisitAction } from '../types';
 import { 
   ShieldAlert, Search, Download, Printer, Filter, 
-  Calendar, User, Bed, Clock, Hash, ChevronLeft, ChevronRight,
+  Calendar, Bed, Clock, ChevronLeft, ChevronRight,
   ShieldCheck, Info, Zap, LogOut, RefreshCw
 } from 'lucide-react';
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
-import { Shield, Key, Mail, User, Info, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2 } from 'lucide-react';
+import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2 } from 'lucide-react';
 import RoleBadge from '../components/RoleBadge';
 import { sileo } from 'sileo';
 import { api } from '../lib/api';
@@ -58,14 +58,14 @@ const Settings: React.FC = () => {
           confirmNewPassword: securityForm.confirmNewPassword
         });
         sileo.success({
-          title: 'Credentials Rotated',
-          description: 'Your security profile has been updated across the property network.'
+          title: 'Security Profile Updated',
+          description: 'Your authentication credentials have been successfully rotated across the property network. Your next session will require the new secret PIN.'
         });
         setSecurityForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
       } catch (err: any) {
         sileo.error({
-          title: 'Authorization Fault',
-          description: err.message || "Credential rotation rejected by property firewall."
+          title: 'Credential Rotation Rejected',
+          description: err.message || "The security subsystem could not process your PIN update. This may be due to an incorrect current PIN or policy violation."
         });
         setErrorMessage(err.message || "Credential rotation rejected by property firewall.");
       } finally {

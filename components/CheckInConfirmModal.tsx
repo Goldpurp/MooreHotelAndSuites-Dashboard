@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
-  X, ShieldCheck, Zap, AlertTriangle, AlertCircle, Loader2, CreditCard, Clock, Lock, ExternalLink, Brush, Wrench, CalendarClock, History
+  X, ShieldCheck, Zap, AlertCircle, Loader2, CreditCard, Clock, Lock, ExternalLink, Brush, CalendarClock, History
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { Guest, Booking, Room, PaymentStatus, RoomStatus } from '../types';
@@ -21,7 +21,6 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
 }) => {
   const { setActiveTab } = useHotel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<'details' | 'success'>('details');
   const [error, setError] = useState<string | null>(null);
 
   // Arrival state logic
@@ -59,14 +58,14 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     try {
       await onConfirm(booking.id);
       sileo.success({
-        title: 'Identity Verified',
-        description: `Dossier ${booking.bookingCode} activated. Room ${room.roomNumber} is now occupied.`
+        title: 'Resident Activation Successful',
+        description: `Folio ${booking.bookingCode} is now active. Unit ${room.roomNumber} has been successfully assigned and the digital key protocol initialized.`
       });
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Activation Protocol Fault',
-        description: err.message || "Ledger synchronization failed."
+        title: 'Activation Protocol Failure',
+        description: err.message || "The property node could not activate Folio ${booking.bookingCode}. Please verify the resident's identity and room readiness."
       });
       setError(err.message || "Ledger synchronization failed.");
     } finally {
@@ -137,30 +136,12 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     arrivalState === 'past' ||
     arrivalState === 'future';
 
-  // Show Cancel & Walk-In button only for future bookings
-  const showCancelAndWalkIn = arrivalState === 'future';
-
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className={`glass-card w-full max-w-md rounded-[2rem] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 shadow-3xl ring-1 ${
         display.color === 'rose' ? 'shadow-rose-950/20 ring-rose-500/20' :
         display.color === 'amber' ? 'shadow-amber-900/20 ring-amber-500/20' : 'shadow-emerald-900/20 ring-emerald-500/20'
       }`}>
-        {status === 'success' ? (
-          <div className="p-12 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-500">
-            <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-              <Zap size={40} className="text-emerald-500" fill="currentColor" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Identity Verified</h2>
-              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] mt-2">Dossier {booking.bookingCode} Activated</p>
-            </div>
-            <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full">
-              <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Asset Status</p>
-              <p className="text-xs font-black text-white uppercase">Room {room.roomNumber} - Now Occupied</p>
-            </div>
-          </div>
-        ) : (
           <>
             <div className={`px-8 py-6 border-b border-white/5 flex items-center justify-between ${
               display.color === 'rose' ? 'bg-rose-500/5' : display.color === 'amber' ? 'bg-amber-500/5' : 'bg-emerald-500/5'
@@ -292,7 +273,6 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
               <button onClick={onClose} disabled={isSubmitting} className="w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">Abort Protocol</button>
             </div>
           </>
-        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, Lock, Activity, Loader2, ShieldOff, ShieldAlert } from 'lucide-react';
+import { X, Lock, Activity, Loader2, ShieldOff, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { sileo } from 'sileo';
-import { StaffUser, ProfileStatus } from '../types';
+import { StaffUser } from '../types';
 
 interface StaffSuspensionModalProps {
   isOpen: boolean;
@@ -12,7 +12,6 @@ interface StaffSuspensionModalProps {
 
 const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onClose, onConfirm, user }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<'details' | 'success'>('details');
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen || !user) return null;
@@ -25,14 +24,14 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
     try {
       await onConfirm(user.id);
       sileo.success({
-        title: isActive ? 'Privileges Revoked' : 'Access Restored',
-        description: `Personnel status for ${user.name} has been successfully updated.`
+        title: isActive ? 'System Access Revoked' : 'Personnel Access Restored',
+        description: `The security clearance for ${user.name} has been successfully updated in the central registry. All active sessions have been synchronized.`
       });
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Security Protocol Fault',
-        description: err.message || "Lifecycle update rejected."
+        title: 'Personnel Registry Fault',
+        description: err.message || "The security node rejected the lifecycle update for ${user.name}. Higher-level root authorization may be required."
       });
       setError(err.message || "Credential lifecycle update rejected by API node.");
     } finally {
@@ -45,23 +44,6 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
       <div className={`glass-card w-full max-w-md rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 shadow-3xl ${
         isActive ? 'shadow-rose-950/20' : 'shadow-emerald-950/20'
       }`}>
-        
-        {status === 'success' ? (
-          <div className="p-16 flex flex-col items-center text-center space-y-8 animate-in zoom-in-95 duration-500">
-             <div className={`w-24 h-24 rounded-full border flex items-center justify-center shadow-2xl ${
-               isActive ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-             }`}>
-                {isActive ? <ShieldOff size={48} /> : <ShieldCheck size={48} />}
-             </div>
-             <div>
-                <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Protocol Confirmed</h2>
-                <p className={`text-[10px] font-black uppercase tracking-[0.3em] mt-3 ${isActive ? 'text-rose-400' : 'text-emerald-400'}`}>
-                   {isActive ? 'System Privileges Revoked' : 'Personnel Access Restored'}
-                </p>
-             </div>
-             <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest max-w-xs leading-relaxed">Identity node updated across all operation sectors.</p>
-          </div>
-        ) : (
           <>
             <div className={`px-8 md:px-10 py-6 md:py-8 border-b border-white/5 flex items-center justify-between ${
               isActive ? 'bg-rose-500/5' : 'bg-emerald-500/5'
@@ -138,7 +120,6 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
               <button onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all">Abort Protocol</button>
             </div>
           </>
-        )}
       </div>
     </div>
   );

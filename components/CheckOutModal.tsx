@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, LogOut, Bed, Calendar, CreditCard, AlertCircle, CheckCircle, Loader2, ShieldCheck } from 'lucide-react';
+import { X, LogOut, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 import { sileo } from 'sileo';
 import { Guest, Booking, Room } from '../types';
 
@@ -13,7 +13,6 @@ interface CheckOutModalProps {
 }
 
 const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfirm, guest, booking, room }) => {
-  const [status, setStatus] = useState<'details' | 'success'>('details');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen || !guest || !booking || !room) return null;
@@ -23,14 +22,14 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
     try {
       await onConfirm(booking.id);
       sileo.success({
-        title: 'Folio Released',
-        description: `Dossier ${booking.bookingCode} archived. Room ${room.roomNumber} marked for cleaning.`
+        title: 'Resident Checkout Protocol Complete',
+        description: `Folio ${booking.bookingCode} has been archived. Unit ${room.roomNumber} is now flagged for prioritized cleaning and sanitation.`
       });
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Check-out Protocol Fault',
-        description: err.message || "Folio synchronization failed."
+        title: 'Dossier Release Failed',
+        description: err.message || "The property ledger could not finalize the checkout for Folio ${booking.bookingCode}. Please verify the settlement state or network integrity."
       });
     } finally {
       setIsSubmitting(false);
@@ -44,22 +43,6 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className="glass-card w-full max-w-md rounded-[2rem] shadow-[0_0_50px_rgba(225,29,72,0.15)] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300">
-        
-        {status === 'success' ? (
-          <div className="p-12 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-500">
-            <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-              <ShieldCheck size={40} className="text-emerald-500" strokeWidth={3} />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Folio Released</h2>
-              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] mt-2">Dossier {booking.bookingCode} Archived</p>
-            </div>
-            <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full">
-              <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Asset State</p>
-              <p className="text-xs font-black text-white uppercase">Room {room.roomNumber} Marked for Cleaning</p>
-            </div>
-          </div>
-        ) : (
           <>
             <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-rose-500/5">
               <div className="flex items-center gap-3">
@@ -113,7 +96,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 bg-rose-500/10 rounded-xl border border-rose-500/20">
+              <div className="flex items-start gap-4 p-4 bg-rose-500/10 rounded-xl border border-rose-500/20">
                 <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-rose-300 leading-relaxed font-bold uppercase tracking-tight">
                   Confirmation will revoke current room access and mark <span className="text-white font-black">Room {room.roomNumber}</span> for Cleaning.
@@ -141,7 +124,6 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
               </button>
             </div>
           </>
-        )}
       </div>
     </div>
   );

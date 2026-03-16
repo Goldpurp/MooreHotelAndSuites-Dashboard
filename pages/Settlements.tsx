@@ -98,14 +98,14 @@ const Settlements: React.FC = () => {
         /** CHANGE: Calling the new completeRefund protocol from context */
         await completeRefund(selectedBooking.id, refundRef);
         sileo.success({
-          title: 'Refund Completed',
-          description: `Folio refund for ${resolveGuestName(selectedBooking)} processed successfully.`
+          title: 'Refund Protocol Executed',
+          description: `The financial refund for ${resolveGuestName(selectedBooking)} has been finalized and committed to the ledger. Transaction integrity verified.`
         });
       } else {
         await confirmTransfer(selectedBooking.bookingCode);
         sileo.success({
-          title: 'Settlement Verified',
-          description: `Accounting verification for ${resolveGuestName(selectedBooking)} successful.`
+          title: 'Folio Settlement Confirmed',
+          description: `Accounting verification for ${resolveGuestName(selectedBooking)} is complete. The transaction has been reconciled and the folio closed.`
         });
       }
       setIsConfirmModalOpen(false);
@@ -114,8 +114,8 @@ const Settlements: React.FC = () => {
     } 
     catch (err: any) { 
       sileo.error({
-        title: 'Accounting Fault',
-        description: err.message || "Ledger commit failed."
+        title: 'Ledger Commitment Failed',
+        description: err.message || "The security node rejected the settlement verification. Please verify the transaction reference or network connection before retrying."
       });
       setVerificationState('idle');
     } 

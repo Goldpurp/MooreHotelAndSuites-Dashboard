@@ -6,10 +6,7 @@ import {
   Activity,
   ArrowRight,
   RefreshCw,
-  PieChart as PieIcon,
   Clock,
-  Zap,
-  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   AlertTriangle
@@ -29,7 +26,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { BookingStatus, RoomStatus } from "../types";
+import { RoomStatus } from "../types";
 import { api } from "../lib/api";
 
 const Dashboard: React.FC = () => {
@@ -64,8 +61,8 @@ const Dashboard: React.FC = () => {
     await refreshData();
     await fetchDashboardData();
     sileo.success({
-      title: 'Metrics Synchronized',
-      description: 'Dashboard telemetry has been updated to the latest registry state.'
+      title: 'Executive Overview Refreshed',
+      description: 'Dashboard telemetry, including occupancy rates and revenue dynamics, has been updated to reflect the latest property status.'
     });
     setTimeout(() => setIsRefreshing(false), 1000);
   };

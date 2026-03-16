@@ -69,7 +69,6 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
   const [priceStr, setPriceStr] = useState('0');
   const [sizeNum, setSizeNum] = useState(20);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<'details' | 'success'>('details');
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,7 +88,6 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
       setSizeNum(20);
     }
     setError(null);
-    setStatus('details');
   }, [editingRoom, isOpen]);
 
   if (!isOpen) return null;
@@ -139,16 +137,16 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
     try {
       await onSave(formData);
       sileo.success({
-        title: editingRoom ? 'Room Updated' : 'Room Onboarded',
-        description: `Room ${formData.roomNumber} has been successfully synchronized.`
+        title: 'Unit Inventory Synchronized',
+        description: `Asset data for Room ${formData.roomNumber} has been successfully reconciled with the property inventory. Diagnostics online.`
       });
       onClose();
     } catch (err: any) {
       const msg = err.message || "Property ledger synchronization failed.";
       setError(msg);
       sileo.error({
-        title: 'Synchronization Failed',
-        description: msg
+        title: 'Ledger Reconciliation Failed',
+        description: msg || "The property inventory system rejected the update. Please ensure the room number is unique and the data is valid."
       });
     } finally {
       setIsSubmitting(false);
@@ -159,20 +157,6 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto custom-scrollbar">
       <div className="glass-card w-full max-w-5xl max-h-[95vh] sm:max-h-[92vh] flex flex-col rounded-[1.5rem] sm:rounded-[2.5rem] shadow-3xl overflow-hidden border border-white/15 animate-in zoom-in-95 duration-300">
         
-        {status === 'success' ? (
-          <div className="p-24 flex flex-col items-center text-center space-y-8 animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shadow-[0_0_40px_rgba(59,130,246,0.2)]">
-              <ShieldCheck size={48} className="text-blue-500" strokeWidth={3} />
-            </div>
-            <div>
-              <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Asset Synchronized</h2>
-              <p className="text-[11px] text-blue-400 font-black uppercase tracking-[0.3em] mt-3">
-                Room {formData.roomNumber} updated in property ledger
-              </p>
-            </div>
-            <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest max-w-md">The hardware registry has been updated across all distributed operation nodes.</p>
-          </div>
-        ) : (
           <>
             <div className="px-5 sm:px-10 py-4 sm:py-6 border-b border-white/5 flex items-center justify-between bg-slate-900/60">
               <div className="flex items-center gap-3 sm:gap-4">
@@ -343,7 +327,6 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
               </button>
             </div>
           </>
-        )}
       </div>
     </div>
   );

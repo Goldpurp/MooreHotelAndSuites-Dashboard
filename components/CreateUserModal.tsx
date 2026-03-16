@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, ShieldAlert, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2, Phone } from 'lucide-react';
+import { X, UserPlus, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2, Phone, ShieldAlert } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
 import { UserRole, StaffUser, ProfileStatus } from '../types';
@@ -13,7 +13,6 @@ interface CreateUserModalProps {
 const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, editingUser }) => {
   const { addStaff, updateStaff, currentUser } = useHotel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<'details' | 'success'>('details');
   
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
@@ -30,7 +29,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
         name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
       });
     }
-    setStatus('details');
   }, [editingUser, isOpen]);
 
   if (!isOpen) return null;
@@ -43,21 +41,21 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
         const { status, ...updatePayload } = formData;
         await updateStaff(editingUser.id, updatePayload as any);
         sileo.success({
-          title: 'Identity Updated',
-          description: `Account authorization for ${formData.name} successfully updated.`
+          title: 'Personnel Profile Synchronized',
+          description: `Security authorization and hierarchy data for ${formData.name} have been updated across the network node.`
         });
       } else {
         await addStaff(formData);
         sileo.success({
-          title: 'Identity Provisioned',
-          description: `Personnel entry for ${formData.name} committed to the security ledger.`
+          title: 'New Identity Provisioned',
+          description: `A new personnel entry for ${formData.name} has been successfully committed to the security ledger. Access tokens enabled.`
         });
       }
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Provisioning Protocol Fault',
-        description: err.message || "Failed to sync identity updates."
+        title: 'Identity Synchronization Error',
+        description: err.message || "The security subsystem encountered a conflict while updating personnel data. Please verify the registry state or network path."
       });
     } finally {
       setIsSubmitting(false);
@@ -90,21 +88,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
       <div className="w-full max-w-5xl flex flex-col lg:flex-row glass-card rounded-[1.5rem] sm:rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(59,130,246,0.15)] animate-in zoom-in-95 duration-300 min-h-[500px] lg:h-[720px] my-4 sm:my-8 max-h-[95vh] sm:max-h-[92vh]">
-        
-        {status === 'success' ? (
-          <div className="flex-1 bg-[#05080f] flex flex-col items-center justify-center text-center p-12 space-y-8 animate-in zoom-in-95 duration-500">
-            <div className="w-24 h-24 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center shadow-[0_0_40px_rgba(59,130,246,0.2)]">
-              <ShieldCheck size={48} className="text-brand-500" strokeWidth={3} />
-            </div>
-            <div>
-              <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Identity Provisions Set</h2>
-              <p className="text-[11px] text-brand-400 font-black uppercase tracking-[0.3em] mt-3">
-                {editingUser ? 'Account Authorization Updated' : 'New Personnel Enrolled Successfully'}
-              </p>
-            </div>
-            <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest max-w-md">Access credentials and hierarchical permissions have been committed to the security ledger.</p>
-          </div>
-        ) : (
           <>
             {/* Left Visual Sidebar */}
             <div className={`flex lg:w-80 bg-gradient-to-br p-6 sm:p-10 lg:p-12 flex-col justify-between shrink-0 ${editingUser ? 'from-indigo-600 to-blue-900' : 'from-brand-600 to-emerald-900'}`}>
@@ -242,7 +225,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                </div>
             </form>
           </>
-        )}
       </div>
     </div>
   );

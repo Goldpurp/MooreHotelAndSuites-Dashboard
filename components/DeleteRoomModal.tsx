@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trash2, AlertTriangle, ShieldAlert, Loader2, Trash } from 'lucide-react';
+import { X, AlertTriangle, ShieldAlert, Loader2, Trash } from 'lucide-react';
 import { sileo } from 'sileo';
 import { Room } from '../types';
 
@@ -12,7 +12,6 @@ interface DeleteRoomModalProps {
 
 const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onConfirm, room }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<'details' | 'success'>('details');
 
   if (!isOpen || !room) return null;
 
@@ -21,14 +20,14 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
     try {
       await onConfirm(room.id);
       sileo.success({
-        title: 'Asset Liquidated',
-        description: `Room ${room.roomNumber} has been permanently removed from the ledger.`
+        title: 'Unit Decommissioned Successfully',
+        description: `Room ${room.roomNumber} and all its associated telemetry have been permanently purged from the property registry.`
       });
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Liquidation Protocol Fault',
-        description: err.message || "Failed to remove the asset."
+        title: 'Decommissioning Request Blocked',
+        description: err.message || "The property security node rejected the removal of Unit ${room.roomNumber}. This may be due to active reservations or hardware locks."
       });
     } finally {
       setIsSubmitting(false);
@@ -38,19 +37,6 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className="glass-card w-full max-w-md rounded-[2rem] shadow-[0_0_50px_rgba(244,63,94,0.15)] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300">
-        
-        {status === 'success' ? (
-          <div className="p-12 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-500">
-            <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(244,63,94,0.2)]">
-              <Trash size={40} className="text-rose-500" strokeWidth={3} />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Asset Liquidated</h2>
-              <p className="text-[10px] text-rose-400 font-black uppercase tracking-[0.2em] mt-2">Room {room.roomNumber} removed from ledger</p>
-            </div>
-            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">Property hardware updated across all nodes.</p>
-          </div>
-        ) : (
           <>
             <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-rose-500/5">
               <div className="flex items-center gap-3">
@@ -105,7 +91,6 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
               </button>
             </div>
           </>
-        )}
       </div>
     </div>
   );

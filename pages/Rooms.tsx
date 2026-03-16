@@ -45,8 +45,8 @@ const Rooms: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Inventory Synchronized',
-      description: 'Room and asset status data has been updated from the central node.'
+      title: 'Asset Inventory Synchronized',
+      description: 'Real-time room status, availability, and unit diagnostics have been successfully updated from the central node.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };

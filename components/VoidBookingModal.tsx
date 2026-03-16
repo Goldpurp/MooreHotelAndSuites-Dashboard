@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, AlertTriangle, ShieldAlert, Loader2, ShieldCheck, BookmarkX, MessageSquare } from 'lucide-react';
+import { X, AlertTriangle, ShieldAlert, Loader2, MessageSquare } from 'lucide-react';
 import { sileo } from 'sileo';
 import { Booking, Guest, Room } from '../types';
 
@@ -14,7 +14,6 @@ interface VoidBookingModalProps {
 
 const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, onConfirm, booking, guest, room }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<'details' | 'success'>('details');
   const [reason, setReason] = useState('Guest requested cancellation');
 
   if (!isOpen || !booking || !guest || !room) return null;
@@ -24,14 +23,14 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
     try {
       await onConfirm(booking.id, reason);
       sileo.success({
-        title: 'Reservation Voided',
-        description: `Folio ${booking.bookingCode} purged. Room ${room.roomNumber} returned to inventory.`
+        title: 'Dossier Revocation Successful',
+        description: `Folio ${booking.bookingCode} for ${booking.guestFirstName} ${booking.guestLastName} has been voided. Unit ${room.roomNumber} is now back in the available inventory.`
       });
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Revocation Protocol Fault',
-        description: err.message || "Failed to void the reservation."
+        title: 'Revocation Protocol Denied',
+        description: err.message || "The security node blocked the revocation of Folio ${booking.bookingCode}. This action may require higher authorization or the FOLIO is in an immutable state."
       });
     } finally {
       setIsSubmitting(false);
@@ -41,22 +40,6 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className="glass-card w-full max-w-md rounded-[2rem] shadow-[0_0_50px_rgba(244,63,94,0.1)] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300">
-        
-        {status === 'success' ? (
-          <div className="p-12 flex flex-col items-center text-center space-y-6 animate-in zoom-in-95 duration-500">
-            <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(244,63,94,0.2)]">
-              <BookmarkX size={40} className="text-rose-500" strokeWidth={3} />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Reservation Voided</h2>
-              <p className="text-[10px] text-rose-400 font-black uppercase tracking-[0.2em] mt-2">Folio {booking.bookingCode} purged from queue</p>
-            </div>
-            <div className="bg-white/5 p-4 rounded-xl border border-white/5 w-full">
-              <p className="text-[9px] text-slate-500 font-black uppercase mb-1">Asset Status</p>
-              <p className="text-xs font-black text-white uppercase">Room {room.roomNumber} Returned to Inventory</p>
-            </div>
-          </div>
-        ) : (
           <>
             <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-rose-500/5">
               <div className="flex items-center gap-3">
@@ -133,7 +116,6 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
               </button>
             </div>
           </>
-        )}
       </div>
     </div>
   );

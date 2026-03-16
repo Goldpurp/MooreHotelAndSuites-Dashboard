@@ -1,16 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { 
-  UserPlus, Search, ShieldAlert, ShieldCheck, ShieldOff, Users, Activity, 
-  Fingerprint, RefreshCw, Mail, Calendar, Lock, ChevronLeft, ChevronRight, Database, 
-  SearchX, UserMinus, Filter, UserCheck, Building2, Save, X, Phone
+  UserPlus, Search, ShieldCheck, ShieldOff, Activity, 
+  Fingerprint, RefreshCw, Mail, Lock, ChevronLeft, ChevronRight, 
+  X, Phone
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import RoleBadge from '../components/RoleBadge';
 import PermissionWrapper from '../components/PermissionWrapper';
 import CreateUserModal from '../components/CreateUserModal';
 import StaffSuspensionModal from '../components/StaffSuspensionModal';
-import { StaffUser, UserRole, ProfileStatus } from '../types';
+import { StaffUser, UserRole } from '../types';
 
 const StaffManagement: React.FC = () => {
   const { staff, toggleStaffStatus, refreshData, currentUser } = useHotel();
@@ -28,8 +28,8 @@ const StaffManagement: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Directory Synchronized',
-      description: 'Personnel and hierarchy data has been updated from the security node.'
+      title: 'Personnel Registry Updated',
+      description: 'Authorized personnel data and organizational hierarchy have been successfully synchronized with the security node.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };

@@ -10,7 +10,7 @@ const TopBar: React.FC = () => {
   const { 
     currentUser, rooms, guests, bookings, staff, 
     setActiveTab, setSelectedBookingId, setSelectedGuestId, setSelectedRoomId,
-    notifications, markAllNotificationsRead, markNotificationAsRead, dismissNotification
+    notifications, markAllNotificationsRead, markNotificationAsRead
   } = useHotel();
   
   const [searchQuery, setSearchQuery] = useState('');

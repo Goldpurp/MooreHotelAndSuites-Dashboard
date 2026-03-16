@@ -1,6 +1,4 @@
-
 import React from 'react';
-import { UserRole } from '../types';
 
 interface RoleBadgeProps {
   role: string | undefined | null;
