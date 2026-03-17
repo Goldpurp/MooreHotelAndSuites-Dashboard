@@ -108,7 +108,7 @@ body,
 [data-sileo-toast] {
   backdrop-filter: blur(20px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  background: rgba(15, 23, 42, 0.7) !important;
+  background: rgba(4, 4, 4, 0.7) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
@@ -117,14 +117,14 @@ body,
 }
 
 [data-sileo-title] {
-  color: #ffffff !important;
+  color: #030303 !important;
   font-weight: 800 !important;
   letter-spacing: 0.025em !important;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.2) !important;
 }
 
 [data-sileo-description] {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: rgba(10, 9, 9, 0.9) !important;
   font-weight: 500 !important;
   line-height: 1.4 !important;
 }
