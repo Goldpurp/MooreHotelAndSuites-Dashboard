@@ -551,6 +551,29 @@ const Guests: React.FC = () => {
                       </p>
                     </div>
                   </div>
+
+                  <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest block mb-1">Check-In</span>
+                      <p className="adaptive-text-sm font-bold text-white leading-none">
+                        {new Date(selectedResident.activeStay.booking.checkIn).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest block mb-1">Check-Out</span>
+                      <p className={`adaptive-text-sm font-bold leading-none ${selectedResident.activeStay.isOverdue ? 'text-rose-500' : 'text-white'}`}>
+                        {new Date(selectedResident.activeStay.booking.checkOut).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 

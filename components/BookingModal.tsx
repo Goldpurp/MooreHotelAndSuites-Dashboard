@@ -16,7 +16,7 @@ interface BookingModalProps {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn = false, initialData = null }) => {
-  const { rooms, addBooking, isRoomAvailable, setActiveTab } = useHotel();
+  const { rooms, addBooking, isRoomAvailable, setActiveTab, guests, selectedGuestId } = useHotel();
   
   const getLocalDateStr = (offsetDays = 0) => {
     const d = new Date();
@@ -36,6 +36,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   
   const [formData, setFormData] = useState({
     roomId: '',
+    guestId: '',
     guestFirstName: '',
     guestLastName: '',
     guestEmail: '',
@@ -79,12 +80,32 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     if (isOpen) {
       setStep('details');
       setInitResponse(null);
-      setFormData({
-        roomId: '',
+      
+      let prefilled = {
         guestFirstName: initialData?.guestFirstName || '',
         guestLastName: initialData?.guestLastName || '',
         guestEmail: initialData?.guestEmail || '',
         guestPhone: initialData?.guestPhone || '',
+        guestId: ''
+      };
+
+      // If we have a selectedGuestId from the context (e.g. from Guests page), use it
+      if (selectedGuestId && !prefilled.guestEmail) {
+        const guest = guests.find(g => g.id === selectedGuestId);
+        if (guest) {
+          prefilled = {
+            guestFirstName: guest.firstName,
+            guestLastName: guest.lastName,
+            guestEmail: guest.email,
+            guestPhone: guest.phone,
+            guestId: guest.id
+          };
+        }
+      }
+
+      setFormData({
+        roomId: '',
+        ...prefilled,
         checkIn: isWalkIn ? today : tomorrow,
         checkOut: isWalkIn ? tomorrow : dayAfter,
         paymentMethod: PaymentMethod.DirectTransfer,
@@ -93,7 +114,19 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       setError(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, isWalkIn, initialData, today, tomorrow, dayAfter]);
+  }, [isOpen, isWalkIn, initialData, today, tomorrow, dayAfter, selectedGuestId, guests]);
+
+  // Auto-detect guest ID when email is entered
+  useEffect(() => {
+    if (formData.guestEmail && !formData.guestId) {
+      const match = guests.find(g => g.email.toLowerCase() === formData.guestEmail.toLowerCase());
+      if (match) {
+        setFormData(prev => ({ ...prev, guestId: match.id }));
+      }
+    } else if (!formData.guestEmail && formData.guestId) {
+      setFormData(prev => ({ ...prev, guestId: '' }));
+    }
+  }, [formData.guestEmail, guests, formData.guestId]);
 
   if (!isOpen) return null;
 
