@@ -17,7 +17,7 @@ interface BookingModalProps {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn = false, initialData = null }) => {
-  const { rooms, addBooking, isRoomAvailable, setActiveTab, refreshData } = useHotel();
+  const { rooms, addBooking, isRoomAvailable, setActiveTab, refreshData, guests, selectedGuestId } = useHotel();
   
   const getLocalDateStr = (offsetDays = 0) => {
     const d = new Date();
@@ -37,6 +37,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   
   const [formData, setFormData] = useState({
     roomId: '',
+    guestId: '',
     guestFirstName: '',
     guestLastName: '',
     guestEmail: '',
@@ -80,12 +81,32 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     if (isOpen) {
       setStep('details');
       setInitResponse(null);
-      setFormData({
-        roomId: '',
+      
+      let prefilled = {
         guestFirstName: initialData?.guestFirstName || '',
         guestLastName: initialData?.guestLastName || '',
         guestEmail: initialData?.guestEmail || '',
         guestPhone: initialData?.guestPhone || '',
+        guestId: ''
+      };
+
+      // If we have a selectedGuestId from the context (e.g. from Guests page), use it
+      if (selectedGuestId && !prefilled.guestEmail) {
+        const guest = guests.find(g => g.id === selectedGuestId);
+        if (guest) {
+          prefilled = {
+            guestFirstName: guest.firstName,
+            guestLastName: guest.lastName,
+            guestEmail: guest.email,
+            guestPhone: guest.phone,
+            guestId: guest.id
+          };
+        }
+      }
+
+      setFormData({
+        roomId: '',
+        ...prefilled,
         checkIn: isWalkIn ? today : tomorrow,
         checkOut: isWalkIn ? tomorrow : dayAfter,
         paymentMethod: PaymentMethod.DirectTransfer,
@@ -94,7 +115,27 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       setError(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, isWalkIn, initialData, today, tomorrow, dayAfter]);
+  }, [isOpen, isWalkIn, initialData, today, tomorrow, dayAfter, selectedGuestId, guests]);
+
+  // Auto-detect guest ID when email and names match an existing record
+  useEffect(() => {
+    if (formData.guestEmail) {
+      const match = guests.find(g => 
+        g.email.toLowerCase() === formData.guestEmail.toLowerCase() &&
+        g.firstName.toLowerCase() === formData.guestFirstName.toLowerCase() &&
+        g.lastName.toLowerCase() === formData.guestLastName.toLowerCase()
+      );
+      
+      if (match && formData.guestId !== match.id) {
+        setFormData(prev => ({ ...prev, guestId: match.id }));
+      } else if (!match && formData.guestId) {
+        // If no exact match found but we had an ID, clear it
+        setFormData(prev => ({ ...prev, guestId: '' }));
+      }
+    } else if (formData.guestId) {
+      setFormData(prev => ({ ...prev, guestId: '' }));
+    }
+  }, [formData.guestEmail, formData.guestFirstName, formData.guestLastName, guests, formData.guestId]);
 
   if (!isOpen) return null;
 
@@ -120,7 +161,21 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await addBooking(formData);
+      // Mapping to PascalCase to ensure correct binding on the .NET backend
+      const payload = {
+        RoomId: formData.roomId,
+        GuestId: formData.guestId || null,
+        GuestFirstName: formData.guestFirstName,
+        GuestLastName: formData.guestLastName,
+        GuestEmail: formData.guestEmail,
+        GuestPhone: formData.guestPhone,
+        CheckIn: formData.checkIn,
+        CheckOut: formData.checkOut,
+        PaymentMethod: formData.paymentMethod,
+        Notes: formData.notes
+      };
+
+      const response = await addBooking(payload);
       if (response.bookingCode) {
         sileo.success({
           title: 'Folio Created Successfully',
