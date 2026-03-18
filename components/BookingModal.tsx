@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { X, Calendar, Zap, FileCheck, Check, AlertCircle, Loader2, User, Bed, ShieldCheck, Globe, Clock, ChevronRight, Receipt, Wallet } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { PaymentMethod, BookingInitResponse } from '../types';
+import { sileo } from 'sileo';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ interface BookingModalProps {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn = false, initialData = null }) => {
-  const { rooms, addBooking, isRoomAvailable, setActiveTab, guests, selectedGuestId } = useHotel();
+  const { rooms, addBooking, isRoomAvailable, setActiveTab, refreshData } = useHotel();
   
   const getLocalDateStr = (offsetDays = 0) => {
     const d = new Date();
@@ -36,7 +37,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   
   const [formData, setFormData] = useState({
     roomId: '',
-    guestId: '',
     guestFirstName: '',
     guestLastName: '',
     guestEmail: '',
@@ -80,32 +80,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     if (isOpen) {
       setStep('details');
       setInitResponse(null);
-      
-      let prefilled = {
+      setFormData({
+        roomId: '',
         guestFirstName: initialData?.guestFirstName || '',
         guestLastName: initialData?.guestLastName || '',
         guestEmail: initialData?.guestEmail || '',
         guestPhone: initialData?.guestPhone || '',
-        guestId: ''
-      };
-
-      // If we have a selectedGuestId from the context (e.g. from Guests page), use it
-      if (selectedGuestId && !prefilled.guestEmail) {
-        const guest = guests.find(g => g.id === selectedGuestId);
-        if (guest) {
-          prefilled = {
-            guestFirstName: guest.firstName,
-            guestLastName: guest.lastName,
-            guestEmail: guest.email,
-            guestPhone: guest.phone,
-            guestId: guest.id
-          };
-        }
-      }
-
-      setFormData({
-        roomId: '',
-        ...prefilled,
         checkIn: isWalkIn ? today : tomorrow,
         checkOut: isWalkIn ? tomorrow : dayAfter,
         paymentMethod: PaymentMethod.DirectTransfer,
@@ -114,19 +94,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       setError(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, isWalkIn, initialData, today, tomorrow, dayAfter, selectedGuestId, guests]);
-
-  // Auto-detect guest ID when email is entered
-  useEffect(() => {
-    if (formData.guestEmail && !formData.guestId) {
-      const match = guests.find(g => g.email.toLowerCase() === formData.guestEmail.toLowerCase());
-      if (match) {
-        setFormData(prev => ({ ...prev, guestId: match.id }));
-      }
-    } else if (!formData.guestEmail && formData.guestId) {
-      setFormData(prev => ({ ...prev, guestId: '' }));
-    }
-  }, [formData.guestEmail, guests, formData.guestId]);
+  }, [isOpen, isWalkIn, initialData, today, tomorrow, dayAfter]);
 
   if (!isOpen) return null;
 
@@ -154,14 +122,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     try {
       const response = await addBooking(formData);
       if (response.bookingCode) {
-        setInitResponse(response);
-        setStep('success');
+        sileo.success({
+          title: 'Folio Created Successfully',
+          description: `Booking code ${response.bookingCode} has been registered with a total of ₦${response.amount.toLocaleString()}.`
+        });
+        await refreshData();
+        onClose();
       } else {
         throw new Error("Protocol failure: No dossier code received from node.");
       }
     } catch (err: any) {
       setError(`Ledger rejection: ${err.message}`);
-      // Don't reset step so they can try again or go back
     } finally {
       setIsSubmitting(false);
     }
@@ -176,56 +147,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/98 backdrop-blur-3xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
       <div className="w-full max-w-5xl flex flex-col items-center justify-center min-h-[500px] py-4 sm:py-8">
         
-        {step === 'success' && initResponse && (
-          <div className="w-full max-w-2xl flex flex-col items-center animate-in zoom-in-95 duration-500 p-4 sm:p-10">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-500/10 flex items-center justify-center mb-6 sm:mb-10 border border-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
-              <Check className="w-8 h-8 sm:w-12 sm:h-12 text-emerald-500" strokeWidth={4} />
-            </div>
-
-            <div className="text-center mb-10 sm:mb-14">
-              <h2 className="text-4xl sm:text-6xl font-black text-white uppercase tracking-tighter leading-none mb-4">Folio Verified</h2>
-              <p className="text-[10px] sm:text-[12px] text-emerald-400 font-black uppercase tracking-[0.4em]">System Commitment Synchronized</p>
-            </div>
-
-            <div className="w-full bg-[#0a0f1d] border border-white/10 rounded-[2.5rem] sm:rounded-[3.5rem] p-8 sm:p-14 shadow-3xl mb-8 sm:mb-14 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <Receipt size={120} className="text-white" />
-               </div>
-               
-               <div className="space-y-10 relative z-10">
-                 <div className="flex flex-col sm:flex-row justify-between items-center pb-8 border-b border-white/5 gap-4">
-                    <div className="text-center sm:text-left">
-                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.25em] block mb-2">Dossier Reference</span>
-                       <span className="text-4xl sm:text-[64px] font-black text-white tracking-tighter uppercase leading-none">{initResponse.bookingCode}</span>
-                    </div>
-                    <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                       <span className="text-[10px] text-emerald-400 font-black uppercase">Status: Live</span>
-                    </div>
-                 </div>
-                 
-                 <div className="grid grid-cols-2 gap-8">
-                    <div>
-                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.25em] block mb-1">Accounting</span>
-                       <span className="text-2xl sm:text-[42px] font-black text-brand-500 tracking-tighter leading-none">₦{initResponse.amount.toLocaleString()}</span>
-                    </div>
-                    <div className="text-right">
-                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.25em] block mb-1">Asset Unit</span>
-                       <span className="text-2xl sm:text-3xl font-black text-white uppercase leading-none">Room {selectedRoom?.roomNumber}</span>
-                    </div>
-                 </div>
-               </div>
-            </div>
-
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <button onClick={handleNavigateToSettlements} className="w-full py-5 sm:py-7 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl sm:rounded-[1.5rem] font-black text-xs sm:text-[15px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-all">
-                 <ShieldCheck size={20} /> Verify Settlement
-               </button>
-               <button onClick={onClose} className="w-full py-5 sm:py-7 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl sm:rounded-[1.5rem] font-black text-xs sm:text-[15px] uppercase tracking-[0.2em] border border-white/5 transition-all">
-                 Close Protocol
-               </button>
-            </div>
-          </div>
-        )}
 
         {step === 'confirm' && (
            <div className="w-full max-w-3xl bg-[#0a0f1d] border border-white/10 rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-16 flex flex-col items-center animate-in fade-in zoom-in-95 duration-300 shadow-3xl">
