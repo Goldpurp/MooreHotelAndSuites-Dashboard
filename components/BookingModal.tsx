@@ -53,11 +53,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   const selectedRoom = useMemo(() => rooms.find(r => r.id === formData.roomId), [rooms, formData.roomId]);
 
   const nights = useMemo(() => {
-    const d1 = new Date(formData.checkIn.replace(/-/g, '/'));
-    const d2 = new Date(formData.checkOut.replace(/-/g, '/'));
-    const diff = d2.getTime() - d1.getTime();
-    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  }, [formData.checkIn, formData.checkOut]);
+    try {
+      const d1 = new Date((formData.checkIn || today).replace(/-/g, '/'));
+      const d2 = new Date((formData.checkOut || tomorrow).replace(/-/g, '/'));
+      const diff = d2.getTime() - d1.getTime();
+      return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    } catch {
+      return 1;
+    }
+  }, [formData.checkIn, formData.checkOut, today, tomorrow]);
 
   const totalAmount = useMemo(() => (selectedRoom?.pricePerNight || 0) * nights, [selectedRoom, nights]);
 
@@ -77,6 +81,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     }
   }, [availableRooms, formData.roomId]);
 
+  // Initialization effect - strictly only runs when modal is opened
   useEffect(() => {
     if (isOpen) {
       setStep('details');
@@ -92,7 +97,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
       // If we have a selectedGuestId from the context (e.g. from Guests page), use it
       if (selectedGuestId && !prefilled.guestEmail) {
-        const guest = guests.find(g => g.id === selectedGuestId);
+        const guest = guests?.find(g => g.id === selectedGuestId);
         if (guest) {
           prefilled = {
             guestFirstName: guest.firstName,
@@ -115,15 +120,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       setError(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, isWalkIn, initialData, today, tomorrow, dayAfter, selectedGuestId, guests]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]); 
 
   // Auto-detect guest ID when email and names match an existing record
   useEffect(() => {
-    if (formData.guestEmail) {
+    if (formData.guestEmail && guests) {
       const match = guests.find(g => 
-        g.email.toLowerCase() === formData.guestEmail.toLowerCase() &&
-        g.firstName.toLowerCase() === formData.guestFirstName.toLowerCase() &&
-        g.lastName.toLowerCase() === formData.guestLastName.toLowerCase()
+        g?.email?.toLowerCase() === formData.guestEmail.toLowerCase() &&
+        g?.firstName?.toLowerCase() === formData.guestFirstName.toLowerCase() &&
+        g?.lastName?.toLowerCase() === formData.guestLastName.toLowerCase()
       );
       
       if (match && formData.guestId !== match.id) {
@@ -179,7 +185,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       if (response.bookingCode) {
         sileo.success({
           title: 'Folio Created Successfully',
-          description: `Booking code ${response.bookingCode} has been registered with a total of ₦${response.amount.toLocaleString()}.`
+          description: `Booking code ${response.bookingCode} has been registered with a total of ₦${(response.amount || 0).toLocaleString()}.`
         });
         await refreshData();
         onClose();
