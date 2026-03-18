@@ -17,7 +17,7 @@ interface BookingModalProps {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn = false, initialData = null }) => {
-  const { rooms, addBooking, isRoomAvailable, setActiveTab, guests, selectedGuestId } = useHotel();
+  const { rooms, addBooking, isRoomAvailable, setActiveTab, refreshData, guests, selectedGuestId } = useHotel();
   
   const getLocalDateStr = (offsetDays = 0) => {
     const d = new Date();
@@ -191,6 +191,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
           title: 'Folio Created Successfully',
           description: `Booking code ${response.bookingCode} has been registered with a total of ₦${(response.amount || 0).toLocaleString()}.`
         });
+        await refreshData();
         onClose();
       } else {
         throw new Error("Protocol failure: No dossier code received from node.");
