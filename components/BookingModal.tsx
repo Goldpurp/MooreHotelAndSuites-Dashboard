@@ -168,9 +168,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     setError(null);
     try {
       // Mapping to PascalCase to ensure correct binding on the .NET backend
-      const payload = {
+      const payload: any = {
         RoomId: formData.roomId,
-        GuestId: formData.guestId || null,
         GuestFirstName: formData.guestFirstName,
         GuestLastName: formData.guestLastName,
         GuestEmail: formData.guestEmail,
@@ -180,6 +179,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
         PaymentMethod: formData.paymentMethod,
         Notes: formData.notes
       };
+
+      // Only include GuestId if we have a definite match to avoid Foreign Key or mapping errors
+      if (formData.guestId) {
+        payload.GuestId = formData.guestId;
+      }
 
       const response = await addBooking(payload);
       if (response.bookingCode) {
