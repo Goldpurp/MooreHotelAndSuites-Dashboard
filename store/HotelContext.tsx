@@ -40,6 +40,7 @@ interface HotelContextType {
   isInitialLoading: boolean;
   isSidebarCollapsed: boolean;
   activeTab: string;
+  isRefreshing: boolean;
   selectedBookingId: string | null;
   setSelectedBookingId: (id: string | null) => void;
   selectedGuestId: string | null;
@@ -120,6 +121,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null,
   );
@@ -287,27 +289,15 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     } as any;
   };
 
-  const refreshData = useCallback(async () => {
+  const refreshCoreResources = useCallback(async () => {
     const token = api.getToken();
     if (!token) return;
-
+    setIsRefreshing(true);
     try {
-      const [
-        roomsRes,
-        bookingsRes,
-        employeesRes,
-        clientsRes,
-        notificationsRes,
-        auditLogsRes,
-        visitHistoryRes,
-      ] = await Promise.all([
+      const [roomsRes, bookingsRes, clientsRes] = await Promise.all([
         api.get("/api/rooms").catch(() => []),
         api.get("/api/bookings").catch(() => []),
-        api.get("/api/admin/management/employees").catch(() => []),
         api.get("/api/admin/management/clients").catch(() => []),
-        api.get("/api/notifications/staff").catch(() => []),
-        api.get("/api/audit-logs").catch(() => []),
-        api.get("/api/visit-records").catch(() => []),
       ]);
 
       const rawRooms = normalizeData(roomsRes);
@@ -322,9 +312,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
           maintenance: RoomStatus.Maintenance,
           reserved: RoomStatus.Reserved,
         };
-
         const onlineVal = r.isOnline !== undefined ? r.isOnline : r.IsOnline;
-
         return {
           ...r,
           id: String(r.id || r.Id),
@@ -340,9 +328,35 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       });
 
+      setRooms(normalizedRooms);
+      setBookings(normalizeData(bookingsRes).map(normalizeBooking));
+      setGuests(normalizeData(clientsRes));
+    } catch (error) {
+      console.error("Core Synchronization Protocol Failed:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  const refreshSystemLogs = useCallback(async () => {
+    const token = api.getToken();
+    if (!token) return;
+    try {
+      const [
+        employeesRes,
+        notificationsRes,
+        auditLogsRes,
+        visitHistoryRes,
+      ] = await Promise.all([
+        api.get("/api/admin/management/employees").catch(() => []),
+        api.get("/api/notifications/staff").catch(() => []),
+        api.get("/api/audit-logs").catch(() => []),
+        api.get("/api/visit-records").catch(() => []),
+      ]);
+
       const allUsersRaw = [
         ...normalizeData(employeesRes),
-        ...normalizeData(clientsRes),
+        ...guests, // Contextual mix with already fetched guests
       ];
 
       const mergedStaff = allUsersRaw
@@ -350,27 +364,20 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
         .filter((u): u is StaffUser => u !== null)
         .filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i);
 
-      setRooms(normalizedRooms);
-      setBookings(normalizeData(bookingsRes).map(normalizeBooking));
       setStaff(mergedStaff);
       setNotifications(normalizeData(notificationsRes));
       setAuditLogs(normalizeData(auditLogsRes));
-      setGuests(normalizeData(clientsRes));
       setVisitHistory(normalizeData(visitHistoryRes).map(normalizeVisitRecord));
-    } catch (error: any) {
-      console.error("Property Synchronization Protocol Failed:", error);
-      sileo.error({
-        title: 'Property Data Desync',
-        description: 'Global synchronization with the security node interrupted. Some metrics may be temporarily offline or out of date.'
-      });
-      if (error.message?.includes("Authorization Required")) {
-        setIsAuthenticated(false);
-        api.removeToken();
-      }
-    } finally {
-      setIsInitialLoading(false);
+    } catch (error) {
+      console.error("System Log Synchronization Protocol Failed:", error);
     }
-  }, []);
+  }, [guests]);
+
+  const refreshData = useCallback(async () => {
+    await refreshCoreResources();
+    await refreshSystemLogs();
+    setIsInitialLoading(false);
+  }, [refreshCoreResources, refreshSystemLogs]);
 
   useEffect(() => {
     // Toast new notifications
@@ -461,6 +468,7 @@ const addRoom = async (room: Omit<Room, "id">) => {
   formData.append("Description", room.description || "");
   formData.append("PricePerNight", String(room.pricePerNight || 0));
   formData.append("Guest", String(room.capacity || 2));
+  formData.append("IsOnline", String(room.isOnline || false));
 
   if (room.amenities) {
     room.amenities.forEach((a) => formData.append("Amenities", a));
@@ -479,7 +487,7 @@ const addRoom = async (room: Omit<Room, "id">) => {
   // Use the NEW specialized method
   await api.postForm("/api/rooms", formData);
 
-  await refreshData();
+  await refreshCoreResources();
 };
 
 
@@ -491,10 +499,21 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
   // Map updated fields
   if (updates.roomNumber) formData.append("RoomNumber", updates.roomNumber);
   if (updates.name) formData.append("Name", updates.name);
+  if (updates.category) formData.append("Category", updates.category);
+  if (updates.floor) formData.append("Floor", updates.floor);
+  if (updates.description) formData.append("Description", updates.description);
   if (updates.status) formData.append("Status", updates.status);
-  if (updates.pricePerNight !== undefined) formData.append("PricePerNight", String(updates.pricePerNight));
-  if (updates.capacity !== undefined) formData.append("Guest", String(updates.capacity));
+  if (updates.pricePerNight !== undefined)
+    formData.append("PricePerNight", String(updates.pricePerNight));
+  if (updates.capacity !== undefined)
+    formData.append("Guest", String(updates.capacity));
   if (updates.size) formData.append("Size", updates.size);
+  if (updates.isOnline !== undefined)
+    formData.append("IsOnline", String(updates.isOnline));
+
+  if (updates.amenities) {
+    updates.amenities.forEach((a) => formData.append("Amenities", a));
+  }
 
   if (updates.images) {
     for (let i = 0; i < updates.images.length; i++) {
@@ -509,14 +528,14 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     }
   }
 
-  await api.put(`/api/rooms/${id}`, formData);
-  await refreshData();
+  await api.putForm(`/api/rooms/${id}`, formData);
+  await refreshCoreResources();
 };
 
 
   const deleteRoom = async (id: string) => {
     await api.delete(`/api/rooms/${id}`);
-    await refreshData();
+    await refreshCoreResources();
   };
 
   const toggleRoomMaintenance = async (id: string) => {
@@ -550,22 +569,22 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
         PaymentStatus.Unpaid) as PaymentStatus,
     };
 
-    await refreshData();
+    await refreshCoreResources();
     return response;
   };
 
   const updateBooking = async (id: string, updates: Partial<Booking>) => {
     await api.put(`/api/bookings/${id}`, { ...updates, id });
-    await refreshData();
+    await refreshCoreResources();
   };
   const updatePaymentStatus = async (id: string, status: PaymentStatus) => {
     await api.put(`/api/bookings/${id}`, { id, paymentStatus: status });
-    await refreshData();
+    await refreshCoreResources();
   };
 
   const confirmTransfer = async (code: string) => {
     await api.post(`/api/bookings/${code}/confirm-transfer`);
-    await refreshData();
+    await refreshCoreResources();
   };
 
   /**
@@ -577,7 +596,7 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     reason: string = "Staff Requested Cancellation",
   ) => {
     await api.post(`/api/bookings/${id}/cancel`, null, { params: { reason } });
-    await refreshData();
+    await refreshCoreResources();
   };
 
   /**
@@ -588,20 +607,20 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     await api.post(`/api/bookings/${id}/complete-refund`, null, {
       params: { transactionRef },
     });
-    await refreshData();
+    await refreshCoreResources();
   };
 
   const checkInBooking = async (id: string) => {
     await api.put(`/api/bookings/${id}/status`, null, {
       params: { status: "CheckedIn" },
     });
-    await refreshData();
+    await refreshCoreResources();
   };
   const checkOutBooking = async (id: string) => {
     await api.put(`/api/bookings/${id}/status`, null, {
       params: { status: "CheckedOut" },
     });
-    await refreshData();
+    await refreshCoreResources();
   };
   const checkInBookingByCode = async (code: string) => {
     const b = bookings.find((x) => x.bookingCode === code);
@@ -614,12 +633,12 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
 
   const addGuest = async (g: any) => {
     const res = await api.post<any>("/api/Auth/register", g);
-    await refreshData();
+    await refreshCoreResources();
     return res.email;
   };
   const updateGuest = async (id: string, updates: Partial<Guest>) => {
     await api.put(`/api/profile/me`, updates);
-    await refreshData();
+    await refreshCoreResources();
   };
 
   const parseLocalMidnight = (dateStr: string) => {
@@ -684,12 +703,12 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
       department: p.department || "",
     };
     await api.post("/api/admin/management/onboard-staff", payload);
-    await refreshData();
+    await refreshCoreResources();
   };
 
   const updateStaff = async (id: string, updates: Partial<StaffUser>) => {
     await api.put(`/api/admin/management/employees/${id}`, { ...updates, id });
-    await refreshData();
+    await refreshCoreResources();
   };
 
   const toggleStaffStatus = async (id: string) => {
@@ -723,6 +742,7 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     isInitialLoading,
     isSidebarCollapsed,
     activeTab,
+    isRefreshing,
     selectedBookingId,
     setSelectedBookingId,
     selectedGuestId,
