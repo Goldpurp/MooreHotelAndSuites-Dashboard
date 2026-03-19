@@ -460,7 +460,7 @@ const addRoom = async (room: Omit<Room, "id">) => {
   formData.append("Size", room.size || "");
   formData.append("Description", room.description || "");
   formData.append("PricePerNight", String(room.pricePerNight || 0));
-  formData.append("Guest", String(room.capacity || 2));
+  formData.append("Capacity", String(room.capacity || 2));
 
   if (room.amenities) {
     room.amenities.forEach((a) => formData.append("Amenities", a));
@@ -486,30 +486,36 @@ const addRoom = async (room: Omit<Room, "id">) => {
 
 const updateRoom = async (id: string, updates: Partial<Room>) => {
   const formData = new FormData();
-  formData.append("Id", id);
 
-  // Map updated fields
-  if (updates.roomNumber) formData.append("RoomNumber", updates.roomNumber);
   if (updates.name) formData.append("Name", updates.name);
+  if (updates.category) formData.append("Category", updates.category);
+  if (updates.floor) formData.append("Floor", updates.floor);
   if (updates.status) formData.append("Status", updates.status);
   if (updates.pricePerNight !== undefined) formData.append("PricePerNight", String(updates.pricePerNight));
-  if (updates.capacity !== undefined) formData.append("Guest", String(updates.capacity));
+  if (updates.capacity !== undefined) formData.append("Capacity", String(updates.capacity));
+  if (updates.isOnline !== undefined) formData.append("IsOnline", String(updates.isOnline));
+  if (updates.description) formData.append("Description", updates.description);
   if (updates.size) formData.append("Size", updates.size);
+  if (updates.amenities) {
+    updates.amenities.forEach((a) => formData.append("Amenities", a));
+  }
 
   if (updates.images) {
     for (let i = 0; i < updates.images.length; i++) {
       const img = updates.images[i];
       if (img.startsWith("data:image")) {
+        // New file upload
         const res = await fetch(img);
         const blob = await res.blob();
-        formData.append("files", blob, `update_${id}_${i}.jpg`);
+        formData.append("files", blob, `update_room_${id}_${i}.jpg`);
       } else {
-        formData.append("ExistingImages", img);
+        // Existing URL to keep in the DB
+        formData.append("Images", img);
       }
     }
   }
 
-  await api.put(`/api/rooms/${id}`, formData);
+  await api.putForm(`/api/rooms/${id}`, formData);
   await refreshData();
 };
 
