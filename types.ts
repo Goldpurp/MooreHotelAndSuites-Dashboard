@@ -22,14 +22,12 @@ export enum VisitAction {
   VOID = "Dossier Voided",
 }
 
-export type RoomCategory = "Standard" | "Business" | "Executive" | "Suite";
+export type RoomCategory = "Standard" | "Deluxe" | "Executive" | "Presidential Suite";
 
 export enum PropertyFloor {
   GroundFloor = "GroundFloor",
   FirstFloor = "FirstFloor",
   SecondFloor = "SecondFloor",
-  ThirdFloor = "ThirdFloor",
-  Penthouse = "Penthouse",
 }
 
 export enum PaymentStatus {
@@ -131,6 +129,7 @@ export interface Booking {
   transactionReference?: string;
   createdAt: string;
   notes?: string;
+  notificationMessage?: string;
   statusHistory: BookingStatusHistory[];
 }
 

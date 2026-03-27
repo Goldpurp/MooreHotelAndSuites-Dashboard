@@ -63,10 +63,18 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
       });
       onClose();
     } catch (err: any) {
-      sileo.error({
-        title: 'Activation Protocol Failure',
-        description: err.message || "The property node could not activate Folio ${booking.bookingCode}. Please verify the resident's identity and room readiness."
-      });
+      let title = 'Activation Protocol Failure';
+      let description = err.message || `The property node could not activate Folio ${booking.bookingCode}. Please verify the resident's identity and room readiness.`;
+
+      if (err.message === "Access Denied: This booking expires in 30min.") {
+        title = "Urgent Check-in Required";
+        description = "This booking is nearing its expiration. Immediate check-in is required to secure the room.";
+      } else if (err.message === "Access Denied: This booking is in the past.") {
+        title = "Stay Period Expired";
+        description = "This booking's stay period has lapsed. Check-in is no longer authorized.";
+      }
+
+      sileo.error({ title, description });
       setError(err.message || "Ledger synchronization failed.");
     } finally {
       setIsSubmitting(false);
@@ -134,7 +142,8 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     isCleaning ||
     room.status !== RoomStatus.Available ||
     arrivalState === 'past' ||
-    arrivalState === 'future';
+    arrivalState === 'future' ||
+    error === "Access Denied: This booking is in the past.";
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
@@ -262,8 +271,8 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                       ? 'Payment Required'
                       : isCleaning
                       ? 'Room Not Ready'
-                      : arrivalState === 'past'
-                      ? 'Check-In Not Allowed'
+                      : arrivalState === 'past' || error === "Access Denied: This booking is in the past."
+                      ? 'Stay Period Expired'
                       : arrivalState === 'future'
                       ? 'Check-In Not Allowed'
                       : 'Authorize Check-In'}

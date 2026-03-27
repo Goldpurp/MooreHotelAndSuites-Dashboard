@@ -101,6 +101,7 @@ const Guests: React.FC = () => {
           history: [],
           totalSpent: b.amount || 0,
           createdAt: b.createdAt,
+          notificationMessage: b.notificationMessage,
         });
       }
     });
@@ -306,13 +307,19 @@ const Guests: React.FC = () => {
                                 <p
                                   className={`adaptive-text-sm font-black transition-colors uppercase truncate leading-none ${isOverdue ? "text-rose-400 group-hover:text-rose-300" : "text-white group-hover:text-brand-400"}`}
                                 >
-                                  {resident.firstName} {resident.lastName}
+                                {resident.firstName} {resident.lastName}
                                 </p>
                                 {isOverdue && (
                                   <AlertTriangle
                                     size={12}
                                     className="text-rose-500 shrink-0"
                                   />
+                                )}
+                                {resident.notificationMessage === "Guest checks out in 30mins" && (
+                                  <div className="flex items-center gap-1 bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30 animate-pulse">
+                                    <Clock size={10} className="text-rose-500" />
+                                    <span className="text-[7px] font-black text-rose-400 uppercase">30MINS LEFT</span>
+                                  </div>
                                 )}
                               </div>
                               <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest truncate">

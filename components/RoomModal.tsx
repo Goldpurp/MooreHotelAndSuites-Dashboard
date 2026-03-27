@@ -234,9 +234,9 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                         <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Category</label>
                         <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-3 sm:py-4 px-4 text-sm text-white outline-none appearance-none cursor-pointer">
                           <option value="Standard">Standard</option>
-                          <option value="Business">Business</option>
+                          <option value="Deluxe">Deluxe</option>
                           <option value="Executive">Executive</option>
-                          <option value="Suite">Suite</option>
+                          <option value="Presidential Suite">Presidential Suite</option>
                         </select>
                     </div>
                     <div className="space-y-2">
@@ -245,8 +245,6 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                           <option value={PropertyFloor.GroundFloor}>Ground Floor</option>
                           <option value={PropertyFloor.FirstFloor}>1st Floor</option>
                           <option value={PropertyFloor.SecondFloor}>2nd Floor</option>
-                          <option value={PropertyFloor.ThirdFloor}>3rd Floor</option>
-                          <option value={PropertyFloor.Penthouse}>Penthouse</option>
                         </select>
                     </div>
                     <div className="space-y-2">
