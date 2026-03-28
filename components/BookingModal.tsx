@@ -345,14 +345,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                      <div className="space-y-2">
                         <div className="flex justify-between items-center mb-1">
                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Check In</label>
-                          <span className="text-[8px] text-blue-500 font-black uppercase flex items-center gap-1 leading-none"><Clock size={8}/> 15:00</span>
+                          <span className="text-[8px] text-blue-500 font-black uppercase flex items-center gap-1 leading-none"><Clock size={8}/> 14:00</span>
                         </div>
                         <input type="date" min={today} readOnly={isWalkIn} value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                      </div>
                      <div className="space-y-2">
                         <div className="flex justify-between items-center mb-1">
                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Check Out</label>
-                          <span className="text-[8px] text-rose-500 font-black uppercase flex items-center gap-1 leading-none"><Clock size={8}/> 11:30</span>
+                          <span className="text-[8px] text-rose-500 font-black uppercase flex items-center gap-1 leading-none"><Clock size={8}/> 12:00</span>
                         </div>
                         <input type="date" min={formData.checkIn} value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                      </div>

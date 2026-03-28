@@ -61,7 +61,7 @@ const Reports: React.FC = () => {
   }, [bookings]);
 
   const occupancyByCategory = useMemo(() => {
-    const categories = ['Standard', 'Business', 'Executive', 'Suite'];
+    const categories = ['Standard', 'Deluxe', 'Executive', 'Presidential Suite'];
     const colors = ['#3b82f6', '#8b5cf6', '#f43f5e', '#10b981'];
     return categories.map((cat, idx) => {
       const roomsOfCat = (rooms || []).filter(r => r.category?.toLowerCase() === cat.toLowerCase());

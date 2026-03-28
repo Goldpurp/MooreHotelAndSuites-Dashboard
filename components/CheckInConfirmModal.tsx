@@ -28,7 +28,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     if (!booking) return 'today';
     const checkInDate = new Date(booking.checkIn);
     const checkOutDate = new Date(booking.checkOut);
-    checkOutDate.setHours(11, 30, 0, 0); // Set checkout time to 11:30
+    checkOutDate.setHours(12, 0, 0, 0); // Set checkout time to 12:00
     const now = new Date();
     const checkInDateOnly = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
     const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -36,7 +36,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     if (now > checkOutDate) return 'past'; // Booking is past
     if (checkInDateOnly > nowDateOnly) return 'future'; // Booking is in the future
     if (checkInDateOnly < nowDateOnly) return 'past'; // Booking is past
-    if (now.getHours() < 15) return 'early-today'; // Early check-in for today
+    if (now.getHours() < 14) return 'early-today'; // Early check-in for today
     return 'on-time'; // Normal check-in for today
   }, [booking]);
 
@@ -119,7 +119,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
       case 'early-today':
         return {
           title: 'EARLY ARRIVAL',
-          sub: 'Pre-15:00 Access Protocol. Room must be available.',
+          sub: 'Pre-14:00 Access Protocol. Room must be available.',
           icon: <Clock size={16} />,
           color: 'amber'
         };
@@ -219,7 +219,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                     <h3 className="text-xl font-black text-white leading-tight uppercase">{arrivalState === 'early-today' ? 'POLICY OVERRIDE' : 'AUTHORIZE ENTRY'}</h3>
                     <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
                       {arrivalState === 'early-today'
-                        ? `Standard check-in starts at 15:00. Authorize early access protocol?`
+                        ? `Standard check-in starts at 14:00. Authorize early access protocol?`
                         : `Authorize digital folio activation for ${guest.firstName} ${guest.lastName}?`}
                     </p>
                   </div>

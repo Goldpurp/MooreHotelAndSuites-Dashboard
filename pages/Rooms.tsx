@@ -28,7 +28,7 @@ const Rooms: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;
 
-  const categories = ['All', 'Standard', 'Business', 'Executive', 'Suite'];
+  const categories = ['All', 'Standard', 'Deluxe', 'Executive', 'Presidential Suite'];
 
   useEffect(() => {
     if (globalSelectedRoomId) {

@@ -62,12 +62,12 @@ const Guests: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  // Utility to check if a check-out is overdue (Standard time: 11:30 AM)
+  // Utility to check if a check-out is overdue (Standard time: 12:00 PM)
   const checkOverdueStatus = (checkOutDate: string) => {
     const now = new Date();
     const checkout = new Date(checkOutDate);
-    // Standard protocol: 11:30 AM
-    checkout.setHours(11, 30, 0, 0);
+    // Standard protocol: 12:00 PM
+    checkout.setHours(12, 0, 0, 0);
     return now > checkout;
   };
 
@@ -472,7 +472,7 @@ const Guests: React.FC = () => {
                     CRITICAL ALERT: EXCEEDED STAY
                   </p>
                   <p className="text-[9px] text-rose-400 font-bold uppercase mt-1">
-                    This guest has passed the 11:30 check-out protocol.
+                    This guest has passed the 12:00 check-out protocol.
                     Immediate attention required.
                   </p>
                 </div>
