@@ -360,7 +360,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Tariff Protocol</label>
                         <select value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value as PaymentMethod})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm text-brand-400 font-black uppercase tracking-widest outline-none appearance-none cursor-pointer hover:bg-white/10 transition-all">
                           <option value={PaymentMethod.DirectTransfer}>Bank Transfer</option>
-                          <option value={PaymentMethod.Paystack}>Paystack Gateway</option>
+                          {/* <option value={PaymentMethod.Paystack}>Paystack Gateway</option> */}
                         </select>
                      </div>
                   </div>

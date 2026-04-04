@@ -245,6 +245,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                           <option value={PropertyFloor.GroundFloor}>Ground Floor</option>
                           <option value={PropertyFloor.FirstFloor}>1st Floor</option>
                           <option value={PropertyFloor.SecondFloor}>2nd Floor</option>
+                          <option value={PropertyFloor.Bungalow}>Bungalow</option>
                         </select>
                     </div>
                     <div className="space-y-2">

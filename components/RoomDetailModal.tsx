@@ -90,7 +90,7 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
                <Shield size={16} className="text-brand-500" />
                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Managed Asset Layer</span>
             </div>
-            <p className="text-[10px] text-slate-600 font-bold uppercase">Room: {room.floor.replace(/([A-Z])/g, ' $1').trim()}</p>
+            <p className="text-[10px] text-slate-600 font-bold uppercase">Room: {room.floor.replace(/(?!^)([A-Z])/g, ' $1')}</p>
           </div>
         </div>
       </div>

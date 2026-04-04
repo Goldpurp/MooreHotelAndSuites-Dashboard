@@ -28,6 +28,7 @@ export enum PropertyFloor {
   GroundFloor = "GroundFloor",
   FirstFloor = "FirstFloor",
   SecondFloor = "SecondFloor",
+  Bungalow = "Bungalow",
 }
 
 export enum PaymentStatus {

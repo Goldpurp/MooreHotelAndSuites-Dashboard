@@ -190,7 +190,7 @@ const Rooms: React.FC = () => {
                         </td>
                         <td className="responsive-table-padding col-priority-med">
                             <p className="adaptive-text-sm font-black text-slate-300 uppercase truncate">{room.category}</p>
-                            <p className="text-[8px] text-slate-700 font-bold uppercase mt-1">{room.floor.replace(/([A-Z])/g, ' $1')}</p>
+                            <p className="text-[8px] text-slate-700 font-bold uppercase mt-1">{room.floor.replace(/(?!^)([A-Z])/g, ' $1')}</p>
                         </td>
                         <td className="responsive-table-padding text-center">
                             <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border whitespace-nowrap ${getStatusClasses(room.status)}`}>{room.status}</span>
