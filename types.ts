@@ -13,6 +13,7 @@ export enum BookingStatus {
   CheckedOut = "CheckedOut",
   Cancelled = "Cancelled",
   Reserved = "Reserved",
+  NoShow = "NoShow",
 }
 
 export enum VisitAction {

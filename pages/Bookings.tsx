@@ -62,6 +62,16 @@ const Bookings: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;
 
+  const getBookingStatus = (b: Booking) => {
+    if (b.status === "Reserved" || b.status === "Confirmed") {
+      const checkInDate = new Date(b.checkIn);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (checkInDate < today) return "NoShow";
+    }
+    return b.status;
+  };
+
   const getStatusConfig = (status: string) => {
     const s = status?.toLowerCase() || "";
     switch (s) {
@@ -112,6 +122,15 @@ const Bookings: React.FC = () => {
           icon: <XCircle size={12} />,
           label: "VOIDED",
         };
+      case "noshow":
+        return {
+          bg: "bg-rose-500/10",
+          text: "text-rose-400",
+          border: "border-rose-500/20",
+          band: "border-rose-500/50 bg-rose-500/10",
+          icon: <XCircle size={12} />,
+          label: "NO-SHOW",
+        };
       case "checkedout":
         return {
           bg: "bg-slate-800",
@@ -137,9 +156,9 @@ const Bookings: React.FC = () => {
     const q = lookupId.trim().toLowerCase();
     return (bookings || [])
       .filter((b) => {
-        const bStatus = b.status?.toLowerCase();
+        const bEffectiveStatus = getBookingStatus(b)?.toLowerCase();
         const matchesStatus =
-          filter === "All" || bStatus === filter.toLowerCase();
+          filter === "All" || bEffectiveStatus === filter.toLowerCase();
         const matchesSearch =
           !q ||
           (b.bookingCode || "").toLowerCase().includes(q) ||
@@ -307,6 +326,7 @@ const Bookings: React.FC = () => {
                 "CheckedIn",
                 "Confirmed",
                 "Reserved",
+                "NoShow",
                 "Pending",
                 "CheckedOut",
                 "Cancelled",
@@ -320,7 +340,9 @@ const Bookings: React.FC = () => {
                     ? "IN-HOUSE"
                     : f === "CheckedOut"
                       ? "HISTORY"
-                      : f}
+                      : f === "NoShow"
+                        ? "NO-SHOW"
+                        : f}
                 </button>
               ))}
             </div>
@@ -360,7 +382,8 @@ const Bookings: React.FC = () => {
                     const room = rooms.find((r) => r.id === b.roomId);
                     const isSelected = selectedBooking?.id === b.id;
                     const guestName = resolveGuestName(b);
-                    const cfg = getStatusConfig(b.status);
+                    const effectiveStatus = getBookingStatus(b);
+                    const cfg = getStatusConfig(effectiveStatus);
                     const isPaid =
                       (b.paymentStatus || "").toLowerCase() === "paid";
 
@@ -442,8 +465,8 @@ const Bookings: React.FC = () => {
                                   onClick={(e) =>
                                     handleOpenCheckInConfirm(e, b)
                                   }
-                                  disabled={!isPaid}
-                                  className={`${!isPaid ? "opacity-30" : "bg-emerald-600 hover:bg-emerald-700"} p-2.5 rounded-xl text-white shadow-lg active:scale-95 transition-all flex items-center gap-2`}
+                                  disabled={!isPaid || effectiveStatus === "NoShow"}
+                                  className={`${(!isPaid || effectiveStatus === "NoShow") ? "opacity-30" : "bg-emerald-600 hover:bg-emerald-700"} p-2.5 rounded-xl text-white shadow-lg active:scale-95 transition-all flex items-center gap-2`}
                                   title="Authorize Check-In"
                                 >
                                   {isPaid ? (
@@ -554,15 +577,15 @@ const Bookings: React.FC = () => {
 
               <div className="grid grid-cols-1 gap-2.5">
                 <div
-                  className={`px-5 py-3.5 rounded-2xl border flex items-center justify-between transition-all ${getStatusConfig(selectedBooking.status).bg} ${getStatusConfig(selectedBooking.status).border}`}
+                  className={`px-5 py-3.5 rounded-2xl border flex items-center justify-between transition-all ${getStatusConfig(getBookingStatus(selectedBooking)).bg} ${getStatusConfig(getBookingStatus(selectedBooking)).border}`}
                 >
                   <span className="text-[9px] text-slate-500 font-black uppercase">
                     Lifecycle State
                   </span>
                   <span
-                    className={`adaptive-text-xs font-black uppercase ${getStatusConfig(selectedBooking.status).text}`}
+                    className={`adaptive-text-xs font-black uppercase ${getStatusConfig(getBookingStatus(selectedBooking)).text}`}
                   >
-                    {getStatusConfig(selectedBooking.status).label}
+                    {getStatusConfig(getBookingStatus(selectedBooking)).label}
                   </span>
                 </div>
                 <div
@@ -634,21 +657,21 @@ const Bookings: React.FC = () => {
                 <button
                   onClick={(e) => handleOpenCheckInConfirm(e, selectedBooking)}
                   disabled={
-                    (selectedBooking.paymentStatus || "").toLowerCase() !==
-                    "paid"
+                    (selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || 
+                    getBookingStatus(selectedBooking) === "NoShow"
                   }
-                  className={`w-full ${(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" ? "bg-slate-900 text-slate-700 cursor-not-allowed" : "bg-[#10b981] hover:bg-[#059669] text-white shadow-xl shadow-emerald-950/60"} font-black py-5 rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3`}
+                  className={`w-full ${(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || getBookingStatus(selectedBooking) === "NoShow" ? "bg-slate-900 text-slate-700 cursor-not-allowed" : "bg-[#10b981] hover:bg-[#059669] text-white shadow-xl shadow-emerald-950/60"} font-black py-5 rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3`}
                 >
-                  {(selectedBooking.paymentStatus || "").toLowerCase() !==
-                  "paid" ? (
+                  {(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || getBookingStatus(selectedBooking) === "NoShow" ? (
                     <Lock size={20} />
                   ) : (
                     <Zap size={20} fill="currentColor" />
                   )}
-                  {(selectedBooking.paymentStatus || "").toLowerCase() !==
-                  "paid"
-                    ? "AWAITING PAYMENT"
-                    : "AUTHORIZE CHECK-IN"}
+                  {getBookingStatus(selectedBooking) === "NoShow" 
+                    ? "RESERVATION EXPIRED / NO-SHOW"
+                    : (selectedBooking.paymentStatus || "").toLowerCase() !== "paid"
+                      ? "AWAITING PAYMENT"
+                      : "AUTHORIZE CHECK-IN"}
                 </button>
               ) : selectedBooking.status?.toLowerCase() === "checkedin" ||
                 selectedBooking.status?.toLowerCase() === "inhouse" ? (
