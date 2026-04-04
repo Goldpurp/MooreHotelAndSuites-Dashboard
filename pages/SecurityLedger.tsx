@@ -8,6 +8,7 @@ import {
   Calendar, Bed, Clock, ChevronLeft, ChevronRight,
   ShieldCheck, Info, Zap, LogOut, RefreshCw
 } from 'lucide-react';
+import { downloadCSV } from '../lib/utils';
 
 const SecurityLedger: React.FC = () => {
   const { visitHistory, refreshData } = useHotel();
@@ -23,6 +24,26 @@ const SecurityLedger: React.FC = () => {
       description: 'The property security ledger has been updated from the audit node.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
+  };
+
+  const handleExportLogs = () => {
+    const exportData = filteredHistory.map(log => ({
+      Timestamp: new Date(log.timestamp).toLocaleString(),
+      Guest: log.guestName,
+      Action: log.action,
+      Room: log.roomNumber,
+      AuthorizedBy: log.authorizedBy,
+      Code: log.bookingCode
+    }));
+    downloadCSV(exportData, `SecurityLedger_${new Date().toISOString().split('T')[0]}.csv`);
+    sileo.success({
+      title: 'Ledger Compiled',
+      description: 'Forensic security logs have been successfully exported to CSV.'
+    });
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const filteredHistory = useMemo(() => {
@@ -80,10 +101,10 @@ const SecurityLedger: React.FC = () => {
            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}>
              <RefreshCw size={16} />
            </button>
-           <button className="bg-white/5 border border-white/5 text-slate-400 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-dash hover:text-white transition-all">
+           <button onClick={handlePrint} className="bg-white/5 border border-white/5 text-slate-400 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-dash hover:text-white transition-all">
              <Printer size={14} className="mr-2 inline" /> Print Dossier
            </button>
-           <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-emerald-500/20 active:scale-95">
+           <button onClick={handleExportLogs} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-emerald-500/20 active:scale-95">
              <Download size={16}/> Export Security Logs
            </button>
         </div>
@@ -141,6 +162,7 @@ const SecurityLedger: React.FC = () => {
                <option value={VisitAction.CHECK_IN}>In-Flow Only</option>
                <option value={VisitAction.CHECK_OUT}>Out-Flow Only</option>
                <option value={VisitAction.RESERVATION}>Bookings Only</option>
+               <option value={VisitAction.VOID}>Voided Only</option>
              </select>
              <button className="p-3 bg-white/5 border border-white/5 rounded-xl text-slate-500 hover:text-white transition-all"><Filter size={16}/></button>
            </div>

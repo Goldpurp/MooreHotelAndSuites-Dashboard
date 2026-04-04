@@ -15,6 +15,7 @@ import { useHotel } from "../store/HotelContext";
 import { sileo } from "sileo";
 import Logo from "../components/Logo";
 import { api } from "../lib/api";
+import { calculateStrength } from "../lib/utils";
 
 const Auth: React.FC = () => {
   const { login } = useHotel();
@@ -173,11 +174,39 @@ const Auth: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1"
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
+
+                    {formData.password && (
+                      <div className="px-1 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                          <span className="text-slate-500">Access Strength</span>
+                          <span className={
+                            calculateStrength(formData.password) <= 2 ? "text-rose-500" :
+                            calculateStrength(formData.password) <= 4 ? "text-amber-500" : "text-emerald-500"
+                          }>
+                            {calculateStrength(formData.password) <= 2 ? "Weak" :
+                             calculateStrength(formData.password) <= 4 ? "Reliable" : "Fortress"}
+                          </span>
+                        </div>
+                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <div 
+                              key={s}
+                              className={`h-full flex-1 transition-all duration-500 ${
+                                calculateStrength(formData.password) >= s 
+                                  ? (calculateStrength(formData.password) <= 2 ? "bg-rose-500" :
+                                     calculateStrength(formData.password) <= 4 ? "bg-amber-500" : "bg-emerald-500")
+                                  : "bg-transparent"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {error && (

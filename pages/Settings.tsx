@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { calculateStrength } from '../lib/utils';
 import RoleBadge from '../components/RoleBadge';
 import { sileo } from 'sileo';
 import { api } from '../lib/api';
@@ -22,17 +23,6 @@ const Settings: React.FC = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const calculateStrength = (p: string) => {
-    let score = 0;
-    if (!p) return 0;
-    if (p.length >= 6) score += 1;
-    if (p.length >= 10) score += 1;
-    if (/[A-Z]/.test(p)) score += 1;
-    if (/[0-9]/.test(p)) score += 1;
-    if (/[^A-Za-z0-9]/.test(p)) score += 1;
-    return score;
-  };
 
   // Fix: Using UserRole enum members instead of lowercase strings to fix overlapping type comparison error.
   const roles = [UserRole.Admin, UserRole.Manager, UserRole.Staff] as const;
@@ -262,7 +252,7 @@ const Settings: React.FC = () => {
                       placeholder="••••••••"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
                     />
-                    <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
+                    <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showOldPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                     </button>
                   </div>
@@ -278,7 +268,7 @@ const Settings: React.FC = () => {
                       placeholder="••••••••"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
                     />
-                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
+                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showNewPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                     </button>
                   </div>
@@ -321,7 +311,7 @@ const Settings: React.FC = () => {
                       placeholder="••••••••"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
                     />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showConfirmPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                     </button>
                   </div>

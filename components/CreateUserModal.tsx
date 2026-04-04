@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2, Phone, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
+import { calculateStrength } from '../lib/utils';
 import { UserRole, StaffUser, ProfileStatus } from '../types';
 
 interface CreateUserModalProps {
@@ -14,17 +15,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
   const { addStaff, updateStaff, currentUser } = useHotel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const calculateStrength = (p: string) => {
-    let score = 0;
-    if (!p) return 0;
-    if (p.length >= 6) score += 1;
-    if (p.length >= 10) score += 1;
-    if (/[A-Z]/.test(p)) score += 1;
-    if (/[0-9]/.test(p)) score += 1;
-    if (/[^A-Za-z0-9]/.test(p)) score += 1;
-    return score;
-  };
   
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
@@ -198,7 +188,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                               className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-4 pr-12 text-sm text-white focus:bg-white/10 outline-none transition-all tracking-widest font-mono" 
                               placeholder="••••••••" 
                             />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                               {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                             </button>
                           </div>

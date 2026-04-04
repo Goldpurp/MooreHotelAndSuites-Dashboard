@@ -7,6 +7,7 @@ import {
   X, FileDown
 } from 'lucide-react';
 import { sileo } from 'sileo';
+import { downloadCSV } from '../lib/utils';
 
 const OperationLog: React.FC = () => {
   const { visitHistory, refreshData } = useHotel();
@@ -47,6 +48,22 @@ const OperationLog: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
+  const handleExportData = () => {
+    const exportData = filteredLogs.map(log => ({
+      Timestamp: new Date(log.timestamp).toLocaleString(),
+      Guest: log.guestName,
+      Action: log.action,
+      Room: log.roomNumber,
+      AuthorizedBy: log.authorizedBy,
+      Reference: log.bookingCode
+    }));
+    downloadCSV(exportData, `OperationalLog_${new Date().toISOString().split('T')[0]}.csv`);
+    sileo.success({
+      title: 'Export Successful',
+      description: 'Operational log dossier has been compiled and downloaded.'
+    });
+  };
+
   const getActionBadge = (action: VisitAction) => {
     switch (action) {
       case VisitAction.CHECK_IN: return { label: 'Arrival', classes: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', icon: <Zap size={10} fill="currentColor" /> };
@@ -69,7 +86,7 @@ const OperationLog: React.FC = () => {
         </div>
         <div className="flex gap-2">
            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={18} /></button>
-           <button className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 shadow-lg whitespace-nowrap"><FileDown size={18} /> Export Data</button>
+           <button onClick={handleExportData} className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 shadow-lg whitespace-nowrap"><FileDown size={18} /> Export Data</button>
         </div>
       </div>
 
