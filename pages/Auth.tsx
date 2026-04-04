@@ -8,6 +8,8 @@ import {
   RefreshCw,
   ChevronLeft,
   CheckCircle2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useHotel } from "../store/HotelContext";
 import { sileo } from "sileo";
@@ -22,6 +24,7 @@ const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +108,15 @@ const Auth: React.FC = () => {
                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-10">
                   Secured Personnel Entry
                 </p>
+                
+                {error && (
+                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 mb-6 animate-in shake">
+                    <AlertCircle size={18} />
+                    <p className="text-[11px] font-black uppercase tracking-tight leading-snug">
+                      {error}
+                    </p>
+                  </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
@@ -122,7 +134,7 @@ const Auth: React.FC = () => {
                         placeholder="name@moorehotels.com"
                         value={formData.email}
                         onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
+                          setFormData({ ...formData, email: e.target.value.replace(/[0-9]/g, '') })
                         }
                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                       />
@@ -148,7 +160,7 @@ const Auth: React.FC = () => {
                         size={18}
                       />
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         required
                         autoComplete="current-password"
                         placeholder="••••••••"
@@ -156,8 +168,15 @@ const Auth: React.FC = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, password: e.target.value })
                         }
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono tracking-widest"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
                   </div>
 
@@ -205,6 +224,15 @@ const Auth: React.FC = () => {
                   Credential Restoration Protocol
                 </p>
 
+                {error && (
+                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 mb-6 animate-in shake">
+                    <AlertCircle size={18} />
+                    <p className="text-[11px] font-black uppercase tracking-tight leading-snug">
+                      {error}
+                    </p>
+                  </div>
+                )}
+
                 <form onSubmit={handleResetPassword} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">
@@ -220,7 +248,7 @@ const Auth: React.FC = () => {
                         required
                         placeholder="name@moorehotels.com"
                         value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
+                        onChange={(e) => setResetEmail(e.target.value.replace(/[0-9]/g, ''))}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                       />
                     </div>

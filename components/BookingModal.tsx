@@ -318,6 +318,13 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                   <button onClick={onClose} className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
                </div>
 
+               {error && (
+                <div className="w-full p-4 mb-6 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-[10px] font-black uppercase tracking-tight flex items-center gap-3 animate-in shake">
+                  <AlertCircle size={16}/> 
+                  <p>{error}</p>
+                </div>
+               )}
+
                <div className="flex-1 space-y-8 sm:space-y-14">
                   <div className="space-y-4 sm:space-y-8">
                       <h4 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2 leading-none"><User size={14} /> Identity Enrollment</h4>
@@ -332,7 +339,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                         </div>
                         <div className="space-y-2">
                            <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Enterprise Email</label>
-                           <input placeholder="john.doe@enterprise.com" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
+                           <input placeholder="john.doe@enterprise.com" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value.replace(/[0-9]/g, '')})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                         </div>
                         <div className="space-y-2">
                            <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Secure Line</label>

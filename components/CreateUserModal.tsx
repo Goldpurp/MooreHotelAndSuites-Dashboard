@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2, Phone, ShieldAlert } from 'lucide-react';
+import { X, UserPlus, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2, Phone, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
 import { UserRole, StaffUser, ProfileStatus } from '../types';
@@ -13,6 +13,18 @@ interface CreateUserModalProps {
 const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, editingUser }) => {
   const { addStaff, updateStaff, currentUser } = useHotel();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const calculateStrength = (p: string) => {
+    let score = 0;
+    if (!p) return 0;
+    if (p.length >= 6) score += 1;
+    if (p.length >= 10) score += 1;
+    if (/[A-Z]/.test(p)) score += 1;
+    if (/[0-9]/.test(p)) score += 1;
+    if (/[^A-Za-z0-9]/.test(p)) score += 1;
+    return score;
+  };
   
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
@@ -142,7 +154,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                           <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Enterprise Email</label>
                           <div className="relative">
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
-                            <input required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} type="email" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="name@moorehotels.com" />
+                            <input required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.replace(/[0-9]/g, '')})} type="email" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="name@moorehotels.com" />
                           </div>
                         </div>
                         <div className="space-y-2">
@@ -175,9 +187,48 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                         <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
                           <Lock size={14} /> Temporary Authorization
                         </h4>
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                           <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Initial Secret</label>
-                          <input required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} type="password" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 px-4 text-sm text-white focus:bg-white/10 outline-none transition-all tracking-widest" placeholder="••••••••" />
+                          <div className="relative">
+                            <input 
+                              required 
+                              value={formData.password} 
+                              onChange={e => setFormData({...formData, password: e.target.value})} 
+                              type={showPassword ? "text" : "password"} 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-4 pr-12 text-sm text-white focus:bg-white/10 outline-none transition-all tracking-widest font-mono" 
+                              placeholder="••••••••" 
+                            />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
+                              {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                            </button>
+                          </div>
+                          {formData.password && (
+                            <div className="px-1 space-y-1.5">
+                              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest">
+                                <span className="text-slate-500">Security Strength</span>
+                                <span className={
+                                  calculateStrength(formData.password) <= 2 ? "text-rose-500" :
+                                  calculateStrength(formData.password) <= 4 ? "text-amber-500" : "text-emerald-500"
+                                }>
+                                  {calculateStrength(formData.password) <= 2 ? "Weak" :
+                                   calculateStrength(formData.password) <= 4 ? "Medium" : "Strong"}
+                                </span>
+                              </div>
+                              <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <div 
+                                    key={s}
+                                    className={`h-full flex-1 transition-all duration-500 ${
+                                      calculateStrength(formData.password) >= s 
+                                        ? (calculateStrength(formData.password) <= 2 ? "bg-rose-500" :
+                                           calculateStrength(formData.password) <= 4 ? "bg-amber-500" : "bg-emerald-500")
+                                        : "bg-transparent"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                     </div>
                   )}

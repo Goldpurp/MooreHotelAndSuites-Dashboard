@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
-import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2 } from 'lucide-react';
+import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import RoleBadge from '../components/RoleBadge';
 import { sileo } from 'sileo';
 import { api } from '../lib/api';
@@ -19,6 +19,20 @@ const Settings: React.FC = () => {
   const [isRotating, setIsRotating] = useState(false);
   const [rotationStatus, setRotationStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const calculateStrength = (p: string) => {
+    let score = 0;
+    if (!p) return 0;
+    if (p.length >= 6) score += 1;
+    if (p.length >= 10) score += 1;
+    if (/[A-Z]/.test(p)) score += 1;
+    if (/[0-9]/.test(p)) score += 1;
+    if (/[^A-Za-z0-9]/.test(p)) score += 1;
+    return score;
+  };
 
   // Fix: Using UserRole enum members instead of lowercase strings to fix overlapping type comparison error.
   const roles = [UserRole.Admin, UserRole.Manager, UserRole.Staff] as const;
@@ -214,11 +228,12 @@ const Settings: React.FC = () => {
 
       {activeSubTab === 'security' && (
         <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8 mt-4 animate-in slide-in-from-right-4 shadow-xl">
-          <form onSubmit={handleRotateSecurity} className="space-y-8 max-w-lg">
             <div>
               <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Security Credentials</h3>
               <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">Rotate your password frequently to maintain property-wide data integrity and ledger security.</p>
             </div>
+
+            <form onSubmit={handleRotateSecurity} className="space-y-8 max-w-lg">
 
             {rotationStatus === 'success' && (
               <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 animate-in zoom-in-95">
@@ -234,39 +249,82 @@ const Settings: React.FC = () => {
               </div>
             )}
 
+
             <div className="space-y-4">
                <div className="space-y-2">
                   <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Old System Password</label>
-                  <input 
-                    type="password" 
-                    required
-                    value={securityForm.oldPassword}
-                    onChange={(e) => setSecurityForm({...securityForm, oldPassword: e.target.value})}
-                    placeholder="••••••••"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30"
-                  />
+                   <div className="relative">
+                    <input 
+                      type={showOldPassword ? "text" : "password"} 
+                      required
+                      value={securityForm.oldPassword}
+                      onChange={(e) => setSecurityForm({...securityForm, oldPassword: e.target.value})}
+                      placeholder="••••••••"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
+                    />
+                    <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
+                      {showOldPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                    </button>
+                  </div>
                </div>
                <div className="space-y-2">
                   <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">New System Password</label>
-                  <input 
-                    type="password" 
-                    required
-                    value={securityForm.newPassword}
-                    onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
-                    placeholder="••••••••"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30"
-                  />
+                   <div className="relative">
+                    <input 
+                      type={showNewPassword ? "text" : "password"} 
+                      required
+                      value={securityForm.newPassword}
+                      onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
+                      placeholder="••••••••"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
+                    />
+                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
+                      {showNewPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                    </button>
+                  </div>
+                  {securityForm.newPassword && (
+                    <div className="px-1 space-y-1.5">
+                      <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest">
+                        <span className="text-slate-500">Strength Indicator</span>
+                        <span className={
+                          calculateStrength(securityForm.newPassword) <= 2 ? "text-rose-500" :
+                          calculateStrength(securityForm.newPassword) <= 4 ? "text-amber-500" : "text-emerald-500"
+                        }>
+                          {calculateStrength(securityForm.newPassword) <= 2 ? "Weak Protocol" :
+                           calculateStrength(securityForm.newPassword) <= 4 ? "Standard Protocol" : "Maximum Security"}
+                        </span>
+                      </div>
+                      <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <div 
+                            key={s}
+                            className={`h-full flex-1 transition-all duration-500 ${
+                              calculateStrength(securityForm.newPassword) >= s 
+                                ? (calculateStrength(securityForm.newPassword) <= 2 ? "bg-rose-500" :
+                                   calculateStrength(securityForm.newPassword) <= 4 ? "bg-amber-500" : "bg-emerald-500")
+                                : "bg-transparent"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                </div>
                <div className="space-y-2">
                   <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Confirm New Password</label>
-                  <input 
-                    type="password" 
-                    required
-                    value={securityForm.confirmNewPassword}
-                    onChange={(e) => setSecurityForm({...securityForm, confirmNewPassword: e.target.value})}
-                    placeholder="••••••••"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30"
-                  />
+                   <div className="relative">
+                    <input 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      required
+                      value={securityForm.confirmNewPassword}
+                      onChange={(e) => setSecurityForm({...securityForm, confirmNewPassword: e.target.value})}
+                      placeholder="••••••••"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
+                    />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400">
+                      {showConfirmPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
+                    </button>
+                  </div>
                </div>
             </div>
 
