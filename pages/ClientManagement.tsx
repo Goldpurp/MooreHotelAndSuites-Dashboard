@@ -24,8 +24,8 @@ const ClientManagement: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Cloud Registry Synced',
-      description: 'Global guest identity data has been updated from the central node.'
+      title: 'List Updated',
+      description: 'The guest list has been updated.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };
@@ -64,9 +64,9 @@ const ClientManagement: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
-              <p className="adaptive-text-xs text-emerald-400 font-black uppercase tracking-widest leading-none">Global Residency Registry</p>
+              <p className="adaptive-text-xs text-emerald-400 font-black uppercase tracking-widest leading-none">Guests</p>
             </div>
-            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Client Management</h2>
+            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Guest List</h2>
           </div>
           <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
         </div>
@@ -75,7 +75,7 @@ const ClientManagement: React.FC = () => {
           <div className="px-6 py-4 border-b border-white/5 bg-slate-950/60 flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-emerald-500 transition-colors" size={14} />
-              <input type="text" placeholder="Lookup Guest Identity..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-10 pr-4 adaptive-text-xs text-white outline-none font-bold placeholder:text-slate-800" />
+              <input type="text" placeholder="Search for guests..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-10 pr-4 adaptive-text-xs text-white outline-none font-bold placeholder:text-slate-800" />
             </div>
             <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
                {(['All', 'Active', 'Suspended'] as const).map(f => (
@@ -88,15 +88,15 @@ const ClientManagement: React.FC = () => {
             <table className="w-full text-left min-w-[700px]">
               <thead>
                 <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-950/40">
-                  <th className="responsive-table-padding">Guest Profile</th>
-                  <th className="responsive-table-padding col-priority-med">Enrolled Date</th>
-                  <th className="responsive-table-padding text-center">Protocol Status</th>
+                  <th className="responsive-table-padding">Guest Name</th>
+                  <th className="responsive-table-padding col-priority-med">Joined</th>
+                  <th className="responsive-table-padding text-center">Status</th>
                   <th className="responsive-table-padding text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {paginatedClients.length === 0 ? (
-                  <tr><td colSpan={4} className="py-32 text-center text-slate-700 adaptive-text-sm font-black uppercase tracking-widest">No guest identities detected</td></tr>
+                  <tr><td colSpan={4} className="py-32 text-center text-slate-700 adaptive-text-sm font-black uppercase tracking-widest">No guests found</td></tr>
                 ) : (
                   paginatedClients.map((client) => {
                     const isActive = String(client.status).toLowerCase() === 'active';
@@ -118,7 +118,7 @@ const ClientManagement: React.FC = () => {
                            <p className="text-[11px] font-black text-slate-500 uppercase whitespace-nowrap">{client.createdAt ? new Date(client.createdAt).toLocaleDateString('en-GB') : 'SYS-ENTRY'}</p>
                         </td>
                         <td className="responsive-table-padding text-center">
-                          <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase border tracking-widest transition-all ${isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>{isActive ? 'Verified' : 'Locked'}</span>
+                          <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase border tracking-widest transition-all ${isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>{isActive ? 'Active' : 'Suspended'}</span>
                         </td>
                         <td className="responsive-table-padding text-right">
                            <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
@@ -135,7 +135,7 @@ const ClientManagement: React.FC = () => {
             </table>
           </div>
           <div className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
-             <div className="text-[9px] text-slate-700 font-black uppercase tracking-widest">Active Identity Cloud Sync • {filteredClients.length} Guests</div>
+             <div className="text-[9px] text-slate-700 font-black uppercase tracking-widest">Guest Sync • {filteredClients.length} Guests</div>
              <div className="flex gap-2">
                 <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
                 <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
@@ -150,8 +150,8 @@ const ClientManagement: React.FC = () => {
           <div className="glass-card rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
             <div className="flex justify-between items-start mb-10">
               <div className="space-y-1">
-                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Guest Persona</h3>
-                 <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">Registry Dossier</p>
+                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Guest Details</h3>
+                 <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">Guest History</p>
               </div>
               <button onClick={() => setSelectedStaffId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
             </div>
@@ -178,13 +178,13 @@ const ClientManagement: React.FC = () => {
               </div>
 
               <div className="p-6 bg-brand-600/5 rounded-2xl border border-brand-500/10 space-y-4 shadow-xl">
-                 <div className="flex justify-between items-center"><p className="text-[9px] text-brand-500 font-black uppercase tracking-widest leading-none">Authority Level</p><RoleBadge role={selectedClient.role} /></div>
-                 <p className="text-[10px] leading-relaxed text-slate-500 font-bold uppercase tracking-tight opacity-70">Resident profile authorized for portal access and ledger telemetry only.</p>
+                 <div className="flex justify-between items-center"><p className="text-[9px] text-brand-500 font-black uppercase tracking-widest leading-none">Role</p><RoleBadge role={selectedClient.role} /></div>
+                 <p className="text-[10px] leading-relaxed text-slate-500 font-bold uppercase tracking-tight opacity-70">Guest account for app access only.</p>
               </div>
             </div>
 
             <div className="mt-10 pt-6 border-t border-white/10">
-              <button onClick={() => { setSelectedGuestId(selectedClient.id); setActiveTab('bookings'); }} className="w-full py-5 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3"><UserPlus size={20} strokeWidth={3}/> PROVISION NEW FOLIO</button>
+              <button onClick={() => { setSelectedGuestId(selectedClient.id); setActiveTab('bookings'); }} className="w-full py-5 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3"><UserPlus size={20} strokeWidth={3}/> NEW BOOKING</button>
             </div>
           </div>
         </div>

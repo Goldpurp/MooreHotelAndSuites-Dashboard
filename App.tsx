@@ -52,7 +52,7 @@ const AppContent: React.FC = () => {
           </h2>
           <div className="flex flex-col items-center gap-1">
             <p className="text-slate-600 text-[9px] font-black uppercase tracking-[0.3em] animate-pulse">
-              Synchronizing Security Tokens...
+              Checking Security...
             </p>
             <div className="w-48 h-[1px] bg-slate-800 relative overflow-hidden mt-2">
               <div className="absolute inset-0 bg-brand-500 w-1/2 animate-[slide_2s_infinite_linear]" />
@@ -75,7 +75,7 @@ const AppContent: React.FC = () => {
         fallback={
           <div className="h-screen bg-slate-950 flex items-center justify-center">
             <div className="text-slate-600 font-black uppercase tracking-[0.5em] text-xs animate-pulse">
-              Moore Systems Initializing...
+              Opening Moore...
             </div>
           </div>
         }
@@ -130,7 +130,7 @@ const AppContent: React.FC = () => {
                 <div className="flex flex-col items-center justify-center h-[60vh] gap-6">
                   <div className="w-14 h-14 border-[3px] border-brand-500/10 border-t-brand-500 rounded-full animate-spin" />
                   <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.3em] animate-pulse">
-                    Initializing Interface Layer...
+                    Loading...
                   </p>
                 </div>
               }

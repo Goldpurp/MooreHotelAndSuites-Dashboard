@@ -43,21 +43,21 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
         const { status, ...updatePayload } = formData;
         await updateStaff(editingUser.id, updatePayload as any);
         sileo.success({
-          title: 'Personnel Profile Synchronized',
-          description: `Security authorization and hierarchy data for ${formData.name} have been updated across the network node.`
+          title: 'Staff Updated',
+          description: `The details for ${formData.name} have been updated.`
         });
       } else {
         await addStaff(formData);
         sileo.success({
-          title: 'New Identity Provisioned',
-          description: `A new personnel entry for ${formData.name} has been successfully committed to the security ledger. Access tokens enabled.`
+          title: 'Staff Added',
+          description: `A new staff member, ${formData.name}, has been added.`
         });
       }
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Identity Synchronization Error',
-        description: err.message || "The security subsystem encountered a conflict while updating personnel data. Please verify the registry state or network path."
+        title: 'Error',
+        description: err.message || "Something went wrong. Please try again."
       });
     } finally {
       setIsSubmitting(false);
@@ -99,7 +99,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                   </div>
                   <div className="space-y-2 sm:space-y-3">
                     <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase leading-[0.85] tracking-tighter">
-                      {editingUser ? 'MODIFY\nNODE\nAUTH' : 'NEW\nIDENTITY\nPROV'}
+                      {editingUser ? 'EDIT\nSTAFF' : 'ADD\nSTAFF'}
                     </h2>
                     <div className="flex items-center gap-2 px-3 py-1 bg-black/20 rounded-lg border border-white/10 w-fit">
                        <KeyRound size={12} className="text-white/60" />
@@ -108,8 +108,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                   </div>
                </div>
 
-               <div className="bg-black/30 p-5 sm:p-8 rounded-xl sm:rounded-[2rem] border border-white/15 space-y-2 sm:space-y-4 backdrop-blur-md mt-6 lg:mt-0 shadow-2xl">
-                  <p className="text-[9px] text-white/50 font-black uppercase tracking-[0.2em]">Impact Analysis</p>
+                <div className="bg-black/30 p-5 sm:p-8 rounded-xl sm:rounded-[2rem] border border-white/15 space-y-2 sm:space-y-4 backdrop-blur-md mt-6 lg:mt-0 shadow-2xl">
+                  <p className="text-[9px] text-white/50 font-black uppercase tracking-[0.2em]">What they can do</p>
                   <div className="flex items-center gap-2 sm:gap-3">
                      <ShieldCheck size={16} className="text-white" />
                      <span className="text-[10px] sm:text-[11px] text-white font-black uppercase tracking-widest">{formData.role} Level</span>
@@ -117,15 +117,15 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                   <p className="text-[8px] leading-relaxed text-white/60 font-bold uppercase tracking-tight">
                     {getRoleDescription(formData.role)}
                   </p>
-               </div>
-            </div>
+                </div>
+             </div>
 
             {/* Form Content */}
             <form onSubmit={handleSubmit} className="flex-1 bg-[#05080f] p-6 sm:p-10 lg:p-12 flex flex-col overflow-y-auto custom-scrollbar">
                <div className="flex justify-between items-center mb-6 sm:mb-12">
                   <div className="flex items-center gap-3">
                      <span className="w-6 h-[1.5px] bg-brand-500 hidden sm:block"></span>
-                     <span className="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">Provisioning Protocol Secure</span>
+                     <span className="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">Adding new staff</span>
                   </div>
                   <button onClick={onClose} disabled={isSubmitting} type="button" className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
                </div>
@@ -133,22 +133,22 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                <div className="flex-1 space-y-6 sm:space-y-10">
                   <div className="space-y-4 sm:space-y-6">
                       <h4 className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-2">
-                        <User size={14} /> Legal Identity Enrollment
+                        <User size={14} /> Staff Details
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Full Legal Name</label>
+                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Name</label>
                           <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 px-4 sm:px-6 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="John Doe" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Enterprise Email</label>
+                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Email</label>
                           <div className="relative">
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                             <input required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.replace(/[0-9]/g, '')})} type="email" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="name@moorehotels.com" />
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Secure Line (Phone)</label>
+                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Phone</label>
                           <div className="relative">
                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
                             <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} type="tel" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="+234..." />
@@ -156,7 +156,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                         </div>
                         {isStaffRole && (
                           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Allocated Department</label>
+                            <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Department</label>
                             <div className="relative">
                               <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" size={16} />
                               <select required={isStaffRole} value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none appearance-none cursor-pointer font-bold">
@@ -175,10 +175,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                   {!editingUser && (
                     <div className="space-y-4 sm:space-y-6">
                         <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
-                          <Lock size={14} /> Temporary Authorization
+                          <Lock size={14} /> Security
                         </h4>
                         <div className="space-y-4">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Initial Secret</label>
+                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Secret PIN</label>
                           <div className="relative">
                             <input 
                               required 
@@ -225,11 +225,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
 
                   <div className="space-y-4 sm:space-y-6">
                     <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
-                      <ShieldAlert size={14} /> Authority Configuration
+                      <ShieldAlert size={14} /> Permissions
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-2">
-                        <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Role Allocation</label>
+                        <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Role</label>
                         <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as UserRole})} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-indigo-400 font-black uppercase tracking-widest outline-none appearance-none cursor-pointer hover:bg-white/10 transition-all">
                           {allowedRoles.map(role => (
                             <option key={role} value={role}>{role}</option>
@@ -237,15 +237,15 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                         </select>
                       </div>
                       <div className="flex flex-col justify-center bg-white/5 p-4 rounded-xl border border-white/5">
-                         <p className="text-[7px] text-slate-500 font-black uppercase mb-1">Status Protocol</p>
-                         <p className="text-[9px] text-slate-400 font-bold">Managed via personnel ledger security controls.</p>
+                         <p className="text-[7px] text-slate-500 font-black uppercase mb-1">Status</p>
+                         <p className="text-[9px] text-slate-400 font-bold">Managed by the system.</p>
                       </div>
                     </div>
                   </div>
                </div>
 
                <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/5 flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <button type="button" onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 sm:py-5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:text-white transition-all border border-white/5">Abort</button>
+                  <button type="button" onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 sm:py-5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:text-white transition-all border border-white/5">Cancel</button>
                   <button 
                     type="submit" 
                     disabled={isSubmitting} 
@@ -254,12 +254,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                     {isSubmitting ? (
                       <>
                         <Loader2 size={18} className="animate-spin" />
-                        Synchronizing Ledger...
+                        Saving...
                       </>
                     ) : (
                       <>
                         {editingUser ? <Save size={18} /> : <UserPlus size={18} strokeWidth={3} />}
-                        {editingUser ? 'Authorize Update' : 'Provision Access'}
+                        {editingUser ? 'Save Changes' : 'Add Staff'}
                       </>
                     )}
                   </button>

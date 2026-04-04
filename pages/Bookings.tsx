@@ -120,7 +120,7 @@ const Bookings: React.FC = () => {
           border: "border-rose-500/20",
           band: "border-rose-500/50 bg-rose-500/5",
           icon: <XCircle size={12} />,
-          label: "VOIDED",
+          label: "CANCELLED",
         };
       case "noshow":
         return {
@@ -138,7 +138,7 @@ const Bookings: React.FC = () => {
           border: "border-slate-700",
           band: "border-slate-700/50 bg-slate-900/5",
           icon: <History size={12} />,
-          label: "CHECKED-OUT",
+          label: "CHECKED OUT",
         };
       default:
         return {
@@ -246,8 +246,8 @@ const Bookings: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Reservation Ledger Refreshed',
-      description: 'The central reservation database has been successfully synchronized. All current and upcoming stays are now up to date.'
+      title: 'Bookings Updated',
+      description: 'The booking list has been updated.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };
@@ -261,11 +261,11 @@ const Bookings: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
               <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">
-                Reservations Ledger
+                Bookings
               </p>
             </div>
             <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">
-              Booking Management
+              Bookings
             </h2>
           </div>
 
@@ -287,7 +287,7 @@ const Bookings: React.FC = () => {
               />
               <input
                 type="text"
-                placeholder="Lookup Guest/Folio..."
+                placeholder="Search Guest/Booking..."
                 value={lookupId}
                 onChange={(e) => setLookupId(e.target.value)}
                 className="bg-slate-950 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-slate-200 outline-none focus:border-brand-500/40 w-48 lg:w-64"
@@ -339,7 +339,7 @@ const Bookings: React.FC = () => {
                   {f === "CheckedIn"
                     ? "IN-HOUSE"
                     : f === "CheckedOut"
-                      ? "HISTORY"
+                      ? "PAST BOOKINGS"
                       : f === "NoShow"
                         ? "NO-SHOW"
                         : f}
@@ -354,13 +354,13 @@ const Bookings: React.FC = () => {
                 <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
                   <th className="responsive-table-padding">Guest Details</th>
                   <th className="responsive-table-padding col-priority-med">
-                    Stay Timeline
+                    Dates
                   </th>
                   <th className="responsive-table-padding text-center col-priority-low">
-                    Asset ID
+                    Room
                   </th>
                   <th className="responsive-table-padding text-right">
-                    Billing Status
+                    Payment
                   </th>
                   <th className="responsive-table-padding text-right">
                     Actions
@@ -405,7 +405,7 @@ const Bookings: React.FC = () => {
                                 {guestName}
                               </p>
                               <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">
-                                Folio: {b.bookingCode}
+                                Booking: {b.bookingCode}
                               </p>
                             </div>
                           </div>
@@ -448,7 +448,7 @@ const Bookings: React.FC = () => {
                             <p
                               className={`text-[8px] font-black uppercase mt-1 ${isPaid ? "text-emerald-500" : "text-rose-500 animate-pulse"}`}
                             >
-                              {isPaid ? "Payment Confirmed" : "Payment Due"}
+                              {isPaid ? "Paid" : "Unpaid"}
                             </p>
                           </div>
                         </td>
@@ -467,7 +467,7 @@ const Bookings: React.FC = () => {
                                   }
                                   disabled={!isPaid || effectiveStatus === "NoShow"}
                                   className={`${(!isPaid || effectiveStatus === "NoShow") ? "opacity-30" : "bg-emerald-600 hover:bg-emerald-700"} p-2.5 rounded-xl text-white shadow-lg active:scale-95 transition-all flex items-center gap-2`}
-                                  title="Authorize Check-In"
+                                  title="Check In"
                                 >
                                   {isPaid ? (
                                     <Zap size={14} fill="currentColor" />
@@ -543,10 +543,10 @@ const Bookings: React.FC = () => {
             <div className="flex justify-between items-start mb-10">
               <div className="space-y-1">
                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">
-                  Booking Folio
+                  Booking Details
                 </h3>
                 <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">
-                  Details & Control
+                  Options
                 </p>
               </div>
               <button
@@ -571,7 +571,7 @@ const Bookings: React.FC = () => {
                   {resolveGuestName(selectedBooking)}
                 </h4>
                 <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">
-                  Guest Persona
+                  Guest
                 </p>
               </div>
 
@@ -580,7 +580,7 @@ const Bookings: React.FC = () => {
                   className={`px-5 py-3.5 rounded-2xl border flex items-center justify-between transition-all ${getStatusConfig(getBookingStatus(selectedBooking)).bg} ${getStatusConfig(getBookingStatus(selectedBooking)).border}`}
                 >
                   <span className="text-[9px] text-slate-500 font-black uppercase">
-                    Lifecycle State
+                    Status
                   </span>
                   <span
                     className={`adaptive-text-xs font-black uppercase ${getStatusConfig(getBookingStatus(selectedBooking)).text}`}
@@ -592,7 +592,7 @@ const Bookings: React.FC = () => {
                   className={`px-5 py-3.5 rounded-2xl border flex items-center justify-between transition-all ${(selectedBooking.paymentStatus || "").toLowerCase() === "paid" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}
                 >
                   <span className="text-[9px] opacity-70 font-black uppercase">
-                    Billing Status
+                    Payment
                   </span>
                   <div className="flex items-center gap-2">
                     {(selectedBooking.paymentStatus || "").toLowerCase() ===
@@ -605,7 +605,7 @@ const Bookings: React.FC = () => {
                       {(selectedBooking.paymentStatus || "").toLowerCase() ===
                       "paid"
                         ? "PAID"
-                        : "DUE"}
+                        : "UNPAID"}
                     </span>
                   </div>
                 </div>
@@ -622,7 +622,7 @@ const Bookings: React.FC = () => {
                 </div>
                 <div className="bg-[#0d131f] px-5 py-4 rounded-2xl border border-white/5">
                   <span className="text-[9px] text-slate-600 font-black uppercase block mb-1">
-                    Total Stay
+                    Stay
                   </span>
                   <span className="adaptive-text-base font-black text-white tracking-tighter whitespace-nowrap">
                     ₦{selectedBooking.amount.toLocaleString()}
@@ -668,10 +668,10 @@ const Bookings: React.FC = () => {
                     <Zap size={20} fill="currentColor" />
                   )}
                   {getBookingStatus(selectedBooking) === "NoShow" 
-                    ? "RESERVATION EXPIRED / NO-SHOW"
+                    ? "EXPIRED"
                     : (selectedBooking.paymentStatus || "").toLowerCase() !== "paid"
-                      ? "AWAITING PAYMENT"
-                      : "AUTHORIZE CHECK-IN"}
+                      ? "UNPAID"
+                      : "CHECK IN"}
                 </button>
               ) : selectedBooking.status?.toLowerCase() === "checkedin" ||
                 selectedBooking.status?.toLowerCase() === "inhouse" ? (
@@ -679,14 +679,14 @@ const Bookings: React.FC = () => {
                   onClick={() => navigateToGuestStay(selectedBooking.guestId)}
                   className="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-5 rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 shadow-xl"
                 >
-                  <ShieldCheck size={20} /> MANAGE ACTIVE STAY
+                  <ShieldCheck size={20} /> MANAGE STAY
                 </button>
               ) : (
                 <button
                   disabled
                   className="w-full bg-slate-900 text-slate-800 font-black py-5 rounded-2xl adaptive-text-sm uppercase tracking-widest border border-white/5 cursor-not-allowed"
                 >
-                  <Lock size={20} /> FOLIO SEALED
+                  <Lock size={20} /> CLOSED
                 </button>
               )}
             </div>

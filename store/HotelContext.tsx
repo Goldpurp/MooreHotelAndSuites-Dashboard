@@ -230,13 +230,13 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     return {
       id: String(v.id || v.Id || ""),
       guestId: String(v.guestId || v.GuestId || ""),
-      guestName: v.guestName || v.GuestName || "Anonymous Resident",
+      guestName: v.guestName || v.GuestName || "Guest",
       roomId: String(v.roomId || v.RoomId || ""),
       roomNumber: String(v.roomNumber || v.RoomNumber || "---"),
       bookingCode: String(v.bookingCode || v.BookingCode || "SYS-TRCE"),
       action: canonicalAction,
       timestamp: v.timestamp || v.Timestamp || new Date().toISOString(),
-      authorizedBy: v.authorizedBy || v.AuthorizedBy || "System Protocol",
+      authorizedBy: v.authorizedBy || v.AuthorizedBy || "System",
     };
   };
 
@@ -274,7 +274,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
 
     return {
       id: String(data.id || data.Id || ""),
-      name: data.name || data.fullName || data.Name || "Personnel",
+      name: data.name || data.fullName || data.Name || "Staff",
       email: data.email || data.Email || "",
       phone: phoneValue,
       role: canonicalRole,
@@ -358,10 +358,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       setGuests(normalizeData(clientsRes));
       setVisitHistory(normalizeData(visitHistoryRes).map(normalizeVisitRecord));
     } catch (error: any) {
-      console.error("Property Synchronization Protocol Failed:", error);
+      console.error("System Sync Failed:", error);
       sileo.error({
-        title: 'Property Data Desync',
-        description: 'Global synchronization with the security node interrupted. Some metrics may be temporarily offline or out of date.'
+        title: 'Connection Error',
+        description: 'The system could not update. Some data might be old.'
       });
       if (error.message?.includes("Authorization Required")) {
         setIsAuthenticated(false);
@@ -433,7 +433,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsAuthenticated(true);
       await refreshData();
     } else {
-      throw new Error("Authorization protocol failed.");
+      throw new Error("Could not log in.");
     }
   };
 
@@ -614,7 +614,7 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     if (b) await checkInBooking(b.id);
     else
       throw new Error(
-        "Identifier mismatch: Dossier code not found in current view.",
+        "Error: Booking ID not found.",
       );
   };
 

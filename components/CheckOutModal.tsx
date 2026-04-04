@@ -22,14 +22,14 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
     try {
       await onConfirm(booking.id);
       sileo.success({
-        title: 'Resident Checkout Protocol Complete',
-        description: `Folio ${booking.bookingCode} has been archived. Unit ${room.roomNumber} is now flagged for prioritized cleaning and sanitation.`
+        title: 'Guest Checked Out',
+        description: `Booking ${booking.bookingCode} has been closed. Room ${room.roomNumber} is now marked for cleaning.`
       });
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Dossier Release Failed',
-        description: err.message || "The property ledger could not finalize the checkout for Folio ${booking.bookingCode}. Please verify the settlement state or network integrity."
+        title: 'Check-out Failed',
+        description: err.message || `The system could not finish the check-out. Please check the payment or try again.`
       });
     } finally {
       setIsSubmitting(false);
@@ -50,8 +50,8 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
                   <LogOut size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight uppercase">Authorize Exit</h2>
-                  <p className="text-[8px] text-rose-400 font-black uppercase tracking-[0.15em]">Property Check-Out Protocol</p>
+                  <h2 className="text-lg font-black text-white tracking-tight uppercase">Confirm Check-out</h2>
+                  <p className="text-[8px] text-rose-400 font-black uppercase tracking-[0.15em]">Check-out</p>
                 </div>
               </div>
               <button onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all">
@@ -74,24 +74,24 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
-                  <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest mb-1">Stay Duration</p>
+                  <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest mb-1">Nights</p>
                   <p className="text-sm font-black text-white">{stayNights} Night(s)</p>
                 </div>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
-                  <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest mb-1">Asset Class</p>
+                  <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest mb-1">Room Category</p>
                   <p className="text-sm font-black text-white uppercase">{room.category}</p>
                 </div>
               </div>
 
               <div className="bg-emerald-500/5 p-5 rounded-2xl border border-emerald-500/10">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Accounting Status</span>
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Payment</span>
                   <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${booking.paymentStatus === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500 text-white animate-pulse'}`}>
                     {booking.paymentStatus}
                   </span>
                 </div>
                 <div className="flex justify-between items-end pt-3 border-t border-white/5">
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total Folio Value</span>
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total Amount</span>
                   <span className="text-2xl font-black text-white tracking-tighter">₦{booking.amount.toLocaleString()}</span>
                 </div>
               </div>
@@ -99,14 +99,14 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
               <div className="flex items-start gap-4 p-4 bg-rose-500/10 rounded-xl border border-rose-500/20">
                 <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-rose-300 leading-relaxed font-bold uppercase tracking-tight">
-                  Confirmation will revoke current room access and mark <span className="text-white font-black">Room {room.roomNumber}</span> for Cleaning.
+                  This will close the booking and mark <span className="text-white font-black">Room {room.roomNumber}</span> for cleaning.
                 </p>
               </div>
             </div>
 
             <div className="px-8 py-6 border-t border-white/5 flex gap-3 bg-slate-950/40">
               <button onClick={onClose} disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">
-                Abort
+                Cancel
               </button>
               <button 
                 onClick={handleConfirm} 
@@ -116,10 +116,10 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
                 {isSubmitting ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Synchronizing...
+                    Processing...
                   </>
                 ) : (
-                  'Authorize Departure'
+                  'Confirm Check-out'
                 )}
               </button>
             </div>

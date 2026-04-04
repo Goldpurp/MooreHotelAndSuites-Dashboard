@@ -149,7 +149,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     e.preventDefault();
     setError(null);
     if (!formData.guestFirstName || !formData.guestLastName || !formData.guestEmail) {
-      setError("Occupant identity enrollment is incomplete.");
+      setError("Please fill in all guest details.");
       return;
     }
     if (new Date(formData.checkOut.replace(/-/g, '/')) <= new Date(formData.checkIn.replace(/-/g, '/'))) {
@@ -157,7 +157,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       return;
     }
     if (!formData.roomId) {
-      setError("Asset allocation is required.");
+      setError("Please select a room.");
       return;
     }
     setStep('confirm');
@@ -188,16 +188,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
       const response = await addBooking(payload);
       if (response.bookingCode) {
         sileo.success({
-          title: 'Folio Created Successfully',
-          description: `Booking code ${response.bookingCode} has been registered with a total of ₦${(response.amount || 0).toLocaleString()}.`
+          title: 'Booking Successful',
+          description: `Booking ${response.bookingCode} was successful. Total: ₦${(response.amount || 0).toLocaleString()}.`
         });
         await refreshData();
         onClose();
       } else {
-        throw new Error("Protocol failure: No dossier code received from node.");
+        throw new Error("Error: No booking ID received.");
       }
     } catch (err: any) {
-      setError(`Ledger rejection: ${err.message}`);
+      setError(`Error: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -220,19 +220,19 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
               </div>
               
               <div className="text-center mb-12">
-                <h3 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter mb-3 leading-none">Authorization Required</h3>
-                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.3em]">Verify Folio Intent Before Ledger Commitment</p>
+                <h3 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter mb-3 leading-none">Confirm Booking</h3>
+                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.3em]">Check details before confirming</p>
               </div>
               
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-1 bg-white/5 border border-white/10 rounded-3xl overflow-hidden mb-12 shadow-inner">
                  <div className="p-8 sm:p-10 space-y-8 bg-black/20">
                     <div>
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Primary Occupant</label>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Guest</label>
                        <p className="text-2xl font-black text-white uppercase tracking-tighter leading-tight">{formData.guestFirstName} {formData.guestLastName}</p>
                        <p className="text-[11px] text-slate-500 font-medium mt-1 truncate">{formData.guestEmail}</p>
                     </div>
                     <div>
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Room Allocation</label>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Room</label>
                        <div className="flex items-center gap-3">
                           <Bed size={18} className="text-brand-400" />
                           <p className="text-xl font-black text-slate-300 uppercase">Room {selectedRoom?.roomNumber}</p>
@@ -241,12 +241,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                  </div>
                  <div className="p-8 sm:p-10 space-y-8 bg-black/40">
                     <div>
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Stay Metric</label>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Nights</label>
                        <p className="text-2xl font-black text-white">{nights} Night(s)</p>
                        <p className="text-[11px] text-slate-500 font-medium mt-1">{new Date(formData.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} — {new Date(formData.checkOut).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
                     </div>
                     <div>
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Financial Commitment</label>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Total Amount</label>
                        <p className="text-4xl font-black text-emerald-500 tracking-tighter leading-none">₦{totalAmount.toLocaleString()}</p>
                        <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mt-2 flex items-center gap-2"><Wallet size={10} /> {formData.paymentMethod}</p>
                     </div>
@@ -257,23 +257,23 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                 <div className="w-full p-6 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-[11px] font-black uppercase tracking-tight flex items-center gap-4 mb-8 animate-in shake">
                   <AlertCircle size={20}/> 
                   <div>
-                    <p className="font-black">Ledger Rejection</p>
+                    <p className="font-black">Error</p>
                     <p className="opacity-80 mt-0.5">{error}</p>
                   </div>
                 </div>
               )}
 
               <div className="flex flex-col sm:flex-row gap-4 w-full">
-                <button onClick={() => setStep('details')} disabled={isSubmitting} className="flex-1 py-5 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-[0.2em] hover:text-white hover:bg-white/5 transition-all">Abort</button>
+                <button onClick={() => setStep('details')} disabled={isSubmitting} className="flex-1 py-5 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-[0.2em] hover:text-white hover:bg-white/5 transition-all">Cancel</button>
                 <button onClick={handleFinalSubmit} disabled={isSubmitting} className="flex-[2] py-5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95">
                    {isSubmitting ? (
                      <>
                         <Loader2 size={18} className="animate-spin" /> 
-                        Synchronizing Protocol...
+                        Processing...
                      </>
                    ) : (
                      <>
-                        <FileCheck size={18} /> Commit to Global Ledger
+                        <FileCheck size={18} /> Confirm Booking
                      </>
                    )}
                 </button>
@@ -290,7 +290,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                     {isWalkIn ? <Zap size={24}/> : <Calendar size={24}/>}
                   </div>
                   <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase leading-[0.85] tracking-tighter">
-                    {isWalkIn ? 'STAFF\nWALK\nIN' : 'NEW\nFOLIO\nSYNC'}
+                    {isWalkIn ? 'WALK\nIN' : 'NEW\nBOOKING'}
                   </h2>
                </div>
 
@@ -301,7 +301,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                   </div>
                   <div className="flex justify-between items-center border-t border-white/10 pt-4 sm:pt-8">
                      <div className="w-full">
-                       <span className="text-[9px] text-white/50 font-black uppercase tracking-widest block mb-1">Projected Settlement</span>
+                       <span className="text-[9px] text-white/50 font-black uppercase tracking-widest block mb-1">Total Amount</span>
                        <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">₦{totalAmount.toLocaleString()}</span>
                      </div>
                   </div>
@@ -313,7 +313,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                <div className="flex justify-between items-center mb-8 sm:mb-16">
                   <div className="flex items-center gap-3">
                      <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
-                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Manual Enrollment Protocol</span>
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">New Booking</span>
                   </div>
                   <button onClick={onClose} className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
                </div>
@@ -327,7 +327,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
                <div className="flex-1 space-y-8 sm:space-y-14">
                   <div className="space-y-4 sm:space-y-8">
-                      <h4 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2 leading-none"><User size={14} /> Identity Enrollment</h4>
+                      <h4 className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] flex items-center gap-2 leading-none"><User size={14} /> Guest Details</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
                            <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">First Name</label>
@@ -338,11 +338,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                            <input placeholder="Doe" value={formData.guestLastName} onChange={e => setFormData({...formData, guestLastName: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                         </div>
                         <div className="space-y-2">
-                           <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Enterprise Email</label>
+                           <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Email</label>
                            <input placeholder="john.doe@enterprise.com" value={formData.guestEmail} onChange={e => setFormData({...formData, guestEmail: e.target.value.replace(/[0-9]/g, '')})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                         </div>
                         <div className="space-y-2">
-                           <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Secure Line</label>
+                           <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1">Phone</label>
                            <input placeholder="+234..." value={formData.guestPhone} onChange={e => setFormData({...formData, guestPhone: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                         </div>
                       </div>
@@ -364,7 +364,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                         <input type="date" min={formData.checkIn} value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                      </div>
                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Tariff Protocol</label>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Payment</label>
                         <select value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value as PaymentMethod})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-5 text-sm text-brand-400 font-black uppercase tracking-widest outline-none appearance-none cursor-pointer hover:bg-white/10 transition-all">
                           <option value={PaymentMethod.DirectTransfer}>Bank Transfer</option>
                           {/* <option value={PaymentMethod.Paystack}>Paystack Gateway</option> */}
@@ -374,8 +374,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
                   <div className="space-y-4 sm:space-y-8">
                      <div className="flex justify-between items-center">
-                        <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] flex items-center gap-2 leading-none"><Bed size={14} /> Asset Allocation</h4>
-                        <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{availableRooms.length} Rooms Online</span>
+                        <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] flex items-center gap-2 leading-none"><Bed size={14} /> Select Room</h4>
+                        <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{availableRooms.length} Rooms Available</span>
                      </div>
                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 overflow-y-auto max-h-48 sm:max-h-64 custom-scrollbar pr-3 p-1">
                         {availableRooms.map(room => (
@@ -390,7 +390,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
                   <div className="pt-6 sm:pt-10 border-t border-white/5">
                      <button type="button" onClick={validateAndShowConfirm} disabled={!formData.roomId || availableRooms.length === 0} className={`w-full py-5 sm:py-7 rounded-2xl sm:rounded-[2rem] font-black text-[11px] sm:text-[13px] uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 ${!formData.roomId ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : isWalkIn ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-amber-900/20' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-900/20'}`}>
-                        Initialize Authorization Protocol <ChevronRight size={18} strokeWidth={3} />
+                        Continue <ChevronRight size={18} strokeWidth={3} />
                      </button>
                   </div>
                </div>

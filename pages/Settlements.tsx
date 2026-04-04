@@ -98,14 +98,14 @@ const Settlements: React.FC = () => {
         /** CHANGE: Calling the new completeRefund protocol from context */
         await completeRefund(selectedBooking.id, refundRef);
         sileo.success({
-          title: 'Refund Protocol Executed',
-          description: `The financial refund for ${resolveGuestName(selectedBooking)} has been finalized and committed to the ledger. Transaction integrity verified.`
+          title: 'Refund Done',
+          description: `Refund for ${resolveGuestName(selectedBooking)} is done.`
         });
       } else {
         await confirmTransfer(selectedBooking.bookingCode);
         sileo.success({
-          title: 'Folio Settlement Confirmed',
-          description: `Accounting verification for ${resolveGuestName(selectedBooking)} is complete. The transaction has been reconciled and the folio closed.`
+          title: 'Payment OK',
+          description: `Payment for ${resolveGuestName(selectedBooking)} is confirmed.`
         });
       }
       setIsConfirmModalOpen(false);
@@ -114,8 +114,8 @@ const Settlements: React.FC = () => {
     } 
     catch (err: any) { 
       sileo.error({
-        title: 'Ledger Commitment Failed',
-        description: err.message || "The security node rejected the settlement verification. Please verify the transaction reference or network connection before retrying."
+        title: 'Payment Failed',
+        description: err.message || "The system could not verify the payment. Please check and try again."
       });
       setVerificationState('idle');
     } 
@@ -125,8 +125,8 @@ const Settlements: React.FC = () => {
     if (!text || text === 'REF-PENDING') return;
     navigator.clipboard.writeText(text);
     sileo.success({
-      title: 'Reference Copied',
-      description: 'The transaction reference has been copied to your clipboard.'
+      title: 'Copied',
+      description: 'Reference copied.'
     });
   };
 
@@ -136,14 +136,14 @@ const Settlements: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
-            <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">Yield Management</p>
+            <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">Payments</p>
           </div>
-          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Financial Settlements</h2>
+          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Payments</h2>
         </div>
         <div className="flex items-center gap-2">
            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
              <div className="bg-slate-900 border border-amber-500/20 rounded-xl px-4 py-2 flex items-center gap-3">
-              <span className="text-[9px] text-slate-500 font-black uppercase">Active Task</span>
+               <span className="text-[9px] text-slate-500 font-black uppercase">Tasks</span>
               <span className="text-sm font-black text-amber-500 leading-none">
                 {bookings.filter(b => b.paymentStatus === PaymentStatus.AwaitingVerification && b.status !== BookingStatus.Cancelled).length}
               </span>
@@ -152,19 +152,18 @@ const Settlements: React.FC = () => {
       </div>
 
       <div className="flex border-b border-white/5 gap-6 overflow-x-auto no-scrollbar">
-          <button onClick={() => setActiveTab('queue')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'queue' ? 'text-brand-400' : 'text-slate-600'}`}>Verification Queue {activeTab === 'queue' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500"></div>}</button>
+          <button onClick={() => setActiveTab('queue')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'queue' ? 'text-brand-400' : 'text-slate-600'}`}>Pending {activeTab === 'queue' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500"></div>}</button>
           
-          {/** CHANGE: Added visual trigger for the new Refunds Pending view */}
-          <button onClick={() => setActiveTab('refunds')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'refunds' ? 'text-rose-400' : 'text-slate-600'}`}>Refunds Pending {activeTab === 'refunds' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"></div>}</button>
+          <button onClick={() => setActiveTab('refunds')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'refunds' ? 'text-rose-400' : 'text-slate-600'}`}>Refunds {activeTab === 'refunds' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"></div>}</button>
           
-          <button onClick={() => setActiveTab('history')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'history' ? 'text-emerald-400' : 'text-slate-600'}`}>Settled History {activeTab === 'history' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"></div>}</button>
+          <button onClick={() => setActiveTab('history')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'history' ? 'text-emerald-400' : 'text-slate-600'}`}>History {activeTab === 'history' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"></div>}</button>
       </div>
 
       <div className="glass-card rounded-2xl border border-white/5 overflow-hidden flex flex-col min-h-[550px]">
         <div className="px-6 py-4 border-b border-white/5 bg-slate-950/40">
            <div className="relative group max-w-lg">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
-              <input type="text" placeholder="Lookup folio by identity..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none font-bold placeholder:text-slate-700" />
+              <input type="text" placeholder="Search by guest or code..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none font-bold placeholder:text-slate-700" />
            </div>
         </div>
 
@@ -172,17 +171,17 @@ const Settlements: React.FC = () => {
           <table className="w-full text-left min-w-[800px]">
             <thead>
               <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/20">
-                <th className="responsive-table-padding">Entry Date</th>
-                <th className="responsive-table-padding">Guest Folio</th>
-                <th className="responsive-table-padding col-priority-med">Dossier Code</th>
+                <th className="responsive-table-padding">Date</th>
+                <th className="responsive-table-padding">Guest Name</th>
+                <th className="responsive-table-padding col-priority-med">Booking</th>
                 <th className="responsive-table-padding text-right">Amount (₦)</th>
-                <th className="responsive-table-padding text-center">Accounting State</th>
+                <th className="responsive-table-padding text-center">Status</th>
                 <th className="responsive-table-padding text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {paginatedData.length === 0 ? (
-                <tr><td colSpan={6} className="py-32 text-center text-slate-700 adaptive-text-base font-black uppercase italic tracking-widest">No accounting telemetry found</td></tr>
+                <tr><td colSpan={6} className="py-32 text-center text-slate-700 adaptive-text-base font-black uppercase italic tracking-widest">No payments found</td></tr>
               ) : (
                 paginatedData.map((folio) => {
                   const isPaid = folio.paymentStatus === PaymentStatus.Paid;
@@ -211,7 +210,7 @@ const Settlements: React.FC = () => {
                           title={folio.transactionReference ? "Click to copy reference" : "Reference Pending"}
                         >
                           <p className="text-[10px] text-slate-500 font-mono truncate italic select-all">
-                            {folio.transactionReference || 'REF-PENDING'}
+                            {folio.transactionReference || 'WAITING'}
                           </p>
                           {folio.transactionReference && (
                             <Copy size={10} className="text-slate-700 group-hover:text-brand-500 opacity-0 group-hover:opacity-100 transition-all" />
@@ -222,7 +221,6 @@ const Settlements: React.FC = () => {
                          <p className={`adaptive-text-sm font-black italic ${isPaid ? 'text-white' : isRefunded || isRefundPending ? 'text-rose-400' : 'text-emerald-400'}`}>₦{folio.amount.toLocaleString()}</p>
                       </td>
                       <td className="responsive-table-padding text-center">
-                         {/** CHANGE: Updated status badge logic to handle the new PaymentStatus enums */}
                          <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase border inline-flex items-center gap-1.5 ${
                            isPaid ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                            isRefunded ? 'bg-slate-800 text-slate-500 border-white/5' :
@@ -230,17 +228,16 @@ const Settlements: React.FC = () => {
                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
                          }`}>
                             {isPaid ? <CheckCircle size={10}/> : isRefunded ? <RotateCcw size={10}/> : isRefundPending ? <ShieldAlert size={10}/> : <Clock size={10} className="animate-pulse"/>}
-                            {isPaid ? 'Settled' : isRefunded ? 'Refunded' : isRefundPending ? 'Refund Req.' : 'Unverified'}
+                            {isPaid ? 'Paid' : isRefunded ? 'Refunded' : isRefundPending ? 'Refund' : 'Checking'}
                          </span>
                       </td>
                       <td className="responsive-table-padding text-right">
                          {(isPaid || isRefunded) ? (
-                           <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Sealed</span></div>
+                           <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Completed</span></div>
                          ) : (
-                           /** CHANGE: Integrated the new refund authorization action */
                            <button onClick={() => { setSelectedBooking(folio); setIsConfirmModalOpen(true); }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
                              {isRefundPending ? <RotateCcw size={12} className="inline mr-1.5" /> : <ShieldCheck size={12} className="inline mr-1.5" />}
-                             {isRefundPending ? 'Complete Refund' : 'Verify Settlement'}
+                             {isRefundPending ? 'Refund' : 'Confirm'}
                            </button>
                          )}
                       </td>
@@ -253,7 +250,7 @@ const Settlements: React.FC = () => {
         </div>
 
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
-           <div className="text-[9px] text-slate-600 font-black uppercase italic tracking-widest">Accounting Integrity Secured • {filteredHistory.length} Records</div>
+           <div className="text-[9px] text-slate-600 font-black uppercase italic tracking-widest">All Records Sorted • {filteredHistory.length} Records</div>
            <div className="flex gap-2">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
@@ -270,8 +267,8 @@ const Settlements: React.FC = () => {
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center border mb-6 shadow-xl ${activeTab === 'refunds' ? 'bg-rose-500/10 border-rose-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
                     {activeTab === 'refunds' ? <RotateCcw size={32} className="text-rose-500" /> : <ShieldCheck size={32} className="text-emerald-500" />}
                   </div>
-                  <h3 className="text-xl font-black text-white uppercase italic mb-1">{activeTab === 'refunds' ? 'Refunded' : 'Settled'}</h3>
-                  <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${activeTab === 'refunds' ? 'text-rose-400' : 'text-emerald-400'}`}>Ledger Synced Successfully</p>
+                  <h3 className="text-xl font-black text-white uppercase italic mb-1">{activeTab === 'refunds' ? 'Refunded' : 'Paid'}</h3>
+                  <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${activeTab === 'refunds' ? 'text-rose-400' : 'text-emerald-400'}`}>Record Updated</p>
                 </div>
               ) : (
                 <>
@@ -279,23 +276,19 @@ const Settlements: React.FC = () => {
                     {verificationState === 'committing' ? <Loader2 size={32} className={`${activeTab === 'refunds' ? 'text-rose-500' : 'text-brand-500'} animate-spin`} /> : activeTab === 'refunds' ? <RotateCcw size={32} className="text-rose-500" /> : <Wallet size={32} className="text-brand-500" />}
                   </div>
                   <h3 className="text-xl font-black text-white uppercase italic mb-2 tracking-tighter">
-                    {verificationState === 'committing' ? 'Processing...' : activeTab === 'refunds' ? 'Finalize Refund?' : 'Verify Settlement?'}
+                    {verificationState === 'committing' ? 'Processing...' : activeTab === 'refunds' ? 'Confirm Refund?' : 'Confirm Payment?'}
                   </h3>
                   <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed mb-6">
                     {verificationState === 'committing' 
-                      ? 'Commitment to property financial node in progress.' 
+                      ? 'Updating the system...' 
                       : activeTab === 'refunds' 
-                        ? `Process folio refund for ${selectedBooking ? resolveGuestName(selectedBooking) : ''}. This requires a transaction reference.`
-                        : `Authorize manual accounting verification for ${selectedBooking ? resolveGuestName(selectedBooking) : ''}.`}
+                        ? `Refund for ${selectedBooking ? resolveGuestName(selectedBooking) : ''}. Enter payment ref below.`
+                        : `Confirm this payment manually for ${selectedBooking ? resolveGuestName(selectedBooking) : ''}.`}
                   </p>
 
-                  {/** 
-                   * CHANGE: Added mandatory transaction reference input field 
-                   * for the refund completion protocol.
-                   */}
                   {activeTab === 'refunds' && verificationState === 'idle' && (
                     <div className="space-y-2 mb-8 text-left">
-                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1 flex items-center gap-2"><Hash size={12}/> Transaction Reference</label>
+                       <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest ml-1 flex items-center gap-2"><Hash size={12}/> Payment Ref</label>
                        <input 
                          value={refundRef}
                          onChange={(e) => setRefundRef(e.target.value)}
@@ -307,13 +300,13 @@ const Settlements: React.FC = () => {
                   
                   {verificationState === 'idle' && (
                     <div className="grid grid-cols-2 gap-3">
-                      <button onClick={() => { setIsConfirmModalOpen(false); setRefundRef(''); }} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Abort</button>
+                      <button onClick={() => { setIsConfirmModalOpen(false); setRefundRef(''); }} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Cancel</button>
                       <button 
                         onClick={executeAction} 
                         disabled={activeTab === 'refunds' && !refundRef.trim()}
                         className={`py-4 rounded-2xl font-black adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg italic transition-all active:scale-95 ${activeTab === 'refunds' ? 'bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-30' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}
                       >
-                        Authorize
+                        Confirm
                       </button>
                     </div>
                   )}

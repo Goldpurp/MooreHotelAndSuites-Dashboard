@@ -61,8 +61,8 @@ const Dashboard: React.FC = () => {
     await refreshData();
     await fetchDashboardData();
     sileo.success({
-      title: 'Executive Overview Refreshed',
-      description: 'Dashboard telemetry, including occupancy rates and revenue dynamics, has been updated to reflect the latest property status.'
+      title: 'Dashboard Updated',
+      description: 'The dashboard charts and stats have been updated.'
     });
     setTimeout(() => setIsRefreshing(false), 1000);
   };
@@ -197,9 +197,9 @@ const Dashboard: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
-            <p className="adaptive-text-xs text-blue-400 font-black uppercase tracking-widest">Property Overview</p>
+            <p className="adaptive-text-xs text-blue-400 font-black uppercase tracking-widest">Overview</p>
           </div>
-          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Management Dashboard</h2>
+          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Dashboard</h2>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? "animate-spin" : ""}`}><RefreshCw size={16} /></button>
@@ -212,15 +212,15 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Revenue" value={`₦${stats.revenue.value.toLocaleString()}`} growth={stats.revenue.growth} icon={DollarSign} color="bg-blue-500/10 text-blue-400" />
-        <StatCard label="Occupancy Rate" value={`${stats.occupancy.value}%`} growth={stats.occupancy.growth} icon={Bed} color="bg-emerald-500/10 text-emerald-400" />
-        <StatCard label="Current Guests" value={stats.activeGuests.value} growth={0} icon={UserCheck} color="bg-amber-500/10 text-amber-400" />
-        <StatCard label="Avg Daily Rate" value={`₦${stats.adr.value.toLocaleString()}`} growth={0} icon={Activity} color="bg-indigo-500/10 text-indigo-400" />
+        <StatCard label="Revenue" value={`₦${stats.revenue.value.toLocaleString()}`} growth={stats.revenue.growth} icon={DollarSign} color="bg-blue-500/10 text-blue-400" />
+        <StatCard label="Occupancy" value={`${stats.occupancy.value}%`} growth={stats.occupancy.growth} icon={Bed} color="bg-emerald-500/10 text-emerald-400" />
+        <StatCard label="Guests" value={stats.activeGuests.value} growth={0} icon={UserCheck} color="bg-amber-500/10 text-amber-400" />
+        <StatCard label="Avg Rate" value={`₦${stats.adr.value.toLocaleString()}`} growth={0} icon={Activity} color="bg-indigo-500/10 text-indigo-400" />
       </div>
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 xl:col-span-8 glass-card adaptive-p rounded-2xl border border-white/5 flex flex-col min-h-[350px]">
-          <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8 px-2">Revenue Trends</h3>
+          <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8 px-2">Revenue</h3>
           <div className="flex-1 w-full min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueTrendData}>
@@ -241,7 +241,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="col-span-12 xl:col-span-4 glass-card adaptive-p rounded-2xl border border-white/5 flex flex-col min-h-[350px]">
-          <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-4 px-2">Room Inventory</h3>
+          <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-4 px-2">Rooms</h3>
           <div className="h-44 relative mb-6">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -253,7 +253,7 @@ const Dashboard: React.FC = () => {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="adaptive-text-2xl font-black text-white">{(rooms || []).length}</span>
-              <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest mt-1">Total Rooms</span>
+               <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest mt-1">Total</span>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 flex-1 overflow-y-auto custom-scrollbar">
@@ -274,24 +274,24 @@ const Dashboard: React.FC = () => {
         <div className="adaptive-p border-b border-white/5 flex items-center justify-between bg-slate-900/40 px-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-600/10 rounded-lg text-blue-500"><Clock size={18} /></div>
-            <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight leading-none">Operational Queue</h3>
+            <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight leading-none">Activity</h3>
           </div>
-          <button onClick={() => setActiveTab("bookings")} className="bg-white/5 hover:bg-white/10 text-slate-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-white/10 flex items-center gap-2 transition-all">All Bookings <ArrowRight size={14} /></button>
+          <button onClick={() => setActiveTab("bookings")} className="bg-white/5 hover:bg-white/10 text-slate-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-white/10 flex items-center gap-2 transition-all">View All <ArrowRight size={14} /></button>
         </div>
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-left min-w-[600px]">
             <thead>
               <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/20">
-                <th className="responsive-table-padding">Guest Details</th>
-                <th className="responsive-table-padding col-priority-med">Stay Period</th>
+                <th className="responsive-table-padding">Guest</th>
+                <th className="responsive-table-padding col-priority-med">Dates</th>
                 <th className="responsive-table-padding col-priority-low">Room</th>
-                <th className="responsive-table-padding">Booking Status</th>
-                <th className="responsive-table-padding text-right">Billing</th>
+                <th className="responsive-table-padding">Status</th>
+                <th className="responsive-table-padding text-right">Payment</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {paginatedQueue.length === 0 ? (
-                <tr><td colSpan={5} className="py-24 text-center text-slate-700 font-black uppercase text-[11px] tracking-widest">Operational Queue Clear</td></tr>
+                <tr><td colSpan={5} className="py-24 text-center text-slate-700 font-black uppercase text-[11px] tracking-widest">No activity for now</td></tr>
               ) : (
                 paginatedQueue.map((booking) => {
                   const room = (rooms || []).find((r) => r.id === booking.roomId);
@@ -314,14 +314,14 @@ const Dashboard: React.FC = () => {
                               <p className={`adaptive-text-sm font-black truncate leading-none uppercase tracking-tight ${isOverdue ? 'text-rose-400 animate-pulse' : 'text-white'}`}>{booking.guestFirstName} {booking.guestLastName}</p>
                               {isOverdue && <AlertTriangle size={12} className="text-rose-500 animate-bounce" />}
                             </div>
-                            <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">Ref: {booking.bookingCode}</p>
+                             <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">ID: {booking.bookingCode}</p>
                           </div>
                         </div>
                       </td>
                       <td className="responsive-table-padding col-priority-med">
                         <p className={`adaptive-text-sm font-black ${isOverdue ? 'text-rose-500' : isIncomingSoon ? 'text-blue-400' : 'text-slate-300'}`}>{new Date(isCheckedIn ? booking.checkOut : booking.checkIn).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}</p>
-                        <p className={`text-[8px] font-bold uppercase mt-1 ${isOverdue ? 'text-rose-600 animate-pulse' : 'text-slate-600'}`}>
-                          {isOverdue ? 'EXCEEDED TIME' : isCheckedIn ? 'Departure' : 'Arrival Status'}
+                         <p className={`text-[8px] font-bold uppercase mt-1 ${isOverdue ? 'text-rose-600 animate-pulse' : 'text-slate-600'}`}>
+                          {isOverdue ? 'OVERDUE' : isCheckedIn ? 'Checking Out' : 'Checking In'}
                         </p>
                       </td>
                       <td className="responsive-table-padding col-priority-low">
@@ -336,16 +336,16 @@ const Dashboard: React.FC = () => {
                             String(booking.status).toLowerCase() === 'confirmed' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
                             "bg-amber-500/10 text-amber-400 border-amber-500/20"
                           }`}>
-                            <span className={`w-1 h-1 rounded-full ${isOverdue ? 'bg-rose-500 animate-ping' : isCheckedIn ? "bg-emerald-400 animate-pulse" : "bg-current"}`}></span>
-                            {isOverdue ? "EXCEEDED STAY" : isCheckedIn ? "In-House" : booking.status}
+                             <span className={`w-1 h-1 rounded-full ${isOverdue ? 'bg-rose-500 animate-ping' : isCheckedIn ? "bg-emerald-400 animate-pulse" : "bg-current"}`}></span>
+                            {isOverdue ? "OVERDUE" : isCheckedIn ? "Checked In" : booking.status}
                           </span>
-                          <span className={`text-[8px] font-bold uppercase tracking-widest px-1 ${isPaid ? 'text-emerald-500' : 'text-rose-500'}`}>{isPaid ? 'Payment Confirmed' : 'Payment Pending'}</span>
+                          <span className={`text-[8px] font-bold uppercase tracking-widest px-1 ${isPaid ? 'text-emerald-500' : 'text-rose-500'}`}>{isPaid ? 'Paid' : 'Unpaid'}</span>
                         </div>
                       </td>
                       <td className="responsive-table-padding text-right">
                         <div className="flex flex-col items-end">
                            <p className={`adaptive-text-base font-black ${isPaid ? 'text-white' : 'text-rose-500'}`}>₦{booking.amount?.toLocaleString() || "0"}</p>
-                           <p className="text-[8px] text-slate-700 font-black uppercase mt-1">{isPaid ? 'Fully Paid' : 'Outstanding'}</p>
+                            <p className="text-[8px] text-slate-700 font-black uppercase mt-1">{isPaid ? 'Paid' : 'Unpaid'}</p>
                         </div>
                       </td>
                     </tr>

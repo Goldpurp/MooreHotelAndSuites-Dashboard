@@ -134,7 +134,7 @@ const TopBar: React.FC = () => {
           <input 
             ref={searchInputRef}
             type="text" 
-            placeholder="Search Records... (⌘+K)" 
+            placeholder="Search... (⌘+K)" 
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -149,7 +149,7 @@ const TopBar: React.FC = () => {
           <div ref={resultsRef} className="absolute top-full left-0 mt-3 w-full max-w-xl bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl p-2 z-[100] animate-in fade-in slide-in-from-top-2 overflow-hidden">
             {!hasAnyResults ? (
               <div className="p-12 text-center">
-                <p className="text-[11px] font-black uppercase tracking-dash text-slate-600">No matches found in ledger</p>
+                <p className="text-[11px] font-black uppercase tracking-dash text-slate-600">No results found</p>
               </div>
             ) : (
               <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-4">
@@ -170,7 +170,7 @@ const TopBar: React.FC = () => {
                 
                 {searchResults?.bookings.length! > 0 && (
                   <div>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Reservations</p>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Bookings</p>
                     {searchResults?.bookings.map(b => (
                       <button key={b.id} onClick={() => handleNavigate('bookings', b.id)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
                         <div className="flex items-center gap-3">
@@ -211,7 +211,7 @@ const TopBar: React.FC = () => {
             className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 transition-all animate-pulse shadow-lg shadow-rose-950/20"
           >
             <ShieldAlert size={16} />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline">{criticalTasksCount} Overdue Checks</span>
+            <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline">{criticalTasksCount} Overdue</span>
           </button>
         )}
 
@@ -228,9 +228,9 @@ const TopBar: React.FC = () => {
           {showNotifications && (
             <div className="absolute top-full right-0 mt-3 w-96 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 flex flex-col overflow-hidden">
               <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
-                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white">Actionable Queue</h3>
+                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white">Notifications</h3>
                  {unreadCount > 0 && (
-                   <button onClick={() => markAllNotificationsRead()} className="text-[9px] text-brand-400 font-black uppercase tracking-dash hover:text-brand-300 transition-colors">Acknowledge All</button>
+                   <button onClick={() => markAllNotificationsRead()} className="text-[9px] text-brand-400 font-black uppercase tracking-dash hover:text-brand-300 transition-colors">Clear All</button>
                  )}
               </div>
               <div className="max-h-[450px] overflow-y-auto custom-scrollbar p-2 space-y-1">
@@ -239,7 +239,7 @@ const TopBar: React.FC = () => {
                       <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 border border-white/5">
                         <CheckCircle size={24} className="text-slate-700 opacity-40" />
                       </div>
-                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash">Operational queue is clear</p>
+                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash">No notifications</p>
                    </div>
                  ) : (
                    unreadNotifications.map((n) => (
@@ -267,7 +267,7 @@ const TopBar: React.FC = () => {
                              </div>
                              <p className="text-[11px] leading-relaxed mt-1.5 font-medium whitespace-pre-line text-slate-400">{n.message}</p>
                              <div className="flex items-center gap-1.5 mt-3 text-brand-400">
-                               <span className="text-[8px] font-black uppercase tracking-dash">Inspect Dossier</span>
+                               <span className="text-[8px] font-black uppercase tracking-dash">View Details</span>
                                <Check size={8}/>
                              </div>
                            </div>
@@ -278,7 +278,7 @@ const TopBar: React.FC = () => {
               </div>
               {unreadCount > 0 && (
                 <div className="p-3 border-t border-white/5 bg-slate-950/40 text-center">
-                   <p className="text-[8px] text-slate-700 font-black uppercase tracking-[0.3em]">Moore Property Management Protocol v2.1</p>
+                    <p className="text-[8px] text-slate-700 font-black uppercase tracking-[0.3em]">Moore Hotel Management</p>
                 </div>
               )}
             </div>
@@ -287,7 +287,7 @@ const TopBar: React.FC = () => {
 
         <div className="flex items-center gap-3 pl-4 border-l border-white/10">
           <div className="text-right hidden sm:block">
-            <p className="text-[13px] font-black text-white leading-tight">{currentUser?.name || 'Authorized Personnel'}</p>
+            <p className="text-[13px] font-black text-white leading-tight">{currentUser?.name || 'Staff'}</p>
             <p className="text-[9px] font-black uppercase text-slate-500 tracking-dash">{(currentUser?.role || 'staff').toUpperCase()}</p>
           </div>
           <img src={currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10" alt="" />

@@ -62,16 +62,16 @@ const Settings: React.FC = () => {
           confirmNewPassword: securityForm.confirmNewPassword
         });
         sileo.success({
-          title: 'Security Profile Updated',
-          description: 'Your authentication credentials have been successfully rotated across the property network. Your next session will require the new secret PIN.'
+          title: 'Security Updated',
+          description: 'Your details have been successfully updated.'
         });
         setSecurityForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
       } catch (err: any) {
         sileo.error({
-          title: 'Credential Rotation Rejected',
-          description: err.message || "The security subsystem could not process your PIN update. This may be due to an incorrect current PIN or policy violation."
+          title: 'Update Failed',
+          description: err.message || "Could not update password. Check your current password."
         });
-        setErrorMessage(err.message || "Credential rotation rejected by property firewall.");
+        setErrorMessage(err.message || "Update rejected by the system.");
       } finally {
       setIsRotating(false);
     }
@@ -81,7 +81,7 @@ const Settings: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Loader2 className="animate-spin text-blue-500" size={32} />
-        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Retrieving Credentials...</p>
+        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Loading...</p>
       </div>
     );
   }
@@ -92,10 +92,10 @@ const Settings: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
-            <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em]">Global Configuration</p>
+            <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em]">Settings</p>
           </div>
-          <h2 className="adaptive-text-3xl font-black text-white tracking-tight uppercase leading-none">System Settings</h2>
-          <p className="text-slate-400 text-[11px] font-medium uppercase tracking-widest mt-1 opacity-70">Manage your personal identity and security credentials</p>
+          <h2 className="adaptive-text-3xl font-black text-white tracking-tight uppercase leading-none">Settings</h2>
+          <p className="text-slate-400 text-[11px] font-medium uppercase tracking-widest mt-1 opacity-70">Manage your profile and password</p>
         </div>
 
         <div className="flex bg-black/40 p-1.5 rounded-xl border border-white/10 gap-1.5 shadow-2xl">
@@ -121,7 +121,7 @@ const Settings: React.FC = () => {
             activeSubTab === 'profile' ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
-          <User size={14} /> Profile Information
+          <User size={14} /> Profile
         </button>
         <button 
           onClick={() => setActiveSubTab('security')}
@@ -129,7 +129,7 @@ const Settings: React.FC = () => {
             activeSubTab === 'security' ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
-          <Key size={14} /> Security & Access
+          <Key size={14} /> Security
         </button>
       </div>
 
@@ -161,7 +161,7 @@ const Settings: React.FC = () => {
                     {(currentUser?.role || userRole).toUpperCase()}
                   </div>
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-dash flex items-center gap-1">
-                    <ShieldCheck size={12} className="text-emerald-500" /> Verified Authority
+                    <ShieldCheck size={12} className="text-emerald-500" /> Verified Staff
                   </span>
                 </div>
               </div>
@@ -172,7 +172,7 @@ const Settings: React.FC = () => {
                 <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex justify-between">
                   Primary Email
                   <span className="text-[8px] text-emerald-500 flex items-center gap-1 uppercase tracking-tighter">
-                    <Shield size={10} /> Account Identity Verified
+                    <Shield size={10} /> Verified
                   </span>
                 </label>
                 <div className="relative">
@@ -189,7 +189,7 @@ const Settings: React.FC = () => {
                 <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex justify-between">
                   Assigned Authority
                   <span className="text-[8px] text-blue-500 flex items-center gap-1 uppercase tracking-tighter">
-                    <Shield size={10} /> Active Permission Level
+                    <Shield size={10} /> Active Role
                   </span>
                 </label>
                 <div className="relative">
@@ -208,8 +208,8 @@ const Settings: React.FC = () => {
                 <ShieldCheck size={24} className="text-emerald-400" />
               </div>
               <div>
-                <p className="text-[15px] font-black text-white tracking-tight uppercase">Enterprise Authentication</p>
-                <p className="text-[11px] text-slate-500 uppercase tracking-widest font-bold mt-1">Secured via enterprise-grade Identity & Access Management (IAM) Protocol.</p>
+                <p className="text-[15px] font-black text-white tracking-tight uppercase">Secure Login</p>
+                <p className="text-[11px] text-slate-500 uppercase tracking-widest font-bold mt-1">Your account is protected by modern security.</p>
               </div>
             </div>
           </div>
@@ -219,8 +219,8 @@ const Settings: React.FC = () => {
       {activeSubTab === 'security' && (
         <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8 mt-4 animate-in slide-in-from-right-4 shadow-xl">
             <div>
-              <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Security Credentials</h3>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">Rotate your password frequently to maintain property-wide data integrity and ledger security.</p>
+              <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Security</h3>
+              <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">Update your password to keep your account safe.</p>
             </div>
 
             <form onSubmit={handleRotateSecurity} className="space-y-8 max-w-lg">
@@ -228,7 +228,7 @@ const Settings: React.FC = () => {
             {rotationStatus === 'success' && (
               <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 animate-in zoom-in-95">
                 <CheckCircle2 size={18} />
-                <p className="text-[11px] font-black uppercase">Credentials successfully rotated.</p>
+                <p className="text-[11px] font-black uppercase">Password updated.</p>
               </div>
             )}
 
@@ -242,7 +242,7 @@ const Settings: React.FC = () => {
 
             <div className="space-y-4">
                <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Old System Password</label>
+                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Old Password</label>
                    <div className="relative">
                     <input 
                       type={showOldPassword ? "text" : "password"} 
@@ -258,7 +258,7 @@ const Settings: React.FC = () => {
                   </div>
                </div>
                <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">New System Password</label>
+                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">New Password</label>
                    <div className="relative">
                     <input 
                       type={showNewPassword ? "text" : "password"} 
@@ -275,13 +275,13 @@ const Settings: React.FC = () => {
                   {securityForm.newPassword && (
                     <div className="px-1 space-y-1.5">
                       <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest">
-                        <span className="text-slate-500">Strength Indicator</span>
+                        <span className="text-slate-500">Strength</span>
                         <span className={
                           calculateStrength(securityForm.newPassword) <= 2 ? "text-rose-500" :
                           calculateStrength(securityForm.newPassword) <= 4 ? "text-amber-500" : "text-emerald-500"
                         }>
-                          {calculateStrength(securityForm.newPassword) <= 2 ? "Weak Protocol" :
-                           calculateStrength(securityForm.newPassword) <= 4 ? "Standard Protocol" : "Maximum Security"}
+                          {calculateStrength(securityForm.newPassword) <= 2 ? "Weak" :
+                           calculateStrength(securityForm.newPassword) <= 4 ? "Good" : "Strong"}
                         </span>
                       </div>
                       <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex gap-0.5">
@@ -301,7 +301,7 @@ const Settings: React.FC = () => {
                   )}
                </div>
                <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Confirm New Password</label>
+                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Confirm Password</label>
                    <div className="relative">
                     <input 
                       type={showConfirmPassword ? "text" : "password"} 
@@ -324,7 +324,7 @@ const Settings: React.FC = () => {
               className="bg-white text-slate-950 font-black px-10 py-4 rounded-xl text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-slate-200 active:scale-95 shadow-2xl shadow-white/5 flex items-center justify-center gap-3"
             >
               {isRotating ? <Loader2 size={16} className="animate-spin" /> : <Key size={16} />}
-              Rotate Authorization
+              Update Password
             </button>
           </form>
           
@@ -332,9 +332,9 @@ const Settings: React.FC = () => {
              <div className="flex items-start gap-4 p-6 bg-rose-500/5 rounded-2xl border border-rose-500/20 shadow-lg">
                 <AlertCircle size={28} className="text-rose-400 mt-1 shrink-0" />
                 <div className="space-y-2">
-                   <p className="text-[16px] font-black text-white uppercase tracking-tight">Revoke Account Access</p>
-                   <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">Requesting deactivation will lock your profile and expire all active sessions immediately. This action requires Admin confirmation and audit logging.</p>
-                   <button className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 hover:text-rose-300 transition-all pt-2 flex items-center gap-2">Initiate Deactivation Flow <ArrowRight size={14}/></button>
+                   <p className="text-[16px] font-black text-white uppercase tracking-tight">Delete Account</p>
+                   <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">This will close your account and log you out. This cannot be undone easily.</p>
+                   <button className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 hover:text-rose-300 transition-all pt-2 flex items-center gap-2">Delete My Account <ArrowRight size={14}/></button>
                 </div>
              </div>
           </div>

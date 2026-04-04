@@ -45,8 +45,8 @@ const Rooms: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Asset Inventory Synchronized',
-      description: 'Real-time room status, availability, and unit diagnostics have been successfully updated from the central node.'
+      title: 'Rooms Updated',
+      description: 'The room list and status have been updated.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };
@@ -84,7 +84,7 @@ const Rooms: React.FC = () => {
   const stats = useMemo(() => [
     { label: 'Total Rooms', value: rooms.length, color: 'text-blue-400' },
     { label: 'Occupied', value: rooms.filter(r => r.status === RoomStatus.Occupied).length, color: 'text-emerald-400' },
-    { label: 'Asset Readiness', value: rooms.filter(r => r.status === RoomStatus.Available).length, color: 'text-blue-400' },
+    { label: 'Available', value: rooms.filter(r => r.status === RoomStatus.Available).length, color: 'text-blue-400' },
     { label: 'Reserved', value: rooms.filter(r => r.status === RoomStatus.Reserved).length, color: 'text-indigo-400' },
   ], [rooms]);
 
@@ -105,13 +105,13 @@ const Rooms: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
-            <p className="adaptive-text-xs text-blue-400 font-black uppercase tracking-widest leading-none">Asset Inventory</p>
+            <p className="adaptive-text-xs text-blue-400 font-black uppercase tracking-widest leading-none">Rooms</p>
           </div>
-          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Room Management</h2>
+          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Rooms</h2>
         </div>
         
         <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
-          <button onClick={() => { setEditingRoom(null); setIsModalOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg"><Plus size={16}/> Onboard New Asset</button>
+          <button onClick={() => { setEditingRoom(null); setIsModalOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg"><Plus size={16}/> Add Room</button>
         </PermissionWrapper>
       </div>
 
@@ -132,7 +132,7 @@ const Rooms: React.FC = () => {
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14}/>
                <input 
                 type="text" 
-                placeholder="Lookup Rooms by Identity..." 
+                placeholder="Search Rooms..." 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)} 
                 className="w-full bg-slate-950/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none focus:bg-slate-900 transition-all placeholder:text-slate-700" 
@@ -148,7 +148,7 @@ const Rooms: React.FC = () => {
                   onClick={() => setCategoryFilter(cat)}
                   className={`px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${categoryFilter === cat ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300'}`}
                 >
-                  {cat === 'All' ? 'All Classes' : cat}
+                  {cat === 'All' ? 'All Types' : cat}
                 </button>
               ))}
             </div>
@@ -162,18 +162,18 @@ const Rooms: React.FC = () => {
 
         <div className="p-4 flex-1">
           {paginatedRooms.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 opacity-20"><SearchX size={64} className="mb-4 text-slate-700" /><p className="adaptive-text-lg font-black uppercase text-slate-500">No assets detected</p></div>
+            <div className="flex flex-col items-center justify-center py-32 opacity-20"><SearchX size={64} className="mb-4 text-slate-700" /><p className="adaptive-text-lg font-black uppercase text-slate-500">No rooms found</p></div>
           ) : (
             viewMode === 'list' ? (
               <div className="overflow-x-auto h-full">
                 <table className="w-full text-left min-w-[700px]">
                   <thead>
                     <tr className="text-slate-600 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/10">
-                      <th className="responsive-table-padding">Room Identity</th>
-                      <th className="responsive-table-padding col-priority-med">Classification</th>
-                      <th className="responsive-table-padding text-center">Status Protocol</th>
-                      <th className="responsive-table-padding col-priority-low">Nightly Tariff</th>
-                      <th className="responsive-table-padding text-right">Control</th>
+                      <th className="responsive-table-padding">Room</th>
+                      <th className="responsive-table-padding col-priority-med">Category</th>
+                      <th className="responsive-table-padding text-center">Status</th>
+                      <th className="responsive-table-padding col-priority-low">Price</th>
+                      <th className="responsive-table-padding text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -229,7 +229,7 @@ const Rooms: React.FC = () => {
                       </div>
                       <div className="text-right shrink-0">
                         <p className="adaptive-text-base font-black text-white">₦{(room.pricePerNight/1000).toFixed(0)}k</p>
-                        <p className="text-[8px] text-slate-700 font-bold uppercase">Tariff</p>
+                        <p className="text-[8px] text-slate-700 font-bold uppercase">Price</p>
                       </div>
                     </div>
                   </div>
@@ -240,7 +240,7 @@ const Rooms: React.FC = () => {
         </div>
 
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
-           <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Total Managed Rooms • {filteredRooms.length}</div>
+           <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Total Rooms • {filteredRooms.length}</div>
            <div className="flex gap-2">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>

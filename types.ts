@@ -20,7 +20,7 @@ export enum VisitAction {
   RESERVATION = "Reservation Made",
   CHECK_IN = "Checked In",
   CHECK_OUT = "Checked Out",
-  VOID = "Dossier Voided",
+  VOID = "Booking Cancelled",
 }
 
 export type RoomCategory = "Standard" | "Deluxe" | "Executive" | "Presidential Suite";

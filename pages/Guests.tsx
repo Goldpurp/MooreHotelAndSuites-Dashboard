@@ -56,8 +56,8 @@ const Guests: React.FC = () => {
     setIsRefreshing(true);
     await refreshData();
     sileo.success({
-      title: 'Guest Database Synchronized',
-      description: 'Guest profiles, stay history, and lifecycle metrics have been successfully retrieved from the secure data node.'
+      title: 'Guests Updated',
+      description: 'The guest list has been updated.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };
@@ -188,11 +188,11 @@ const Guests: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
               <p className="adaptive-text-xs text-emerald-400 font-black uppercase tracking-widest leading-none">
-                Guest Relations Registry
+                Guests
               </p>
             </div>
             <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">
-              {activeTab === "in-house" ? "In-House Guests" : "Guest History"}
+              {activeTab === "in-house" ? "Checked In" : "Past Guests"}
             </h2>
           </div>
           <button
@@ -208,7 +208,7 @@ const Guests: React.FC = () => {
             onClick={() => setLocalActiveTab("in-house")}
             className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === "in-house" ? "text-emerald-400" : "text-slate-600"}`}
           >
-            In-House ({unifiedResidentList.filter((r) => !!r.activeStay).length}
+            Checked In ({unifiedResidentList.filter((r) => !!r.activeStay).length}
             )
             {activeTab === "in-house" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 shadow-emerald-500/50"></div>
@@ -240,7 +240,7 @@ const Guests: React.FC = () => {
               />
               <input
                 type="text"
-                placeholder="Lookup Guest Identity..."
+                placeholder="Search for a guest..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none focus:border-emerald-500/30 transition-all"
@@ -252,15 +252,15 @@ const Guests: React.FC = () => {
             <table className="w-full text-left min-w-[500px]">
               <thead className="sticky top-0 bg-slate-950 z-20 border-b border-white/10">
                 <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
-                  <th className="responsive-table-padding">Guest Profile</th>
+                  <th className="responsive-table-padding">Guest Details</th>
                   <th className="responsive-table-padding text-center col-priority-med">
-                    Occupancy Status
+                    Status
                   </th>
                   <th className="responsive-table-padding col-priority-low">
-                    Stay Cycle
+                    Dates
                   </th>
                   <th className="responsive-table-padding text-right">
-                    Lifetime Billing
+                    Total
                   </th>
                 </tr>
               </thead>
@@ -347,11 +347,11 @@ const Guests: React.FC = () => {
                             ) : (
                               <History size={10} />
                             )}
-                            {active
+                             {active
                               ? isOverdue
-                                ? "EXCEEDED STAY"
-                                : "ACTIVE"
-                              : "CYCLED"}
+                                ? "OVERDUE"
+                                : "CHECKED IN"
+                              : "LEFT"}
                           </span>
                         </td>
                         <td className="responsive-table-padding col-priority-low">
@@ -379,7 +379,7 @@ const Guests: React.FC = () => {
                                       day: "2-digit",
                                       month: "short",
                                     })
-                                : "PAST STAY"}
+                                : "PAST"}
                             </span>
                           </div>
                         </td>
@@ -397,9 +397,9 @@ const Guests: React.FC = () => {
                             <p className="text-[8px] text-slate-700 font-black uppercase mt-1">
                               {active
                                 ? activeIsPaid
-                                  ? "Billing Paid"
-                                  : "Billing Due"
-                                : "Total Spend"}
+                                  ? "Paid"
+                                  : "Unpaid"
+                                : "Total"}
                             </p>
                           </div>
                         </td>
@@ -412,7 +412,7 @@ const Guests: React.FC = () => {
           </div>
           <div className="px-8 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
             <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest">
-              {filteredResidents.length} Registered Guests
+              {filteredResidents.length} Guests
             </span>
             <div className="flex gap-2">
               <button
@@ -447,10 +447,10 @@ const Guests: React.FC = () => {
             <div className="flex justify-between items-start mb-3">
               <div className="space-y-1">
                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">
-                  Guest Profile
+                  Guest Details
                 </h3>
                 <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">
-                  System Dossier
+                  History
                 </p>
               </div>
               <button
@@ -469,11 +469,10 @@ const Guests: React.FC = () => {
                 />
                 <div>
                   <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">
-                    CRITICAL ALERT: EXCEEDED STAY
+                    ALERT: OVERDUE
                   </p>
                   <p className="text-[9px] text-rose-400 font-bold uppercase mt-1">
-                    This guest has passed the 12:00 check-out protocol.
-                    Immediate attention required.
+                    This guest should have checked out by 12:00 PM.
                   </p>
                 </div>
               </div>
@@ -534,8 +533,8 @@ const Guests: React.FC = () => {
                       className={`text-[9px] font-black uppercase tracking-widest ${selectedResident.activeStay.isOverdue ? "text-rose-500" : "text-emerald-500/60"}`}
                     >
                       {selectedResident.activeStay.isOverdue
-                        ? "OVERDUE CHECK-OUT"
-                        : "Active Stay"}
+                        ? "OVERDUE"
+                        : "Checked In"}
                     </span>
                     <span
                       className={`px-2 py-1 text-[8px] font-black uppercase rounded border ${(selectedResident.activeStay.booking.paymentStatus || "").toLowerCase() === "paid" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}
@@ -587,17 +586,17 @@ const Guests: React.FC = () => {
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between px-1">
                   <h4 className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
-                    <History size={12} /> STAY HISTORY
+                    <History size={12} /> PAST BOOKINGS
                   </h4>
                   <span className="text-[9px] font-black text-slate-700 bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                    {selectedResident.history.length} CYCLES
+                    {selectedResident.history.length} BOOKINGS
                   </span>
                 </div>
                 <div className="space-y-1.5 max-h-[160px] overflow-y-auto">
                   {selectedResident.history.length === 0 ? (
                     <div className="p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10 opacity-30">
                       <p className="text-[9px] text-slate-600 uppercase font-black">
-                        No history recorded
+                        No past bookings
                       </p>
                     </div>
                   ) : (
@@ -655,7 +654,7 @@ const Guests: React.FC = () => {
                   }}
                   className="w-full bg-rose-600 hover:bg-rose-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl"
                 >
-                  <LogOut size={20} strokeWidth={3} /> CHECK-OUT GUEST
+                  <LogOut size={20} strokeWidth={3} /> CHECK OUT
                 </button>
               ) : (
                 <button
@@ -665,7 +664,7 @@ const Guests: React.FC = () => {
                   }}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
                 >
-                  <Users size={20} /> NEW RESERVATION
+                  <Users size={20} /> NEW BOOKING
                 </button>
               )}
             </div>

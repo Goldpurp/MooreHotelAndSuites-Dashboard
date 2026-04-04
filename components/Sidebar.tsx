@@ -24,9 +24,9 @@ const Sidebar: React.FC = () => {
     useHotel();
 
   const menuItems = [
-    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-    { id: "bookings", label: "Reservations", icon: CalendarDays },
-    { id: "settlements", label: "Confirmations", icon: CheckCircle2 },
+    { id: "dashboard", label: "Home", icon: LayoutDashboard },
+    { id: "bookings", label: "Bookings", icon: CalendarDays },
+    { id: "settlements", label: "Payments", icon: CheckCircle2 },
     { id: "rooms", label: "Rooms", icon: Bed },
     { id: "guests", label: "Guests", icon: Users },
   ];
@@ -115,7 +115,7 @@ const Sidebar: React.FC = () => {
             <span
               className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
             >
-              Analytics
+              Stats
             </span>
           </button>
         </PermissionWrapper>
@@ -123,7 +123,7 @@ const Sidebar: React.FC = () => {
         <div className="pt-10">
           {!isSidebarCollapsed && (
             <p className="px-4 text-[10px] text-slate-600 font-black uppercase tracking-dash mb-5 flex items-center gap-2">
-              <span className="w-4 h-px bg-slate-800"></span> Administration
+              <span className="w-4 h-px bg-slate-800"></span> Manage
             </p>
           )}
 
@@ -146,7 +146,7 @@ const Sidebar: React.FC = () => {
                 <span
                   className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
                 >
-                  Operation Log
+                  Activity
                 </span>
               </button>
 
@@ -165,7 +165,7 @@ const Sidebar: React.FC = () => {
                 <span
                   className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
                 >
-                  Staffing
+                  Staff
                 </span>
               </button>
 
@@ -223,7 +223,7 @@ const Sidebar: React.FC = () => {
           <span
             className={`transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
           >
-            Sign Out
+            Log Out
           </span>
         </button>
       </div>

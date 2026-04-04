@@ -34,15 +34,15 @@ const Auth: React.FC = () => {
     try {
       await login(formData.email, formData.password);
       sileo.success({
-        title: 'Identity Verified Successfully',
-        description: 'Your security credentials have been accepted. Initializing your personalized management environment.'
+        title: 'Logged In',
+        description: 'You have successfully logged in.'
       });
     } catch (err: any) {
       sileo.error({
-        title: 'Authorization Protocol Failed',
-        description: err.message || "The security node rejected your credentials. Please verify your email and secret PIN before retrying."
+        title: 'Login Failed',
+        description: err.message || "Check your details and try again."
       });
-      setError(err.message || "Access Denied: Could not verify credentials.");
+      setError(err.message || "Wrong email or password.");
     } finally {
       setIsLoading(false);
     }
@@ -56,20 +56,20 @@ const Auth: React.FC = () => {
     try {
       await api.post("/api/Auth/forgot-password", { email: resetEmail });
       sileo.success({
-        title: 'Password Recovery Transmitted',
-        description: 'A secure restoration token has been dispatched to your enterprise inbox. Please follow the instructions to reset your PIN.'
+        title: 'Email Sent',
+        description: 'We sent a reset link to your email.'
       });
       setSuccess(
-        "Recovery protocol initiated. Please check your enterprise inbox for reset instructions.",
+        "Please check your email for reset instructions.",
       );
       setResetEmail("");
     } catch (err: any) {
       sileo.error({
-        title: 'Restoration Request Blocked',
-        description: err.message || "The security subsystem could not process your recovery request. This may be due to network congestion or an invalid identifier."
+        title: 'Error',
+        description: err.message || "Something went wrong. Please try again."
       });
       setError(
-        err.message || "Recovery Protocol Fault: Could not process request.",
+        err.message || "Could not reset password.",
       );
     } finally {
       setIsLoading(false);
@@ -86,14 +86,13 @@ const Auth: React.FC = () => {
               Moore Hotels <br /> & Suites
             </h1>
             <p className="text-blue-100/80 text-md mt-6 font-medium max-w-sm leading-relaxed">
-              Enterprise Property Management interface. Requires valid node
-              authorization.
+              Log in to your account.
             </p>
           </div>
           <div className="relative z-10">
             <div className="max-w-fit flex items-center gap-4 p-4 bg-black/20 rounded-2xl border border-white/10 backdrop-blur-md">
               <p className="text-blue-200 text-xs font-black uppercase tracking-widest leading-relaxed">
-                Luxury Refined. Hospitality Reimagined.
+                Welcome to Moore Hotels.
               </p>
             </div>
           </div>
@@ -104,10 +103,10 @@ const Auth: React.FC = () => {
             {mode === "login" ? (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                 <h2 className="text-3xl font-black text-white tracking-tight uppercase mb-2">
-                  Authorize Access
+                  Log In
                 </h2>
                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-10">
-                  Secured Personnel Entry
+                  Enter your email and password
                 </p>
                 
                 {error && (
@@ -122,7 +121,7 @@ const Auth: React.FC = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">
-                      Account identifier
+                      Email Address
                     </label>
                     <div className="relative">
                       <Mail
@@ -145,14 +144,14 @@ const Auth: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center px-1">
                       <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
-                        Secret PIN
+                        Password
                       </label>
                       <button
                         type="button"
                         onClick={() => setMode("reset")}
                         className="text-[9px] text-blue-400 font-black uppercase tracking-widest hover:text-blue-300 transition-colors"
                       >
-                        Forgot Access?
+                        Forgot Password?
                       </button>
                     </div>
                     <div className="relative">
@@ -199,7 +198,7 @@ const Auth: React.FC = () => {
                       <Loader2 className="animate-spin" size={18} />
                     ) : (
                       <>
-                        Authorize Session <ArrowRight size={18} />
+                        Login <ArrowRight size={18} />
                       </>
                     )}
                   </button>
@@ -215,14 +214,14 @@ const Auth: React.FC = () => {
                   }}
                   className="flex items-center gap-2 text-slate-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest mb-8"
                 >
-                  <ChevronLeft size={16} /> Back to Authorization
+                  <ChevronLeft size={16} /> Back to Login
                 </button>
 
                 <h2 className="text-3xl font-black text-white tracking-tight uppercase mb-2">
-                  Recover Access
+                  Reset Password
                 </h2>
                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-10">
-                  Credential Restoration Protocol
+                  Enter your email below.
                 </p>
 
                 {error && (
@@ -237,7 +236,7 @@ const Auth: React.FC = () => {
                 <form onSubmit={handleResetPassword} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">
-                      Registered Email
+                      Email Address
                     </label>
                     <div className="relative">
                       <Mail
@@ -282,7 +281,7 @@ const Auth: React.FC = () => {
                       <Loader2 className="animate-spin" size={18} />
                     ) : (
                       <>
-                        Transmit Reset Token <RefreshCw size={18} />
+                        Send Reset Link <RefreshCw size={18} />
                       </>
                     )}
                   </button>
