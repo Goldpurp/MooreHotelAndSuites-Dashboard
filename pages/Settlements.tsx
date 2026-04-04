@@ -3,7 +3,7 @@ import { useHotel } from '../store/HotelContext';
 import { PaymentStatus, Booking, BookingStatus, UserRole } from '../types';
 import { Search, CheckCircle, Clock, 
   RefreshCw, ShieldCheck, Loader2, ChevronLeft, ChevronRight,
-  ShieldAlert, Lock, Wallet, RotateCcw, Hash
+  ShieldAlert, Lock, Wallet, RotateCcw, Hash, Copy
 } from 'lucide-react';
 import { sileo } from 'sileo';
 
@@ -121,6 +121,15 @@ const Settlements: React.FC = () => {
     } 
   };
 
+  const handleCopy = (text: string) => {
+    if (!text || text === 'REF-PENDING') return;
+    navigator.clipboard.writeText(text);
+    sileo.success({
+      title: 'Reference Copied',
+      description: 'The transaction reference has been copied to your clipboard.'
+    });
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-700 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -196,7 +205,18 @@ const Settlements: React.FC = () => {
                       </td>
                       <td className="responsive-table-padding col-priority-med">
                         <p className="text-xs font-black uppercase text-slate-300">{folio.bookingCode}</p>
-                        <p className="text-[8px] text-slate-700 font-mono truncate mt-1 italic">{folio.transactionReference || 'REF-PENDING'}</p>
+                        <div 
+                          onClick={() => handleCopy(folio.transactionReference || '')}
+                          className={`group flex items-center gap-2 mt-1 w-fit transition-all ${folio.transactionReference ? 'cursor-pointer hover:text-brand-400' : 'opacity-40'}`}
+                          title={folio.transactionReference ? "Click to copy reference" : "Reference Pending"}
+                        >
+                          <p className="text-[10px] text-slate-500 font-mono truncate italic select-all">
+                            {folio.transactionReference || 'REF-PENDING'}
+                          </p>
+                          {folio.transactionReference && (
+                            <Copy size={10} className="text-slate-700 group-hover:text-brand-500 opacity-0 group-hover:opacity-100 transition-all" />
+                          )}
+                        </div>
                       </td>
                       <td className="responsive-table-padding text-right">
                          <p className={`adaptive-text-sm font-black italic ${isPaid ? 'text-white' : isRefunded || isRefundPending ? 'text-rose-400' : 'text-emerald-400'}`}>₦{folio.amount.toLocaleString()}</p>
