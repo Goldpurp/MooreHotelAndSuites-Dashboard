@@ -8,7 +8,7 @@ import {
   Calendar, Bed, Clock, ChevronLeft, ChevronRight,
   ShieldCheck, Info, Zap, LogOut, RefreshCw
 } from 'lucide-react';
-import { downloadCSV } from '../lib/utils';
+import { downloadPDF } from '../lib/utils';
 
 const SecurityLedger: React.FC = () => {
   const { visitHistory, refreshData } = useHotel();
@@ -35,10 +35,10 @@ const SecurityLedger: React.FC = () => {
       AuthorizedBy: log.authorizedBy,
       Code: log.bookingCode
     }));
-    downloadCSV(exportData, `SecurityLedger_${new Date().toISOString().split('T')[0]}.csv`);
+    downloadPDF(exportData, "Forensic Security Ledger", `SecurityLedger_${new Date().toISOString().split('T')[0]}.pdf`);
     sileo.success({
       title: 'Ledger Compiled',
-      description: 'Forensic security logs have been successfully exported to CSV.'
+      description: 'Forensic security logs have been successfully exported as PDF.'
     });
   };
 

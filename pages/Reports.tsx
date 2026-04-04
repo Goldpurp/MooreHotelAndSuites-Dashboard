@@ -6,7 +6,7 @@ import {
 import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
 import { BookingStatus, RoomStatus, AuditLog } from '../types';
-import { downloadCSV } from '../lib/utils';
+import { downloadPDF } from '../lib/utils';
 
 import { 
   XAxis as ReXAxis, YAxis as ReYAxis, 
@@ -45,10 +45,10 @@ const Reports: React.FC = () => {
       PaymentStatus: b.paymentStatus,
       CreatedAt: b.createdAt
     }));
-    downloadCSV(exportData, `LedgerExport_${new Date().toISOString().split('T')[0]}.csv`);
+    downloadPDF(exportData, "Financial Registry Ledger", `LedgerExport_${new Date().toISOString().split('T')[0]}.pdf`);
     sileo.success({
       title: 'Ledger Exported',
-      description: 'The property financial ledger and booking dossiers have been compiled into CSV format.'
+      description: 'The property financial ledger and booking dossiers have been compiled into PDF format.'
     });
   };
 

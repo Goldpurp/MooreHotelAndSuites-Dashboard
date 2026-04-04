@@ -179,34 +179,6 @@ const Auth: React.FC = () => {
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
-
-                    {formData.password && (
-                      <div className="px-1 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                          <span className="text-slate-500">Access Strength</span>
-                          <span className={
-                            calculateStrength(formData.password) <= 2 ? "text-rose-500" :
-                            calculateStrength(formData.password) <= 4 ? "text-amber-500" : "text-emerald-500"
-                          }>
-                            {calculateStrength(formData.password) <= 2 ? "Weak" :
-                             calculateStrength(formData.password) <= 4 ? "Reliable" : "Fortress"}
-                          </span>
-                        </div>
-                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex gap-0.5">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <div 
-                              key={s}
-                              className={`h-full flex-1 transition-all duration-500 ${
-                                calculateStrength(formData.password) >= s 
-                                  ? (calculateStrength(formData.password) <= 2 ? "bg-rose-500" :
-                                     calculateStrength(formData.password) <= 4 ? "bg-amber-500" : "bg-emerald-500")
-                                  : "bg-transparent"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {error && (

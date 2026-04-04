@@ -7,7 +7,7 @@ import {
   X, FileDown
 } from 'lucide-react';
 import { sileo } from 'sileo';
-import { downloadCSV } from '../lib/utils';
+import { downloadPDF } from '../lib/utils';
 
 const OperationLog: React.FC = () => {
   const { visitHistory, refreshData } = useHotel();
@@ -57,10 +57,10 @@ const OperationLog: React.FC = () => {
       AuthorizedBy: log.authorizedBy,
       Reference: log.bookingCode
     }));
-    downloadCSV(exportData, `OperationalLog_${new Date().toISOString().split('T')[0]}.csv`);
+    downloadPDF(exportData, "Operational Visit Log", `OperationalLog_${new Date().toISOString().split('T')[0]}.pdf`);
     sileo.success({
       title: 'Export Successful',
-      description: 'Operational log dossier has been compiled and downloaded.'
+      description: 'Operational log dossier has been compiled and downloaded as PDF.'
     });
   };
 
