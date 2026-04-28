@@ -70,6 +70,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
   const [sizeNum, setSizeNum] = useState(20);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationFields, setValidationFields] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -131,7 +132,28 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.roomNumber) return;
+    
+    const missing: string[] = [];
+    if (!formData.roomNumber.trim()) missing.push('roomNumber');
+    if (!formData.name.trim()) missing.push('name');
+    if (!formData.category) missing.push('category');
+    if (!formData.floor) missing.push('floor');
+    if (!formData.size || sizeNum <= 0) missing.push('size');
+    if (formData.pricePerNight <= 0) missing.push('pricePerNight');
+    if (formData.capacity <= 0) missing.push('capacity');
+    if (!formData.description.trim()) missing.push('description');
+    if (formData.images.length === 0) missing.push('images');
+
+    if (missing.length > 0) {
+      setValidationFields(missing);
+      sileo.error({
+        title: 'Validation Failed',
+        description: 'Please ensure all asset data fields are correctly populated before committing to the ledger.'
+      });
+      return;
+    }
+
+    setValidationFields([]);
     setIsSubmitting(true);
     setError(null);
     try {
@@ -181,25 +203,29 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                 )}
 
                 <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
-                  <div className="flex-1 space-y-4 bg-white/5 p-5 sm:p-8 rounded-xl sm:rounded-[2rem] border border-white/5">
+                  <div className={`flex-1 space-y-4 bg-white/5 p-5 sm:p-8 rounded-xl sm:rounded-[2rem] border ${validationFields.includes('images') ? 'border-rose-500/30 bg-rose-500/5' : 'border-white/5'}`}>
                       <div className="flex items-center justify-between mb-2">
                           <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2">
                               <ImageIcon size={14} /> Asset photos
                           </h4>
-                          <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Physical property imagery</p>
+                          {validationFields.includes('images') ? (
+                            <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-pulse">Min. 1 Photo Required</p>
+                          ) : (
+                            <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Physical property imagery</p>
+                          )}
                       </div>
                       <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4">
                           {formData.images.map((img, idx) => (
                             <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-white/10 shadow-lg">
                               <img src={img} className="w-full h-full object-cover" alt="" />
-                              <button type="button" onClick={() => setFormData(p => ({...p, images: p.images.filter((_,i) => i !== idx)}))} className="absolute inset-0 bg-rose-600/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"><Trash2 size={16}/></button>
+                              <button type="button" onClick={() => { setFormData(p => ({...p, images: p.images.filter((_,i) => i !== idx)})); if (formData.images.length <= 1) setValidationFields(prev => [...prev, 'images']); }} className="absolute inset-0 bg-rose-600/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"><Trash2 size={16}/></button>
                             </div>
                           ))}
-                          <button type="button" onClick={() => fileInputRef.current?.click()} className="aspect-square rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/50 flex flex-col items-center justify-center gap-1.5 text-slate-600 hover:text-blue-500 transition-all bg-slate-900/40">
+                          <button type="button" onClick={() => fileInputRef.current?.click()} className={`aspect-square rounded-xl border-2 border-dashed ${validationFields.includes('images') ? 'border-rose-500/30 bg-rose-500/5' : 'border-white/10 hover:border-blue-500/50'} flex flex-col items-center justify-center gap-1.5 text-slate-600 hover:text-blue-500 transition-all bg-slate-900/40`}>
                             <Camera size={20} />
                             <span className="text-[7px] font-black uppercase">Attach</span>
                           </button>
-                          <input type="file" ref={fileInputRef} multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
+                          <input type="file" ref={fileInputRef} multiple accept="image/*" className="hidden" onChange={(e) => { handleImageUpload(e); setValidationFields(prev => prev.filter(f => f !== 'images')); }} />
                       </div>
                   </div>
 
@@ -220,19 +246,28 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                     <div className="space-y-2">
-                        <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Room Identity (No.)</label>
-                        <input required name="roomNumber" value={formData.roomNumber} onChange={handleChange} placeholder="e.g. 305" className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-3 sm:py-4 px-4 sm:px-6 text-sm text-white focus:bg-slate-900 transition-all outline-none" />
+                        <div className="flex justify-between items-center px-1">
+                           <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Room Identity (No.)</label>
+                           {validationFields.includes('roomNumber') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                        </div>
+                        <input name="roomNumber" value={formData.roomNumber} onChange={(e) => { handleChange(e); setValidationFields(prev => prev.filter(f => f !== 'roomNumber')); }} placeholder="e.g. 305" className={`w-full bg-slate-950/60 border ${validationFields.includes('roomNumber') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl py-3 sm:py-4 px-4 sm:px-6 text-sm text-white focus:bg-slate-900 transition-all outline-none`} />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Room Display Name</label>
-                        <input name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Deluxe King" className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-3 sm:py-4 px-4 sm:px-6 text-sm text-white focus:bg-slate-900 transition-all outline-none" />
+                        <div className="flex justify-between items-center px-1">
+                           <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Room Display Name</label>
+                           {validationFields.includes('name') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                        </div>
+                        <input name="name" value={formData.name} onChange={(e) => { handleChange(e); setValidationFields(prev => prev.filter(f => f !== 'name')); }} placeholder="e.g. Deluxe King" className={`w-full bg-slate-950/60 border ${validationFields.includes('name') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl py-3 sm:py-4 px-4 sm:px-6 text-sm text-white focus:bg-slate-900 transition-all outline-none`} />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8">
                     <div className="space-y-2">
-                        <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Category</label>
-                        <select name="category" value={formData.category} onChange={handleChange} className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-3 sm:py-4 px-4 text-sm text-white outline-none appearance-none cursor-pointer">
+                        <div className="flex justify-between items-center px-1">
+                           <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Category</label>
+                           {validationFields.includes('category') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                        </div>
+                        <select name="category" value={formData.category} onChange={(e) => { handleChange(e); setValidationFields(prev => prev.filter(f => f !== 'category')); }} className={`w-full bg-slate-950/60 border ${validationFields.includes('category') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl py-3 sm:py-4 px-4 text-sm text-white outline-none appearance-none cursor-pointer`}>
                           <option value="Standard">Standard</option>
                           <option value="Deluxe">Deluxe</option>
                           <option value="Executive">Executive</option>
@@ -240,8 +275,11 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Floor Level</label>
-                        <select name="floor" value={formData.floor} onChange={handleChange} className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-3 sm:py-4 px-4 text-sm text-white outline-none appearance-none cursor-pointer">
+                        <div className="flex justify-between items-center px-1">
+                           <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Floor Level</label>
+                           {validationFields.includes('floor') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                        </div>
+                        <select name="floor" value={formData.floor} onChange={(e) => { handleChange(e); setValidationFields(prev => prev.filter(f => f !== 'floor')); }} className={`w-full bg-slate-950/60 border ${validationFields.includes('floor') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl py-3 sm:py-4 px-4 text-sm text-white outline-none appearance-none cursor-pointer`}>
                           <option value={PropertyFloor.GroundFloor}>Ground Floor</option>
                           <option value={PropertyFloor.FirstFloor}>1st Floor</option>
                           <option value={PropertyFloor.SecondFloor}>2nd Floor</option>
@@ -249,25 +287,38 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex justify-between">
-                           <span>Dimensions (sqm)</span>
-                           <span className="text-blue-500 font-black">{sizeNum} m²</span>
-                        </label>
-                        <input type="number" name="size" value={sizeNum} onChange={handleChange} placeholder="45" className="w-full bg-slate-950/60 border border-white/10 rounded-xl py-3 sm:py-4 px-4 text-sm text-white outline-none" />
+                        <div className="flex justify-between items-center px-1">
+                           <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Dimensions (sqm)</label>
+                           {validationFields.includes('size') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Invalid</p>}
+                        </div>
+                        <div className="relative">
+                            <input type="number" name="size" value={sizeNum} onChange={(e) => { handleChange(e); setValidationFields(prev => prev.filter(f => f !== 'size')); }} placeholder="45" className={`w-full bg-slate-950/60 border ${validationFields.includes('size') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl py-3 sm:py-4 px-4 text-sm text-white outline-none`} />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-blue-500">{sizeNum} m²</span>
+                        </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 bg-black/20 p-5 sm:p-8 rounded-xl sm:rounded-[2rem] border border-white/5">
                     <div className="space-y-3">
-                        <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Daily Tariff (₦)</label>
-                        <input name="pricePerNight" value={priceStr} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 sm:py-5 px-4 sm:px-6 text-lg sm:text-2xl font-black text-blue-500 outline-none" />
+                        <div className="flex justify-between items-center px-1">
+                           <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Daily Tariff (₦)</label>
+                           {validationFields.includes('pricePerNight') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Price Required</p>}
+                        </div>
+                        <input name="pricePerNight" value={priceStr} onChange={(e) => { handleChange(e); setValidationFields(prev => prev.filter(f => f !== 'pricePerNight')); }} className={`w-full bg-black/40 border ${validationFields.includes('pricePerNight') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl py-3 sm:py-5 px-4 sm:px-6 text-lg sm:text-2xl font-black text-blue-500 outline-none`} />
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex justify-between">
-                           <span>Occupancy</span>
-                           <span className="text-white font-black">{formData.capacity} Guests</span>
-                        </label>
-                        <input type="range" name="capacity" min="1" max="8" value={formData.capacity} onChange={handleChange} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 mt-5" />
+                        <div className="flex justify-between items-center px-1">
+                           <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Occupancy</label>
+                           {validationFields.includes('capacity') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                        </div>
+                        <div className="pt-2">
+                            <input type="range" name="capacity" min="1" max="8" value={formData.capacity} onChange={(e) => { handleChange(e); setValidationFields(prev => prev.filter(f => f !== 'capacity')); }} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                            <div className="flex justify-between mt-2 px-1">
+                               <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest">1 Guest</span>
+                               <span className="text-[10px] text-white font-black uppercase">{formData.capacity} Guests</span>
+                               <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest">8 Guests</span>
+                            </div>
+                        </div>
                     </div>
                     <div className="space-y-3">
                       <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Room Status</label>
@@ -282,8 +333,11 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Description</label>
-                    <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Detailed room specifications..." className="w-full bg-slate-950/60 border border-white/10 rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-sm text-white focus:bg-slate-900 transition-all outline-none min-h-[100px] resize-none" />
+                    <div className="flex justify-between items-center px-1">
+                       <label className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest">Description</label>
+                       {validationFields.includes('description') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                    </div>
+                    <textarea name="description" value={formData.description} onChange={(e) => { handleChange(e); setValidationFields(prev => prev.filter(f => f !== 'description')); }} placeholder="Detailed room specifications..." className={`w-full bg-slate-950/60 border ${validationFields.includes('description') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 sm:py-4 px-4 sm:px-6 text-sm text-white focus:bg-slate-900 transition-all outline-none min-h-[100px] resize-none`} />
                 </div>
 
                 <div className="pt-6 border-t border-white/5 grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-10">

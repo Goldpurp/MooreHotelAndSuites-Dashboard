@@ -134,7 +134,7 @@ const Auth: React.FC = () => {
                         placeholder="name@moorehotels.com"
                         value={formData.email}
                         onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value.replace(/[0-9]/g, '') })
+                          setFormData({ ...formData, email: e.target.value })
                         }
                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                       />
@@ -248,7 +248,7 @@ const Auth: React.FC = () => {
                         required
                         placeholder="name@moorehotels.com"
                         value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value.replace(/[0-9]/g, ''))}
+                        onChange={(e) => setResetEmail(e.target.value)}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
                       />
                     </div>

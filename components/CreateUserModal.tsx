@@ -15,6 +15,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
   const { addStaff, updateStaff, currentUser } = useHotel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [validationFields, setValidationFields] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
@@ -37,27 +38,44 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const missing: string[] = [];
+    
+    // Basic Field Validation
+    if (!formData.name.trim()) missing.push('name');
+    if (!formData.email.trim() || !formData.email.includes('@')) missing.push('email');
+    if (!editingUser && (!formData.password || formData.password.length < 6)) missing.push('password');
+
+    if (missing.length > 0) {
+      setValidationFields(missing);
+      sileo.error({ 
+        title: 'Input Required', 
+        description: 'Please fill in all highlighted fields correctly.' 
+      });
+      return;
+    }
+
+    setValidationFields([]);
     setIsSubmitting(true);
     try {
       if (editingUser) {
         const { status, ...updatePayload } = formData;
         await updateStaff(editingUser.id, updatePayload as any);
         sileo.success({
-          title: 'Staff Updated',
-          description: `The details for ${formData.name} have been updated.`
+          title: 'Update Successful',
+          description: `The credentials and profile for ${formData.name} have been synchronized.`
         });
       } else {
         await addStaff(formData);
         sileo.success({
-          title: 'Staff Added',
-          description: `A new staff member, ${formData.name}, has been added.`
+          title: 'Staff Onboarded',
+          description: `${formData.name} has been added to the system directory successfully.`
         });
       }
       onClose();
     } catch (err: any) {
       sileo.error({
-        title: 'Error',
-        description: err.message || "Something went wrong. Please try again."
+        title: 'Registry Fault',
+        description: err.message || "The system encountered a technical issue while saving staff data."
       });
     } finally {
       setIsSubmitting(false);
@@ -137,15 +155,23 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Name</label>
-                          <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 px-4 sm:px-6 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="John Doe" />
+                        <div className="flex justify-between items-center px-1">
+                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Name</label>
+                          {validationFields.includes('name') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                        </div>
+                          <input required value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); setValidationFields(prev => prev.filter(f => f !== 'name')); }} className={`w-full bg-white/5 border ${validationFields.includes('name') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 px-4 sm:px-6 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold`} placeholder="John Doe" />
+
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Email</label>
+                          <div className="flex justify-between items-center px-1">
+                             <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Email</label>
+                             {validationFields.includes('email') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                          </div>
                           <div className="relative">
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
-                            <input required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value.replace(/[0-9]/g, '')})} type="email" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="name@moorehotels.com" />
+                            <input required value={formData.email} onChange={e => { setFormData({...formData, email: e.target.value}); setValidationFields(prev => prev.filter(f => f !== 'email')); }} type="email" className={`w-full bg-white/5 border ${validationFields.includes('email') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold`} placeholder="name@moorehotels.com" />
                           </div>
+
                         </div>
                         <div className="space-y-2">
                           <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Phone</label>
@@ -178,20 +204,24 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                           <Lock size={14} /> Security
                         </h4>
                         <div className="space-y-4">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Secret PIN</label>
+                          <div className="flex justify-between items-center px-1">
+                             <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Secret PIN</label>
+                             {validationFields.includes('password') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">6+ characters required</p>}
+                          </div>
                           <div className="relative">
                             <input 
                               required 
                               value={formData.password} 
-                              onChange={e => setFormData({...formData, password: e.target.value})} 
+                              onChange={e => { setFormData({...formData, password: e.target.value}); setValidationFields(prev => prev.filter(f => f !== 'password')); }} 
                               type={showPassword ? "text" : "password"} 
-                              className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-4 pr-12 text-sm text-white focus:bg-white/10 outline-none transition-all tracking-widest font-mono" 
+                              className={`w-full bg-white/5 border ${validationFields.includes('password') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 pl-4 pr-12 text-sm text-white focus:bg-white/10 outline-none transition-all tracking-widest font-mono`} 
                               placeholder="••••••••" 
                             />
                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                               {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                             </button>
                           </div>
+
                           {formData.password && (
                             <div className="px-1 space-y-1.5">
                               <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest">

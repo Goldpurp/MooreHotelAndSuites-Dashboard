@@ -62,6 +62,7 @@ interface HotelContextType {
   checkInBooking: (bookingId: string) => Promise<void>;
   checkOutBooking: (bookingId: string) => Promise<void>;
   checkInBookingByCode: (code: string) => Promise<void>;
+  verifyMonnify: (bookingCode: string, transactionReference: string) => Promise<void>;
   /**
    * CHANGE: Updated signature for the new cancellation API.
    * Targets: POST /api/bookings/{id}/cancel?reason={reason}
@@ -167,6 +168,14 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     return PaymentStatus.Unpaid;
   };
 
+  const toCanonicalPaymentMethod = (val: string | undefined): PaymentMethod => {
+    if (!val) return PaymentMethod.DirectTransfer;
+    const lower = val.toLowerCase().replace(/[\s_-]/g, "");
+    if (lower === "monnify") return PaymentMethod.Monnify;
+    if (lower === "directtransfer" || lower === "banktransfer") return PaymentMethod.DirectTransfer;
+    return PaymentMethod.DirectTransfer;
+  };
+
   const normalizeBooking = (b: any): Booking => {
     return {
       id: String(b.id || b.Id || ""),
@@ -186,7 +195,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       paymentStatus: toCanonicalPaymentStatus(
         b.paymentStatus || b.PaymentStatus || "Unpaid",
       ),
-      paymentMethod: b.paymentMethod || b.PaymentMethod || "",
+      paymentMethod: toCanonicalPaymentMethod(b.paymentMethod || b.PaymentMethod || ""),
       transactionReference:
         b.transactionReference || b.TransactionReference || "",
       createdAt: b.createdAt || b.CreatedAt || new Date().toISOString(),
@@ -574,6 +583,13 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     await refreshData();
   };
 
+  const verifyMonnify = async (code: string, ref: string) => {
+    await api.post(`/api/bookings/${code}/verify-monnify`, null, {
+      params: { transactionReference: ref },
+    });
+    await refreshData();
+  };
+
   /**
    * CHANGE: Implemented specialized cancellation API call.
    * Includes mandatory reason parameter.
@@ -748,6 +764,7 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     updateBooking,
     updatePaymentStatus,
     confirmTransfer,
+    verifyMonnify,
     checkInBooking,
     checkOutBooking,
     checkInBookingByCode,

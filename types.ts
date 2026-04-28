@@ -42,8 +42,8 @@ export enum PaymentStatus {
 }
 
 export enum PaymentMethod {
-  Paystack = "Paystack",
-  DirectTransfer = "DirectTransfer",
+  Monnify = "monnify",
+  DirectTransfer = "directTransfer",
 }
 
 export enum UserRole {

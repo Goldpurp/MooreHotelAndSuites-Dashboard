@@ -15,10 +15,15 @@ interface VoidBookingModalProps {
 const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, onConfirm, booking, guest, room }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reason, setReason] = useState('Guest requested cancellation');
+  const [validationError, setValidationError] = useState(false);
 
   if (!isOpen || !booking || !guest || !room) return null;
 
   const handleConfirm = async () => {
+    if (!reason.trim()) {
+      setValidationError(true);
+      return;
+    }
     setIsSubmitting(true);
     try {
       await onConfirm(booking.id, reason);
@@ -66,13 +71,16 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
               </div>
 
               <div className="space-y-2">
-                 <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <MessageSquare size={12}/> Cancellation Reason
-                 </label>
+                 <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-2">
+                       <MessageSquare size={12}/> Cancellation Reason
+                    </label>
+                    {validationError && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Reason Required</p>}
+                 </div>
                  <textarea 
                     value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-xs text-white focus:border-rose-500/40 outline-none min-h-[80px] resize-none"
+                    onChange={(e) => { setReason(e.target.value); setValidationError(false); }}
+                    className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : 'border-white/10'} rounded-xl p-4 text-xs text-white focus:border-rose-500/40 outline-none min-h-[80px] resize-none`}
                     placeholder="Enter why this was cancelled..."
                  />
               </div>
