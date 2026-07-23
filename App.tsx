@@ -1,8 +1,11 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
+import MobileNav from "./components/MobileNav";
+import { ConfirmationProvider } from "./components/ConfirmationProvider";
 import { Toaster } from "sileo";
 import { HotelProvider, useHotel } from "./store/HotelContext";
+import { UserRole } from "./types";
 
 // Lazy loading pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -23,8 +26,25 @@ const AppContent: React.FC = () => {
     isInitialLoading,
     isSidebarCollapsed,
     activeTab,
+    setActiveTab,
+    userRole,
     refreshData,
   } = useHotel();
+
+  const restrictedTabs: Partial<Record<string, UserRole[]>> = {
+    reports: [UserRole.Admin, UserRole.Manager],
+    operation_log: [UserRole.Admin, UserRole.Manager],
+    staff: [UserRole.Admin, UserRole.Manager],
+    clients: [UserRole.Admin, UserRole.Manager],
+    settlements: [UserRole.Admin, UserRole.Manager],
+  };
+
+  useEffect(() => {
+    const allowedRoles = restrictedTabs[activeTab];
+    if (isAuthenticated && allowedRoles && !allowedRoles.includes(userRole)) {
+      setActiveTab("dashboard");
+    }
+  }, [activeTab, isAuthenticated, setActiveTab, userRole]);
 
   // Watchdog to prevent permanent splash screen hang if synchronization is slow
   useEffect(() => {
@@ -36,6 +56,51 @@ const AppContent: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [isInitialLoading, refreshData]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let disposed = false;
+    let syncInProgress = false;
+
+    const syncInBackground = async () => {
+      if (
+        disposed ||
+        syncInProgress ||
+        document.visibilityState === "hidden" ||
+        !navigator.onLine
+      ) {
+        return;
+      }
+
+      syncInProgress = true;
+      try {
+        await refreshData({ silent: true });
+      } finally {
+        syncInProgress = false;
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      void syncInBackground();
+    }, 30_000);
+    const syncWhenVisible = () => {
+      if (document.visibilityState === "visible") void syncInBackground();
+    };
+    const syncWhenOnline = () => void syncInBackground();
+
+    document.addEventListener("visibilitychange", syncWhenVisible);
+    window.addEventListener("focus", syncWhenVisible);
+    window.addEventListener("online", syncWhenOnline);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", syncWhenVisible);
+      window.removeEventListener("focus", syncWhenVisible);
+      window.removeEventListener("online", syncWhenOnline);
+    };
+  }, [isAuthenticated, refreshData]);
 
   if (isInitialLoading) {
     return (
@@ -112,19 +177,40 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const usesWorkspaceLayout = new Set([
+    "bookings",
+    "rooms",
+    "guests",
+    "operation_log",
+    "staff",
+    "clients",
+    "settlements",
+  ]).has(activeTab);
+
   return (
-    <div className="min-h-screen bg-slate-950 flex text-slate-50 font-sans selection:bg-brand-500/30 overflow-x-hidden">
+    <div className="h-[100dvh] min-h-0 overflow-hidden bg-slate-950 flex text-slate-50 font-sans selection:bg-brand-500/30">
       <Toaster />
       <Sidebar />
+      <MobileNav />
 
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ease-in-out ${
+        className={`h-full min-h-0 flex-1 flex flex-col min-w-0 transition-[margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
         }`}
       >
         <TopBar />
-        <main className="flex-1 fluid-padding overflow-y-auto custom-scrollbar overflow-x-hidden">
-          <div className="max-w-[1920px] mx-auto w-full pb-32">
+        <main className="flex-1 min-h-0 overflow-hidden">
+          <div
+            className={`app-scroll-region fluid-padding mx-auto h-full w-full max-w-[1920px] ${
+              usesWorkspaceLayout
+                ? "workspace-viewport overflow-hidden"
+                : "overflow-y-auto overflow-x-hidden pb-28 md:pb-10"
+            }`}
+          >
+            <div
+              key={activeTab}
+              className={`route-stage w-full ${usesWorkspaceLayout ? "h-full min-h-0" : "min-h-full"}`}
+            >
             <Suspense
               fallback={
                 <div className="flex flex-col items-center justify-center h-[60vh] gap-6">
@@ -137,6 +223,7 @@ const AppContent: React.FC = () => {
             >
               {renderContent()}
             </Suspense>
+            </div>
           </div>
         </main>
       </div>
@@ -147,7 +234,9 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <HotelProvider>
-      <AppContent />
+      <ConfirmationProvider>
+        <AppContent />
+      </ConfirmationProvider>
     </HotelProvider>
   );
 };

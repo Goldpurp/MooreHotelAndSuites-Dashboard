@@ -10,7 +10,7 @@ import StaffSuspensionModal from '../components/StaffSuspensionModal';
 import { StaffUser, UserRole } from '../types';
 
 const ClientManagement: React.FC = () => {
-  const { staff, toggleStaffStatus, refreshData, currentUser, setSelectedGuestId, setActiveTab } = useHotel();
+  const { staff, toggleStaffStatus, refreshData, currentUser, setSelectedGuestId, setActiveTab, selectedProfileId, setSelectedProfileId } = useHotel();
   const [isSuspensionOpen, setIsSuspensionOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState<StaffUser | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
@@ -44,6 +44,15 @@ const ClientManagement: React.FC = () => {
   }, [staff, searchQuery, statusFilter]);
 
   const totalPages = Math.ceil(filteredClients.length / PAGE_SIZE);
+
+  useEffect(() => {
+    if (!selectedProfileId) return;
+    const resultIndex = filteredClients.findIndex((profile) => profile.id === selectedProfileId);
+    if (resultIndex < 0) return;
+    setCurrentPage(Math.floor(resultIndex / PAGE_SIZE) + 1);
+    setSelectedStaffId(selectedProfileId);
+    setSelectedProfileId(null);
+  }, [filteredClients, selectedProfileId, setSelectedProfileId]);
   const paginatedClients = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredClients.slice(start, start + PAGE_SIZE);
@@ -58,8 +67,8 @@ const ClientManagement: React.FC = () => {
   const selectedClient = useMemo(() => staff.find(s => s.id === selectedStaffId), [staff, selectedStaffId]);
 
   return (
-    <div className="flex flex-row gap-6 h-[calc(100vh-120px)] animate-in fade-in duration-700 overflow-hidden pb-4">
-      <div className="split-main flex flex-col gap-4">
+    <div className="master-detail-workspace flex h-full min-h-0 flex-row gap-6 overflow-hidden">
+      <div className="split-main flex min-h-0 flex-col gap-4">
         <div className="flex items-end justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -84,8 +93,8 @@ const ClientManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left min-w-[700px]">
+          <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+            <table className="mobile-card-table w-full text-left min-w-[700px]">
               <thead>
                 <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-950/40">
                   <th className="responsive-table-padding">Guest Name</th>
@@ -102,10 +111,10 @@ const ClientManagement: React.FC = () => {
                     const isActive = String(client.status).toLowerCase() === 'active';
                     return (
                       <tr key={client.id} onClick={() => setSelectedStaffId(client.id)} className={`hover:bg-white/[0.02] transition-all group border-l-4 ${selectedStaffId === client.id ? 'bg-white/[0.04] border-emerald-500' : 'border-transparent'} cursor-pointer`}>
-                        <td className="responsive-table-padding">
+                        <td data-label="Guest" className="responsive-table-padding">
                           <div className="flex items-center gap-4">
                             <div className="relative shrink-0">
-                               <img src={client.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}&background=020617&color=fff`} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/5 transition-all" alt=""/>
+                               <img src={client.avatarUrl || "/avatar-placeholder.svg"} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/5 transition-all" alt=""/>
                                {isActive && <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-950 animate-pulse"></div>}
                             </div>
                             <div className="min-w-0">
@@ -114,13 +123,13 @@ const ClientManagement: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="responsive-table-padding col-priority-med">
+                        <td data-label="Joined" className="responsive-table-padding col-priority-med">
                            <p className="text-[11px] font-black text-slate-500 uppercase whitespace-nowrap">{client.createdAt ? new Date(client.createdAt).toLocaleDateString('en-GB') : 'SYS-ENTRY'}</p>
                         </td>
-                        <td className="responsive-table-padding text-center">
+                        <td data-label="Status" className="responsive-table-padding text-center">
                           <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase border tracking-widest transition-all ${isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>{isActive ? 'Active' : 'Suspended'}</span>
                         </td>
-                        <td className="responsive-table-padding text-right">
+                        <td data-label="Actions" className="responsive-table-padding text-right">
                            <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                              {currentUser?.role === UserRole.Admin ? (
                                <button onClick={() => { setUserToToggle(client); setIsSuspensionOpen(true); }} className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isActive ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-600' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-600 hover:text-white'}`}><Shield size={16} /></button>
@@ -147,7 +156,7 @@ const ClientManagement: React.FC = () => {
 
       {selectedClient && (
         <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
-          <div className="glass-card rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
+          <div className="glass-card scroll-pane rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
             <div className="flex justify-between items-start mb-10">
               <div className="space-y-1">
                  <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Guest Details</h3>
@@ -158,7 +167,7 @@ const ClientManagement: React.FC = () => {
 
             <div className="flex flex-col items-center mb-10 pt-4">
               <div className="relative mb-6">
-                 <img src={selectedClient.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedClient.name)}&background=020617&color=fff`} className="w-24 h-24 rounded-3xl object-cover ring-4 ring-white/10 shadow-2xl" alt=""/>
+                 <img src={selectedClient.avatarUrl || "/avatar-placeholder.svg"} className="w-24 h-24 rounded-3xl object-cover ring-4 ring-white/10 shadow-2xl" alt=""/>
                  {String(selectedClient.status).toLowerCase() === 'active' && <div className="absolute -bottom-1 -right-1 p-2 bg-emerald-600 rounded-xl border-4 border-slate-950 text-white shadow-xl animate-pulse"><ShieldCheck size={16} /></div>}
               </div>
               <h3 className="adaptive-text-lg font-black text-white uppercase text-center leading-tight tracking-tighter px-2 mb-2">{selectedClient.name}</h3>

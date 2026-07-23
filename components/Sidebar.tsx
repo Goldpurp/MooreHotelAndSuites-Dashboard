@@ -18,22 +18,36 @@ import { useHotel } from "../store/HotelContext";
 import PermissionWrapper from "./PermissionWrapper";
 import Logo from "./Logo";
 import { UserRole } from "../types";
+import { useConfirmation } from "./ConfirmationProvider";
 
 const Sidebar: React.FC = () => {
-  const { logout, isSidebarCollapsed, toggleSidebar, activeTab, setActiveTab } =
+  const { logout, isSidebarCollapsed, toggleSidebar, activeTab, setActiveTab, userRole } =
     useHotel();
+  const confirm = useConfirmation();
 
+  const handleLogout = async () => {
+    const accepted = await confirm({
+      title: "Log out of Moore Hotels?",
+      message: "You will need to enter your staff credentials again to access hotel operations.",
+      confirmLabel: "Log out",
+      cancelLabel: "Stay signed in",
+      tone: "danger",
+    });
+    if (accepted) logout();
+  };
+
+  const privileged = userRole === UserRole.Admin || userRole === UserRole.Manager;
   const menuItems = [
     { id: "dashboard", label: "Home", icon: LayoutDashboard },
     { id: "bookings", label: "Bookings", icon: CalendarDays },
-    { id: "settlements", label: "Payments", icon: CheckCircle2 },
+    { id: "settlements", label: "Payments", icon: CheckCircle2, visible: privileged },
     { id: "rooms", label: "Rooms", icon: Bed },
     { id: "guests", label: "Guests", icon: Users },
-  ];
+  ].filter((item) => item.visible !== false);
 
   return (
     <aside
-      className={`h-screen bg-slate-950/95 backdrop-blur-3xl border-r border-white/10 flex flex-col fixed left-0 top-0 z-50 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
+      className={`h-screen bg-slate-950/95 backdrop-blur-3xl border-r border-white/10 hidden md:flex flex-col fixed left-0 top-0 z-50 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
         isSidebarCollapsed ? "w-20" : "w-64"
       }`}
     >
@@ -213,7 +227,7 @@ const Sidebar: React.FC = () => {
 
       <div className="p-4 mt-auto border-t border-white/5">
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="w-full flex items-center gap-4 px-4 py-4 text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all text-[12px] font-black uppercase tracking-widest group"
         >
           <LogOut

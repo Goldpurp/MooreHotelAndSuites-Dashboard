@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { sileo } from "sileo";
 import CheckOutModal from "../components/CheckOutModal";
+import { getCheckoutTiming, isCheckoutOverdue } from "../lib/stayTime";
 
 const Guests: React.FC = () => {
   const {
@@ -45,6 +46,7 @@ const Guests: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCheckOutModalOpen, setIsCheckOutModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [clockNow, setClockNow] = useState(() => Date.now());
   const PAGE_SIZE = 12;
   const [activeCheckOutData, setActiveCheckOutData] = useState<{
     guest: Guest | null;
@@ -62,14 +64,18 @@ const Guests: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  // Utility to check if a check-out is overdue (Standard time: 12:00 PM)
-  const checkOverdueStatus = (checkOutDate: string) => {
-    const now = new Date();
-    const checkout = new Date(checkOutDate);
-    // Standard protocol: 12:00 PM
-    checkout.setHours(12, 0, 0, 0);
-    return now > checkout;
-  };
+  useEffect(() => {
+    const updateClock = () => setClockNow(Date.now());
+    const interval = window.setInterval(updateClock, 30_000);
+    const updateWhenVisible = () => {
+      if (document.visibilityState === "visible") updateClock();
+    };
+    document.addEventListener("visibilitychange", updateWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", updateWhenVisible);
+    };
+  }, []);
 
   const unifiedResidentList = useMemo(() => {
     const registry = new Map<string, any>();
@@ -81,7 +87,7 @@ const Guests: React.FC = () => {
         const match = (guests || []).find(
           (g) => b.guestId && g.id === b.guestId,
         );
-        const isOverdue = checkOverdueStatus(b.checkOut);
+        const isOverdue = isCheckoutOverdue(b.checkOut, clockNow);
 
         registry.set(identityKey, {
           id: b.bookingCode || b.id,
@@ -92,7 +98,7 @@ const Guests: React.FC = () => {
           phone: b.guestPhone || match?.phone || "",
           avatarUrl:
             match?.avatarUrl ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent((b.guestFirstName || "G") + " " + (b.guestLastName || ""))}&background=020617&color=fff`,
+            "/avatar-placeholder.svg",
           activeStay: {
             booking: b,
             room: rooms.find((r) => r.id === b.roomId) || null,
@@ -101,7 +107,6 @@ const Guests: React.FC = () => {
           history: [],
           totalSpent: b.amount || 0,
           createdAt: b.createdAt,
-          notificationMessage: b.notificationMessage,
         });
       }
     });
@@ -117,7 +122,7 @@ const Guests: React.FC = () => {
           lastName: b.guestLastName || "",
           email: b.guestEmail || "",
           phone: b.guestPhone || "",
-          avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent((b.guestFirstName || "G") + " " + (b.guestLastName || ""))}&background=020617&color=fff`,
+          avatarUrl: "/avatar-placeholder.svg",
           activeStay: null,
           history: [],
           totalSpent: 0,
@@ -129,7 +134,7 @@ const Guests: React.FC = () => {
       profile.totalSpent += b.amount || 0;
     });
     return Array.from(registry.values());
-  }, [guests, bookings, rooms]);
+  }, [guests, bookings, rooms, clockNow]);
 
   const filteredResidents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -181,8 +186,8 @@ const Guests: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-row gap-6 h-[calc(100vh-120px)] animate-in fade-in duration-700 overflow-hidden">
-      <div className="split-main flex flex-col gap-4">
+    <div className="master-detail-workspace flex h-full min-h-0 flex-row gap-6 overflow-hidden">
+      <div className="split-main flex min-h-0 flex-col gap-4">
         <div className="flex items-end justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -248,8 +253,8 @@ const Guests: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-y-auto flex-1">
-            <table className="w-full text-left min-w-[500px]">
+          <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+            <table className="mobile-card-table w-full text-left min-w-[500px]">
               <thead className="sticky top-0 bg-slate-950 z-20 border-b border-white/10">
                 <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
                   <th className="responsive-table-padding">Guest Details</th>
@@ -281,6 +286,11 @@ const Guests: React.FC = () => {
                       (active?.booking?.paymentStatus || "").toLowerCase() ===
                       "paid";
                     const isOverdue = active?.isOverdue;
+                    const visibleBooking =
+                      active?.booking || resident.history?.[0] || null;
+                    const checkoutTiming = active
+                      ? getCheckoutTiming(active.booking.checkOut, clockNow)
+                      : null;
 
                     return (
                       <tr
@@ -288,7 +298,7 @@ const Guests: React.FC = () => {
                         onClick={() => setLocalSelectedId(resident.id)}
                         className={`hover:bg-white/[0.02] transition-all cursor-pointer group border-l-4 ${localSelectedId === resident.id ? "bg-white/[0.04] border-brand-500" : "border-transparent"}`}
                       >
-                        <td className="responsive-table-padding">
+                        <td data-label="Guest" className="responsive-table-padding">
                           <div className="flex items-center gap-4">
                             <div className="relative shrink-0">
                               <img
@@ -315,46 +325,62 @@ const Guests: React.FC = () => {
                                     className="text-rose-500 shrink-0"
                                   />
                                 )}
-                                {resident.notificationMessage === "Guest checks out in 30mins" && (
-                                  <div className="flex items-center gap-1 bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30 animate-pulse">
-                                    <Clock size={10} className="text-rose-500" />
-                                    <span className="text-[7px] font-black text-rose-400 uppercase">30MINS LEFT</span>
+                                {checkoutTiming && (
+                                  <div
+                                    className={`flex items-center gap-1 rounded border px-1.5 py-0.5 animate-pulse ${
+                                      checkoutTiming.isOverdue
+                                        ? "border-rose-500/30 bg-rose-500/20"
+                                        : "border-amber-500/30 bg-amber-500/15"
+                                    }`}
+                                  >
+                                    <Clock
+                                      size={10}
+                                      className={checkoutTiming.isOverdue ? "text-rose-500" : "text-amber-400"}
+                                    />
+                                    <span
+                                      className={`text-[7px] font-black uppercase ${
+                                        checkoutTiming.isOverdue ? "text-rose-400" : "text-amber-300"
+                                      }`}
+                                    >
+                                      {checkoutTiming.label}
+                                    </span>
                                   </div>
                                 )}
                               </div>
-                              <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest truncate">
-                                ID: {resident.id}
+                              <p className="break-all text-[8px] font-black uppercase tracking-wider text-slate-500">
+                                Ref: {visibleBooking?.bookingCode || "Not available"}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="responsive-table-padding text-center col-priority-med">
-                          <span
-                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center gap-1.5 justify-center w-fit mx-auto border ${
-                              active
-                                ? isOverdue
-                                  ? "bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.1)]"
-                                  : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]"
-                                : "bg-slate-900 text-slate-600 border-white/5"
-                            }`}
-                          >
-                            {active ? (
-                              isOverdue ? (
-                                <Clock size={10} />
-                              ) : (
-                                <Zap size={10} fill="currentColor" />
-                              )
-                            ) : (
-                              <History size={10} />
+                        <td data-label="Status" className="responsive-table-padding text-center col-priority-med">
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            {active && isOverdue && (
+                              <span className="relative inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-[9px] font-black uppercase text-rose-400 shadow-[0_0_14px_rgba(244,63,94,0.18)] animate-pulse">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                                  <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+                                </span>
+                                Overdue
+                              </span>
                             )}
-                             {active
-                              ? isOverdue
-                                ? "OVERDUE"
-                                : "CHECKED IN"
-                              : "LEFT"}
-                          </span>
+                            <span
+                              className={`inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase ${
+                                active
+                                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]"
+                                  : "border-white/5 bg-slate-900 text-slate-600"
+                              }`}
+                            >
+                              {active ? (
+                                <Zap size={10} fill="currentColor" />
+                              ) : (
+                                <History size={10} />
+                              )}
+                              {active ? "Checked In" : "Left"}
+                            </span>
+                          </div>
                         </td>
-                        <td className="responsive-table-padding col-priority-low">
+                        <td data-label="Stay" className="responsive-table-padding col-priority-low">
                           <div className="flex items-center gap-2 adaptive-text-xs font-bold text-slate-600">
                             <span className={isOverdue ? "text-rose-400" : ""}>
                               {active
@@ -383,7 +409,7 @@ const Guests: React.FC = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="responsive-table-padding text-right">
+                        <td data-label="Actions" className="responsive-table-padding text-right">
                           <div className="min-w-0">
                             <p
                               className={`adaptive-text-sm font-black tracking-tighter truncate ${active ? (activeIsPaid ? "text-emerald-400" : "text-rose-500") : "text-slate-400"}`}
@@ -443,7 +469,7 @@ const Guests: React.FC = () => {
 
       {selectedResident && (
         <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
-          <div className="glass-card rounded-2xl p-8 flex flex-col border border-white/10 bg-[#0a0f1a] shadow-2xl h-full overflow-y-auto">
+          <div className="glass-card scroll-pane rounded-2xl p-8 flex flex-col border border-white/10 bg-[#0a0f1a] shadow-2xl h-full overflow-y-auto">
             <div className="flex justify-between items-start mb-3">
               <div className="space-y-1">
                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">
@@ -533,7 +559,7 @@ const Guests: React.FC = () => {
                       className={`text-[9px] font-black uppercase tracking-widest ${selectedResident.activeStay.isOverdue ? "text-rose-500" : "text-emerald-500/60"}`}
                     >
                       {selectedResident.activeStay.isOverdue
-                        ? "OVERDUE"
+                        ? "OVERDUE · CHECKED IN"
                         : "Checked In"}
                     </span>
                     <span
@@ -554,6 +580,9 @@ const Guests: React.FC = () => {
                       </p>
                       <p className="text-[8px] text-slate-600 font-bold uppercase truncate">
                         {selectedResident.activeStay.room?.category}
+                      </p>
+                      <p className="mt-1 break-all text-[8px] font-black uppercase tracking-wider text-slate-500">
+                        Ref: {selectedResident.activeStay.booking.bookingCode}
                       </p>
                     </div>
                   </div>
@@ -620,6 +649,9 @@ const Guests: React.FC = () => {
                                 year: "numeric",
                               },
                             )}
+                          </p>
+                          <p className="mt-1 break-all text-[8px] font-black uppercase tracking-wider text-slate-500">
+                            Ref: {stay.bookingCode}
                           </p>
                         </div>
                         <button

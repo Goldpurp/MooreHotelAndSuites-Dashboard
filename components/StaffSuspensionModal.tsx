@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Lock, Activity, Loader2, ShieldOff, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { sileo } from 'sileo';
 import { StaffUser } from '../types';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface StaffSuspensionModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface StaffSuspensionModalProps {
 const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onClose, onConfirm, user }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const modalRef = useAccessibleModal(isOpen, onClose, !isSubmitting);
 
   if (!isOpen || !user) return null;
 
@@ -40,7 +42,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-300">
+    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label={isActive ? 'Suspend staff access' : 'Restore staff access'} tabIndex={-1} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-300">
       <div className={`glass-card w-full max-w-md rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 shadow-3xl ${
         isActive ? 'shadow-rose-950/20' : 'shadow-emerald-950/20'
       }`}>
@@ -57,11 +59,11 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                     {isActive ? 'Deactivate' : 'Activate'}
                   </h2>
                   <p className={`text-[8px] font-black uppercase tracking-[0.2em] mt-1.5 ${isActive ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    Personnel ID: {user.id.slice(0, 8)}...
+                    Staff access confirmation
                   </p>
                 </div>
               </div>
-              <button onClick={onClose} disabled={isSubmitting} className="p-2 md:p-2.5 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all active:scale-90">
+              <button type="button" data-modal-close aria-label="Close staff status confirmation" onClick={onClose} disabled={isSubmitting} className="p-2 md:p-2.5 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all active:scale-90">
                 <X size={20} />
               </button>
             </div>
@@ -81,7 +83,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
 
               <div className="bg-white/5 p-5 md:p-6 rounded-2xl md:rounded-[2rem] border border-white/5 space-y-4 shadow-inner">
                  <div className="flex items-center gap-4">
-                    <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=020617&color=fff`} className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/10" alt="" />
+                    <img src={user.avatarUrl || "/avatar-placeholder.svg"} className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/10" alt="" />
                     <div className="min-w-0">
                        <p className="text-sm md:text-[14px] font-black text-white uppercase tracking-tight truncate">{user.name}</p>
                        <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase">{user.role}</p>
@@ -117,7 +119,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                   </>
                 )}
               </button>
-              <button onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all">Abort Protocol</button>
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all">Abort Protocol</button>
             </div>
           </>
       </div>

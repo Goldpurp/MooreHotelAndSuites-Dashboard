@@ -6,9 +6,10 @@ import { Search, CheckCircle, Clock,
   ShieldAlert, Lock, Wallet, RotateCcw, Hash, Copy
 } from 'lucide-react';
 import { sileo } from 'sileo';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 const Settlements: React.FC = () => {
-  const { bookings, guests, confirmTransfer, verifyMonnify, completeRefund, refreshData, currentUser } = useHotel();
+  const { bookings, guests, confirmTransfer, verifyMonnify, completeRefund, refreshData, currentUser, selectedPaymentBookingId, setSelectedPaymentBookingId } = useHotel();
   
   /** 
    * CHANGE: Added 'refunds' tab to the Settlements workflow 
@@ -19,6 +20,7 @@ const Settlements: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [confirmationText, setConfirmationText] = useState('');
   
   /** 
    * CHANGE: Added state for mandatory transaction reference 
@@ -31,6 +33,17 @@ const Settlements: React.FC = () => {
 
   const [verificationState, setVerificationState] = useState<'idle' | 'committing' | 'success'>('idle');
   const [validationError, setValidationError] = useState(false);
+  const closeConfirmation = () => {
+    setIsConfirmModalOpen(false);
+    setRefundRef('');
+    setConfirmationText('');
+    setValidationError(false);
+  };
+  const paymentModalRef = useAccessibleModal(
+    isConfirmModalOpen,
+    closeConfirmation,
+    verificationState !== 'committing',
+  );
 
   const processedData = useMemo(() => {
     return (bookings || [])
@@ -80,22 +93,43 @@ const Settlements: React.FC = () => {
 
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery]);
 
+  useEffect(() => {
+    if (!selectedPaymentBookingId) return;
+    const booking = bookings.find((item) => item.id === selectedPaymentBookingId);
+    if (!booking) return;
+
+    if (booking.paymentStatus === PaymentStatus.RefundPending) setActiveTab('refunds');
+    else if (booking.paymentStatus === PaymentStatus.Paid || booking.paymentStatus === PaymentStatus.Refunded) setActiveTab('history');
+    else setActiveTab('queue');
+
+    setSearchQuery(booking.bookingCode || booking.guestEmail || '');
+    setCurrentPage(1);
+    setSelectedPaymentBookingId(null);
+  }, [bookings, selectedPaymentBookingId, setSelectedPaymentBookingId]);
+
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  /** 
-   * CHANGE: Unified action execution logic.
-   * If in the Refund tab, it triggers completeRefund with the transaction ref.
-   * Otherwise, it performs standard transfer verification.
-   */
+  const isManualTransferConfirmation = activeTab !== 'refunds' &&
+    selectedBooking?.paymentMethod === PaymentMethod.DirectTransfer;
+
   const executeAction = async () => {
     if (!selectedBooking) return;
-    
-    // Validation before committing
-    if ((activeTab === 'refunds' || selectedBooking.paymentMethod === PaymentMethod.Monnify) && !refundRef.trim() && !selectedBooking.transactionReference) {
+
+    if (isManualTransferConfirmation && confirmationText !== 'ACCEPT') {
+      setValidationError(true);
+      sileo.error({
+        title: 'Confirmation Required',
+        description: 'Type "ACCEPT" exactly to confirm that the payment was manually verified.'
+      });
+      return;
+    }
+
+    const actionReference = refundRef.trim();
+    if (activeTab === 'refunds' && !actionReference) {
       setValidationError(true);
       sileo.error({
         title: 'Input Required',
@@ -108,19 +142,19 @@ const Settlements: React.FC = () => {
     setVerificationState('committing');
     try { 
       if (activeTab === 'refunds') {
-        await completeRefund(selectedBooking.id, refundRef);
+        await completeRefund(selectedBooking.id, actionReference);
         sileo.success({
           title: 'Refund Processed',
           description: `The refund for ${resolveGuestName(selectedBooking)} has been finalized.`
         });
       } else if (selectedBooking.paymentMethod === PaymentMethod.Monnify) {
-        await verifyMonnify(selectedBooking.bookingCode, refundRef || selectedBooking.transactionReference || '');
+        await verifyMonnify(selectedBooking.bookingCode);
         sileo.success({
           title: 'Payment Verified',
           description: `Monnify transaction for ${resolveGuestName(selectedBooking)} is now confirmed.`
         });
       } else {
-        await confirmTransfer(selectedBooking.bookingCode);
+        await confirmTransfer(selectedBooking.bookingCode, confirmationText);
         sileo.success({
           title: 'Booking Confirmed',
           description: `The booking for ${resolveGuestName(selectedBooking)} is now officially confirmed.`
@@ -131,6 +165,7 @@ const Settlements: React.FC = () => {
         setIsConfirmModalOpen(false);
         setSelectedBooking(null);
         setRefundRef('');
+        setConfirmationText('');
         setVerificationState('idle');
       }, 1500);
     } 
@@ -154,7 +189,7 @@ const Settlements: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 pb-10">
+    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -182,7 +217,7 @@ const Settlements: React.FC = () => {
           <button onClick={() => setActiveTab('history')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'history' ? 'text-emerald-400' : 'text-slate-600'}`}>History {activeTab === 'history' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"></div>}</button>
       </div>
 
-      <div className="glass-card rounded-2xl border border-white/5 overflow-hidden flex flex-col min-h-[550px]">
+      <div className="glass-card min-h-0 flex-1 rounded-2xl border border-white/5 overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-white/5 bg-slate-950/40">
            <div className="relative group max-w-lg">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
@@ -190,8 +225,8 @@ const Settlements: React.FC = () => {
            </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left min-w-[800px]">
+        <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+          <table className="mobile-card-table w-full text-left min-w-[800px]">
             <thead>
               <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/20">
                 <th className="responsive-table-padding">Date</th>
@@ -213,20 +248,20 @@ const Settlements: React.FC = () => {
                   
                   return (
                     <tr key={folio.id} className="hover:bg-white/[0.02] transition-all border-l-4 border-transparent">
-                      <td className="responsive-table-padding">
+                      <td data-label="Date" className="responsive-table-padding">
                         <div>
                           <p className="adaptive-text-sm font-black text-white italic">{new Date(folio.createdAt).toLocaleDateString('en-GB')}</p>
                           <p className="text-[8px] text-slate-600 font-bold uppercase mt-1">{new Date(folio.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </td>
-                      <td className="responsive-table-padding">
+                      <td data-label="Guest" className="responsive-table-padding">
                         <div className="min-w-0">
                           <p className="adaptive-text-sm font-black text-slate-300 uppercase italic truncate leading-none mb-1">{resolveGuestName(folio)}</p>
                           <p className="text-[8px] text-slate-600 font-black uppercase truncate">{folio.guestEmail || 'No Email'}</p>
                         </div>
                       </td>
-                      <td className="responsive-table-padding col-priority-med">
-                        <p className="text-xs font-black uppercase text-slate-300">{folio.bookingCode}</p>
+                      <td data-label="Booking" className="responsive-table-padding col-priority-med">
+                        <p className="break-all text-xs font-black uppercase text-slate-300">{folio.bookingCode}</p>
                         <div 
                           onClick={() => handleCopy(folio.transactionReference || '')}
                           className={`group flex items-center gap-2 mt-1 w-fit transition-all ${folio.transactionReference ? 'cursor-pointer hover:text-brand-400' : 'opacity-40'}`}
@@ -240,10 +275,10 @@ const Settlements: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="responsive-table-padding text-right">
+                      <td data-label="Amount" className="responsive-table-padding text-right">
                          <p className={`adaptive-text-sm font-black italic ${isPaid ? 'text-white' : isRefunded || isRefundPending ? 'text-rose-400' : 'text-emerald-400'}`}>₦{folio.amount.toLocaleString()}</p>
                       </td>
-                      <td className="responsive-table-padding text-center">
+                      <td data-label="Status" className="responsive-table-padding text-center">
                          <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase border inline-flex items-center gap-1.5 ${
                            isPaid ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                            isRefunded ? 'bg-slate-800 text-slate-500 border-white/5' :
@@ -254,11 +289,11 @@ const Settlements: React.FC = () => {
                             {isPaid ? 'Paid' : isRefunded ? 'Refunded' : isRefundPending ? 'Refund' : 'Awaiting'}
                          </span>
                       </td>
-                      <td className="responsive-table-padding text-right">
+                      <td data-label="Actions" className="responsive-table-padding text-right">
                          {(isPaid || isRefunded) ? (
                            <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Completed</span></div>
                          ) : (
-                           <button onClick={() => { setSelectedBooking(folio); setIsConfirmModalOpen(true); if (folio.paymentMethod === PaymentMethod.Monnify) setRefundRef(folio.transactionReference || ''); }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : folio.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
+                           <button onClick={() => { setSelectedBooking(folio); setConfirmationText(''); setValidationError(false); setIsConfirmModalOpen(true); if (folio.paymentMethod === PaymentMethod.Monnify) setRefundRef(folio.transactionReference || ''); }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : folio.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
                              {isRefundPending ? <RotateCcw size={12} className="inline mr-1.5" /> : folio.paymentMethod === PaymentMethod.Monnify ? <ShieldCheck size={12} className="inline mr-1.5" /> : <ShieldCheck size={12} className="inline mr-1.5" />}
                              {isRefundPending ? 'Refund' : folio.paymentMethod === PaymentMethod.Monnify ? 'Verify' : 'Confirm'}
                            </button>
@@ -283,7 +318,7 @@ const Settlements: React.FC = () => {
       </div>
 
       {isConfirmModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#020617]/90 backdrop-blur-md animate-in fade-in duration-300">
+        <div ref={paymentModalRef} role="alertdialog" aria-modal="true" aria-label={activeTab === 'refunds' ? 'Confirm refund' : 'Confirm payment'} tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#020617]/90 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-sm bg-[#0a0f1d] border border-white/10 rounded-[2.5rem] p-8 shadow-3xl text-center overflow-hidden">
               {verificationState === 'success' ? (
                 <div className="py-6 animate-in zoom-in-95 duration-500 flex flex-col items-center">
@@ -308,30 +343,74 @@ const Settlements: React.FC = () => {
                         ? `Refund for ${selectedBooking ? resolveGuestName(selectedBooking) : ''}. Enter payment ref below.`
                         : selectedBooking?.paymentMethod === PaymentMethod.Monnify
                           ? `Verify Monnify payment for ${selectedBooking ? resolveGuestName(selectedBooking) : ''}.`
-                          : `Confirm this payment manually for ${selectedBooking ? resolveGuestName(selectedBooking) : ''}.`}
+                          : `You are confirming that ₦${selectedBooking?.amount.toLocaleString() || '0'} was manually verified for ${selectedBooking ? resolveGuestName(selectedBooking) : ''}.`}
                   </p>
+                  {selectedBooking && (
+                    <div className="mb-6 rounded-2xl border border-white/5 bg-white/[0.035] px-4 py-3 text-left">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Booking Reference</p>
+                      <p className="mt-1 break-all text-[11px] font-black uppercase tracking-wide text-white">
+                        {selectedBooking.bookingCode}
+                      </p>
+                    </div>
+                  )}
 
-                  {(activeTab === 'refunds' || selectedBooking?.paymentMethod === PaymentMethod.Monnify) && verificationState === 'idle' && (
+                  {verificationState === 'idle' && isManualTransferConfirmation && (
+                    <div className="space-y-3 mb-8 text-left">
+                      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
+                        <p className="text-[10px] font-black uppercase tracking-wider text-amber-300 leading-relaxed">
+                          Only continue after checking the receiving bank account and matching this booking's amount.
+                        </p>
+                      </div>
+                      <div className="flex justify-between items-center px-1">
+                        <label htmlFor="manual-payment-confirmation" className="text-[9px] text-slate-500 font-black uppercase tracking-widest">
+                          Type <span className="text-white">ACCEPT</span> to confirm
+                        </label>
+                        {validationError && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Does not match</p>}
+                      </div>
+                      <input
+                        id="manual-payment-confirmation"
+                        value={confirmationText}
+                        onChange={(e) => { setConfirmationText(e.target.value); setValidationError(false); }}
+                        placeholder="ACCEPT"
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        aria-invalid={validationError}
+                        className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : confirmationText === 'ACCEPT' ? 'border-emerald-500/40' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all font-black tracking-[0.18em] uppercase focus:border-brand-500/50`}
+                      />
+                    </div>
+                  )}
+
+                  {verificationState === 'idle' && activeTab === 'refunds' && (
                     <div className="space-y-2 mb-8 text-left">
                        <div className="flex justify-between items-center px-1">
-                          <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center gap-2"><Hash size={12}/> {activeTab === 'refunds' ? 'Refund Ref' : 'Monnify Ref'}</label>
+                          <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center gap-2"><Hash size={12}/> Refund Ref</label>
                           {validationError && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
                        </div>
                        <input 
                          value={refundRef}
                          onChange={(e) => { setRefundRef(e.target.value); setValidationError(false); }}
-                         placeholder={activeTab === 'refunds' ? "REF-XXXXXX" : "Transaction Reference"}
-                         className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all italic font-bold ${selectedBooking?.paymentMethod === PaymentMethod.Monnify ? 'focus:border-indigo-500/40' : 'focus:border-rose-500/40'}`}
+                         placeholder="REF-XXXXXX"
+                         className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all italic font-bold focus:border-rose-500/40`}
                        />
+                    </div>
+                  )}
+
+                  {verificationState === 'idle' && selectedBooking?.paymentMethod === PaymentMethod.Monnify && activeTab !== 'refunds' && (
+                    <div className="mb-8 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-4 text-left">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-indigo-300 leading-relaxed">
+                        The server will use its saved payment reference and verify the status, amount, currency, booking, and guest directly with Monnify. No reference input is accepted.
+                      </p>
                     </div>
                   )}
                   
                   {verificationState === 'idle' && (
                     <div className="grid grid-cols-2 gap-3">
-                      <button onClick={() => { setIsConfirmModalOpen(false); setRefundRef(''); setValidationError(false); }} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Cancel</button>
+                      <button type="button" data-modal-cancel onClick={closeConfirmation} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Cancel</button>
                       <button 
                         onClick={executeAction} 
-                        className={`py-4 rounded-2xl font-black adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg italic transition-all active:scale-95 ${activeTab === 'refunds' ? 'bg-rose-600 hover:bg-rose-700 text-white' : selectedBooking?.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}
+                        disabled={isManualTransferConfirmation && confirmationText !== 'ACCEPT'}
+                        className={`py-4 rounded-2xl font-black adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg italic transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:active:scale-100 ${activeTab === 'refunds' ? 'bg-rose-600 hover:bg-rose-700 text-white' : selectedBooking?.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}
                       >
                         {selectedBooking?.paymentMethod === PaymentMethod.Monnify && activeTab !== 'refunds' ? 'Verify' : 'Confirm'}
                       </button>

@@ -5,6 +5,7 @@ import {
 import { sileo } from 'sileo';
 import { Guest, Booking, Room, PaymentStatus, RoomStatus } from '../types';
 import { useHotel } from '../store/HotelContext';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface CheckInConfirmModalProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
   const isUnpaid = useMemo(() => (booking?.paymentStatus || '').toLowerCase() !== 'paid', [booking]);
   const isBlockedByStatus = useMemo(() => room ? room.status !== RoomStatus.Available : false, [room]);
   const isCleaning = useMemo(() => room?.status === RoomStatus.Cleaning, [room]);
+  const modalRef = useAccessibleModal(isOpen, onClose, !isSubmitting);
 
   if (!isOpen || !guest || !booking || !room) return null;
 
@@ -58,13 +60,13 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     try {
       await onConfirm(booking.id);
       sileo.success({
-        title: 'Resident Activation Successful',
-        description: `Folio ${booking.bookingCode} is now active. Unit ${room.roomNumber} has been successfully assigned and the digital key protocol initialized.`
+        title: 'Guest Checked In',
+        description: `Room ${room.roomNumber} is now assigned and ready for the guest.`
       });
       onClose();
     } catch (err: any) {
-      let title = 'Activation Protocol Failure';
-      let description = err.message || `The property node could not activate Folio ${booking.bookingCode}. Please verify the resident's identity and room readiness.`;
+      let title = 'Check-in Unsuccessful';
+      let description = err.message || `The guest could not be checked into Room ${room.roomNumber}. Please verify the guest and room details.`;
 
       if (err.message === "Access Denied: This booking expires in 30min.") {
         title = "Urgent Check-in Required";
@@ -146,7 +148,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     error === "Access Denied: This booking is in the past.";
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label="Confirm guest check-in" tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className={`glass-card w-full max-w-md rounded-[2rem] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 shadow-3xl ring-1 ${
         display.color === 'rose' ? 'shadow-rose-950/20 ring-rose-500/20' :
         display.color === 'amber' ? 'shadow-amber-900/20 ring-amber-500/20' : 'shadow-emerald-900/20 ring-emerald-500/20'
@@ -170,10 +172,16 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                   }`}>{display.sub}</p>
                 </div>
               </div>
-              <button onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all"><X size={16} /></button>
+              <button type="button" data-modal-close aria-label="Close check-in confirmation" onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all"><X size={16} /></button>
             </div>
 
             <div className="p-8 space-y-6">
+              <div className="rounded-2xl border border-white/5 bg-white/[0.035] px-4 py-3">
+                <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Booking Reference</p>
+                <p className="mt-1 break-all text-[11px] font-black uppercase tracking-wide text-white">
+                  {booking.bookingCode || "Not available"}
+                </p>
+              </div>
               {isUnpaid ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex flex-col items-center gap-4">
@@ -279,7 +287,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                   </>
                 )}
               </button>
-              <button onClick={onClose} disabled={isSubmitting} className="w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">Abort Protocol</button>
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">Abort Protocol</button>
             </div>
           </>
       </div>

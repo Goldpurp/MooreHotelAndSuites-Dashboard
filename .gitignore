@@ -11,6 +11,11 @@ node_modules
 dist
 .env
 .env.*
+!.env.example
+!.env.cloud.example
+!.env.localhost
+!.env.development
+!.env.production
 dist-ssr
 *.local
 

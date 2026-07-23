@@ -3,6 +3,7 @@ import { X, Calendar, Zap, FileCheck, Check, AlertCircle, Loader2, User, Bed, Sh
 import { useHotel } from '../store/HotelContext';
 import { PaymentMethod, BookingInitResponse } from '../types';
 import { sileo } from 'sileo';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
   const [error, setError] = useState<string | null>(null);
   const [validationFields, setValidationFields] = useState<string[]>([]);
+  const modalRef = useAccessibleModal(isOpen, onClose, !isSubmitting);
 
   const selectedRoom = useMemo(() => rooms.find(r => r.id === formData.roomId), [rooms, formData.roomId]);
 
@@ -228,7 +230,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/98 backdrop-blur-3xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-label={isWalkIn ? 'Create walk-in booking' : 'Create booking'} tabIndex={-1} className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/98 backdrop-blur-3xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
       <div className="w-full max-w-5xl flex flex-col items-center justify-center min-h-[500px] py-4 sm:py-8">
         
 
@@ -341,7 +343,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                      <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">New Booking</span>
                   </div>
-                  <button onClick={onClose} className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
+                  <button type="button" data-modal-close aria-label="Close booking form" onClick={onClose} className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
                </div>
 
                {error && (
@@ -495,7 +497,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
              </div>
 
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                <button onClick={onClose} className="py-5 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-[0.2em] hover:text-white hover:bg-white/5 transition-all italic">Close Modal</button>
+                <button type="button" data-modal-close onClick={onClose} className="py-5 border border-white/10 rounded-2xl text-slate-500 font-black text-[11px] uppercase tracking-[0.2em] hover:text-white hover:bg-white/5 transition-all italic">Close Modal</button>
                 <button onClick={handleNavigateToSettlements} className="py-5 bg-white text-slate-950 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all hover:bg-slate-200 active:scale-95 italic">Go to Settlements</button>
              </div>
           </div>

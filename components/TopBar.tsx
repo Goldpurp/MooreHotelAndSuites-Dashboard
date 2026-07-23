@@ -1,34 +1,69 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
+import {
   Search, Bell, Bed, Users, Calendar, CheckCircle, 
-  Info, Check, ShieldAlert
+  Info, Check, ShieldAlert, X, CreditCard, ShieldCheck,
+  UserSquare, ClipboardList, History, ArrowRight
 } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { AppNotification } from '../types';
+import { getStaffDisplayName } from '../lib/displayPrivacy';
+import {
+  buildGlobalSearchGroups,
+  GlobalSearchKind,
+  GlobalSearchResult,
+} from '../lib/globalSearch';
+import { isCheckoutOverdue } from '../lib/stayTime';
+
+const SEARCH_ICONS: Record<GlobalSearchKind, React.ElementType> = {
+  page: ArrowRight,
+  room: Bed,
+  booking: Calendar,
+  guest: Users,
+  payment: CreditCard,
+  staff: ShieldCheck,
+  client: UserSquare,
+  activity: ClipboardList,
+  notification: Bell,
+  audit: History,
+};
+
+const SEARCH_ICON_STYLES: Record<GlobalSearchKind, string> = {
+  page: 'bg-slate-500/10 text-slate-300',
+  room: 'bg-blue-500/10 text-blue-400',
+  booking: 'bg-amber-500/10 text-amber-400',
+  guest: 'bg-emerald-500/10 text-emerald-400',
+  payment: 'bg-violet-500/10 text-violet-400',
+  staff: 'bg-sky-500/10 text-sky-400',
+  client: 'bg-teal-500/10 text-teal-400',
+  activity: 'bg-orange-500/10 text-orange-400',
+  notification: 'bg-rose-500/10 text-rose-400',
+  audit: 'bg-indigo-500/10 text-indigo-400',
+};
 
 const TopBar: React.FC = () => {
-  const { 
-    currentUser, rooms, guests, bookings, staff, 
+  const {
+    currentUser, rooms, guests, bookings, staff, auditLogs, visitHistory, userRole,
     setActiveTab, setSelectedBookingId, setSelectedGuestId, setSelectedRoomId,
+    setSelectedPaymentBookingId, setSelectedProfileId, setSelectedVisitRecordId,
+    setSelectedAuditLogId,
     notifications, markAllNotificationsRead, markNotificationAsRead
   } = useHotel();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [activeSearchIndex, setActiveSearchIndex] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const resultItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   // Critical Tasks Logic (Overdue check-outs)
   const criticalTasksCount = useMemo(() => {
-    const now = new Date();
     return (bookings || []).filter(b => {
       if (String(b.status).toLowerCase() !== 'checkedin') return false;
-      const checkout = new Date(b.checkOut);
-      checkout.setHours(11, 30, 0, 0);
-      return now > checkout;
+      return isCheckoutOverdue(b.checkOut);
     }).length;
   }, [bookings]);
 
@@ -37,6 +72,7 @@ const TopBar: React.FC = () => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         searchInputRef.current?.focus();
+        setShowResults(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -56,47 +92,103 @@ const TopBar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim() || searchQuery.length < 2) return null;
-    const q = searchQuery.toLowerCase();
-    
-    return {
-      rooms: (rooms || []).filter(r => 
-        (r.roomNumber || '').toLowerCase().includes(q) || 
-        (r.category || '').toLowerCase().includes(q) || 
-        (r.name || '').toLowerCase().includes(q)
-      ).slice(0, 4),
-      guests: (guests || []).filter(g => 
-        (g.lastName || '').toLowerCase().includes(q) || 
-        (g.firstName || '').toLowerCase().includes(q) ||
-        (g.email || '').toLowerCase().includes(q)
-      ).slice(0, 4),
-      bookings: (bookings || []).filter(b => 
-        (b.bookingCode || '').toLowerCase().includes(q) ||
-        (b.id || '').toLowerCase().includes(q)
-      ).slice(0, 4),
-      staff: (staff || []).filter(s => 
-        (s.name || '').toLowerCase().includes(q) || 
-        (s.email || '').toLowerCase().includes(q)
-      ).slice(0, 4)
-    };
-  }, [searchQuery, rooms, guests, bookings, staff]);
+  const searchGroups = useMemo(() => buildGlobalSearchGroups({
+    query: searchQuery,
+    rooms: rooms || [],
+    bookings: bookings || [],
+    guests: guests || [],
+    staff: staff || [],
+    notifications: notifications || [],
+    auditLogs: auditLogs || [],
+    visitHistory: visitHistory || [],
+    userRole,
+  }), [searchQuery, rooms, bookings, guests, staff, notifications, auditLogs, visitHistory, userRole]);
 
-  const hasAnyResults = useMemo(() => {
-    if (!searchResults) return false;
-    return Object.values(searchResults).some((arr) => (arr as any[]).length > 0);
-  }, [searchResults]);
+  const flatSearchResults = useMemo(
+    () => searchGroups.flatMap((group) => group.results),
+    [searchGroups],
+  );
 
-  const handleNavigate = (tab: string, id: string) => {
+  const resultIndexes = useMemo(() => {
+    const indexes = new Map<string, number>();
+    flatSearchResults.forEach((result, index) => indexes.set(result.key, index));
+    return indexes;
+  }, [flatSearchResults]);
+
+  useEffect(() => {
+    setActiveSearchIndex(0);
+    resultItemRefs.current = [];
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (!showResults) return;
+    resultItemRefs.current[activeSearchIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [activeSearchIndex, showResults]);
+
+  const resetSearchTargets = () => {
     setSelectedBookingId(null);
     setSelectedGuestId(null);
     setSelectedRoomId(null);
-    if (tab === 'bookings') setSelectedBookingId(id);
-    if (tab === 'guests') setSelectedGuestId(id);
-    if (tab === 'rooms') setSelectedRoomId(id);
-    setActiveTab(tab);
+    setSelectedPaymentBookingId(null);
+    setSelectedProfileId(null);
+    setSelectedVisitRecordId(null);
+    setSelectedAuditLogId(null);
+  };
+
+  const closeSearch = () => {
     setSearchQuery('');
     setShowResults(false);
+    setActiveSearchIndex(0);
+  };
+
+  const handleSearchSelection = async (result: GlobalSearchResult) => {
+    resetSearchTargets();
+
+    if (result.kind === 'booking' && result.targetId) setSelectedBookingId(result.targetId);
+    if (result.kind === 'guest' && result.targetId) setSelectedGuestId(result.targetId);
+    if (result.kind === 'room' && result.targetId) setSelectedRoomId(result.targetId);
+    if (result.kind === 'payment' && result.targetId) setSelectedPaymentBookingId(result.targetId);
+    if ((result.kind === 'staff' || result.kind === 'client') && result.targetId) setSelectedProfileId(result.targetId);
+    if (result.kind === 'activity' && result.targetId) setSelectedVisitRecordId(result.targetId);
+    if (result.kind === 'audit' && result.targetId) setSelectedAuditLogId(result.targetId);
+
+    if (result.kind === 'notification') {
+      const notification = notifications.find((item) => item.id === result.key.replace('notification-', ''));
+      if (notification && !notification.isRead) await markNotificationAsRead(notification.id);
+      if (result.tab === 'bookings' && result.targetId) setSelectedBookingId(result.targetId);
+    }
+
+    setActiveTab(result.tab);
+    closeSearch();
+  };
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setShowResults(false);
+      return;
+    }
+    if (flatSearchResults.length === 0) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setShowResults(true);
+      setActiveSearchIndex((index) => Math.min(index + 1, flatSearchResults.length - 1));
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveSearchIndex((index) => Math.max(index - 1, 0));
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      void handleSearchSelection(flatSearchResults[activeSearchIndex] || flatSearchResults[0]);
+    }
+  };
+
+  const handleNavigate = (tab: string, id?: string) => {
+    resetSearchTargets();
+    if (tab === 'bookings' && id) setSelectedBookingId(id);
+    if (tab === 'guests' && id) setSelectedGuestId(id);
+    if (tab === 'rooms' && id) setSelectedRoomId(id);
+    setActiveTab(tab);
+    closeSearch();
   };
 
   const handleNotificationClick = async (n: AppNotification) => {
@@ -125,85 +217,124 @@ const TopBar: React.FC = () => {
   );
 
   const unreadCount = unreadNotifications.length;
+  const currentUserDisplayName = getStaffDisplayName(
+    currentUser?.name,
+    currentUser?.role ? `Hotel ${String(currentUser.role).toLowerCase()}` : 'Hotel staff',
+  );
 
   return (
-    <header className="h-20 bg-slate-900/60 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 sticky top-0 z-40">
-      <div className="relative w-full max-w-lg">
+    <header className="relative z-40 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/5 bg-slate-900/60 px-3 backdrop-blur-xl sm:h-20 sm:px-6">
+      <div className="relative w-full max-w-2xl">
         <div className="relative group">
           <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchQuery ? 'text-brand-500' : 'text-slate-500'}`} size={16} />
-          <input 
+          <input
             ref={searchInputRef}
-            type="text" 
-            placeholder="Search... (⌘+K)" 
+            type="search"
+            role="combobox"
+            aria-label="Search all hotel data"
+            aria-autocomplete="list"
+            aria-expanded={showResults && searchQuery.trim().length >= 2}
+            aria-controls="global-search-results"
+            aria-activedescendant={showResults && flatSearchResults.length > 0 ? `global-search-option-${activeSearchIndex}` : undefined}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="Search rooms, guests, bookings, payments..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setShowResults(true);
             }}
             onFocus={() => setShowResults(true)}
-            className="w-full bg-slate-950/60 border border-white/10 rounded-2xl py-3 pl-11 pr-4 text-sm text-slate-200 outline-none transition-all placeholder:text-slate-600 focus:border-brand-500/50 focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 shadow-inner"
+            onKeyDown={handleSearchKeyDown}
+            className="w-full bg-slate-950/60 border border-white/10 rounded-2xl py-3 pl-11 pr-12 text-sm text-slate-200 outline-none transition-all placeholder:text-slate-600 focus:border-brand-500/50 focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 shadow-inner [appearance:textfield] [&::-webkit-search-cancel-button]:hidden"
           />
+          {searchQuery ? (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={closeSearch}
+              className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <X size={16} />
+            </button>
+          ) : (
+            <span className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-black text-slate-600 lg:block">⌘ K</span>
+          )}
         </div>
-        
+
         {showResults && searchQuery.trim().length >= 2 && (
-          <div ref={resultsRef} className="absolute top-full left-0 mt-3 w-full max-w-xl bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl p-2 z-[100] animate-in fade-in slide-in-from-top-2 overflow-hidden">
-            {!hasAnyResults ? (
-              <div className="p-12 text-center">
-                <p className="text-[11px] font-black uppercase tracking-dash text-slate-600">No results found</p>
+          <div
+            ref={resultsRef}
+            id="global-search-results"
+            className="fixed left-3 right-3 top-16 z-[160] mt-2 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/98 shadow-2xl backdrop-blur-3xl animate-in fade-in slide-in-from-top-2 sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-3 sm:w-[min(42rem,calc(100vw-5rem))]"
+          >
+            <div className="flex items-center justify-between gap-4 border-b border-white/5 bg-slate-950/55 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white">Search all hotel data</p>
+                <p className="mt-0.5 text-[9px] font-bold text-slate-600">Results are limited by your access level.</p>
+              </div>
+              <span className="shrink-0 rounded-lg border border-white/5 bg-white/[0.03] px-2.5 py-1 text-[9px] font-black text-slate-500">{flatSearchResults.length} found</span>
+            </div>
+
+            {flatSearchResults.length === 0 ? (
+              <div className="p-10 text-center">
+                <Search size={24} className="mx-auto mb-3 text-slate-700" />
+                <p className="text-[11px] font-black uppercase tracking-dash text-slate-500">No matching hotel data</p>
+                <p className="mt-2 text-[10px] font-medium text-slate-700">Try a guest name, room, date, status, phone, email, amount, or reference.</p>
               </div>
             ) : (
-              <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-4">
-                {searchResults?.rooms.length! > 0 && (
-                  <div>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Rooms</p>
-                    {searchResults?.rooms.map(r => (
-                      <button key={r.id} onClick={() => handleNavigate('rooms', r.id)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
-                        <div className="flex items-center gap-3">
-                          <Bed size={14} className="text-blue-500" />
-                          <span className="text-[13px] font-black text-white">Room {r.roomNumber}</span>
-                        </div>
-                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{r.category}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                
-                {searchResults?.bookings.length! > 0 && (
-                  <div>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Bookings</p>
-                    {searchResults?.bookings.map(b => (
-                      <button key={b.id} onClick={() => handleNavigate('bookings', b.id)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
-                        <div className="flex items-center gap-3">
-                          <Calendar size={14} className="text-amber-500" />
-                          <span className="text-[13px] font-black text-white">{b.guestFirstName} {b.guestLastName}</span>
-                        </div>
-                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{b.bookingCode}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {searchResults?.guests.length! > 0 && (
-                  <div>
-                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 px-3">Guests</p>
-                    {searchResults?.guests.map(g => (
-                      <button key={g.id} onClick={() => handleNavigate('guests', g.id)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group">
-                        <div className="flex items-center gap-3">
-                          <Users size={14} className="text-emerald-500" />
-                          <span className="text-[13px] font-black text-white">{g.firstName} {g.lastName}</span>
-                        </div>
-                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{g.email}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div role="listbox" aria-label="Global search results" className="scroll-pane max-h-[min(68vh,34rem)] overflow-y-auto p-2">
+                {searchGroups.map((group) => (
+                  <section key={group.kind} aria-label={group.label} className="mb-2 last:mb-0">
+                    <div className="flex items-center justify-between px-3 pb-1.5 pt-2">
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-600">{group.label}</p>
+                      <span className="text-[8px] font-black text-slate-700">{group.results.length}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {group.results.map((result) => {
+                        const index = resultIndexes.get(result.key) ?? 0;
+                        const Icon = SEARCH_ICONS[result.kind];
+                        const isActive = index === activeSearchIndex;
+                        return (
+                          <button
+                            key={result.key}
+                            ref={(node) => { resultItemRefs.current[index] = node; }}
+                            id={`global-search-option-${index}`}
+                            type="button"
+                            role="option"
+                            aria-selected={isActive}
+                            onMouseEnter={() => setActiveSearchIndex(index)}
+                            onClick={() => void handleSearchSelection(result)}
+                            className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all ${isActive ? 'border-brand-500/20 bg-brand-500/10' : 'border-transparent hover:bg-white/[0.045]'}`}
+                          >
+                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${SEARCH_ICON_STYLES[result.kind]}`}>
+                              <Icon size={16} />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[12px] font-black text-white">{result.title}</span>
+                              <span className="mt-0.5 block break-words text-[10px] font-medium leading-4 text-slate-500">{result.description}</span>
+                            </span>
+                            {result.meta && <span className="max-w-28 shrink-0 truncate text-right text-[8px] font-black uppercase tracking-wider text-slate-600">{result.meta}</span>}
+                            <ArrowRight size={14} className={`shrink-0 transition-transform ${isActive ? 'translate-x-0 text-brand-400' : '-translate-x-1 text-slate-700'}`} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
               </div>
             )}
+
+            <div className="hidden items-center gap-4 border-t border-white/5 bg-slate-950/55 px-4 py-2.5 text-[8px] font-bold text-slate-700 sm:flex">
+              <span>↑↓ Navigate</span>
+              <span>↵ Open</span>
+              <span>Esc Close</span>
+            </div>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         {/* Critical Overdue Alerts */}
         {criticalTasksCount > 0 && (
           <button 
@@ -226,7 +357,7 @@ const TopBar: React.FC = () => {
           </button>
 
           {showNotifications && (
-            <div className="absolute top-full right-0 mt-3 w-96 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 flex flex-col overflow-hidden">
+            <div className="fixed left-3 right-3 top-16 mt-2 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-96 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 flex flex-col overflow-hidden">
               <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white">Notifications</h3>
                  {unreadCount > 0 && (
@@ -285,12 +416,12 @@ const TopBar: React.FC = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+        <div className="hidden min-[420px]:flex items-center gap-3 pl-2 sm:pl-4 border-l border-white/10">
           <div className="text-right hidden sm:block">
-            <p className="text-[13px] font-black text-white leading-tight">{currentUser?.name || 'Staff'}</p>
+            <p className="text-[13px] font-black text-white leading-tight">{currentUserDisplayName}</p>
             <p className="text-[9px] font-black uppercase text-slate-500 tracking-dash">{(currentUser?.role || 'staff').toUpperCase()}</p>
           </div>
-          <img src={currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10" alt="" />
+          <img src={currentUser?.avatarUrl || '/avatar-placeholder.svg'} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10" alt="" />
         </div>
       </div>
     </header>

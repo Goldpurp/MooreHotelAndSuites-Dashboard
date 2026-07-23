@@ -28,6 +28,8 @@ import {
 } from "recharts";
 import { RoomStatus } from "../types";
 import { api } from "../lib/api";
+import { getBookingReferenceDisplay } from "../lib/displayPrivacy";
+import { isCheckoutOverdue } from "../lib/stayTime";
 
 const Dashboard: React.FC = () => {
   const {
@@ -90,9 +92,7 @@ const Dashboard: React.FC = () => {
         // Overdue Calculation Utility
         const getOverdue = (booking: any) => {
           if (String(booking.status).toLowerCase() !== 'checkedin') return false;
-          const checkoutDate = new Date(booking.checkOut);
-          checkoutDate.setHours(11, 30, 0, 0);
-          return now > checkoutDate;
+          return isCheckoutOverdue(booking.checkOut, now);
         };
 
         const isOverdueA = getOverdue(a);
@@ -279,7 +279,7 @@ const Dashboard: React.FC = () => {
           <button onClick={() => setActiveTab("bookings")} className="bg-white/5 hover:bg-white/10 text-slate-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-white/10 flex items-center gap-2 transition-all">View All <ArrowRight size={14} /></button>
         </div>
         <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left min-w-[600px]">
+          <table className="mobile-card-table w-full text-left min-w-[600px]">
             <thead>
               <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/20">
                 <th className="responsive-table-padding">Guest</th>
@@ -299,14 +299,12 @@ const Dashboard: React.FC = () => {
                   const isCheckedIn = String(booking.status || '').toLowerCase() === 'checkedin';
                   
                   // Detect overdue check-out
-                  const checkoutDate = new Date(booking.checkOut);
-                  checkoutDate.setHours(11, 30, 0, 0);
-                  const isOverdue = isCheckedIn && new Date() > checkoutDate;
+                  const isOverdue = isCheckedIn && isCheckoutOverdue(booking.checkOut);
                   const isIncomingSoon = !isCheckedIn && new Date(booking.checkIn).toLocaleDateString() === new Date().toLocaleDateString();
 
                   return (
                     <tr key={booking.id} className={`group transition-all cursor-pointer border-l-4 ${isOverdue ? 'bg-rose-500/10 border-rose-500 hover:bg-rose-500/20 animate-pulse' : 'hover:bg-white/5 border-transparent hover:border-blue-600'}`} onClick={() => { setSelectedBookingId(booking.id); setActiveTab(isOverdue ? "guests" : "bookings"); }}>
-                      <td className="responsive-table-padding">
+                      <td data-label="Guest" className="responsive-table-padding">
                         <div className="flex items-center gap-4">
                           <div className={`w-9 h-9 rounded-xl border flex items-center justify-center font-black shrink-0 ${isOverdue ? "bg-rose-500/20 border-rose-500/40 text-rose-500 animate-pulse" : isCheckedIn ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : isIncomingSoon ? "bg-blue-500/10 border-blue-500/20 text-blue-400" : "bg-slate-800 border-white/10 text-slate-500"}`}>{booking.guestFirstName?.charAt(0) || "G"}</div>
                           <div className="min-w-0">
@@ -314,21 +312,21 @@ const Dashboard: React.FC = () => {
                               <p className={`adaptive-text-sm font-black truncate leading-none uppercase tracking-tight ${isOverdue ? 'text-rose-400 animate-pulse' : 'text-white'}`}>{booking.guestFirstName} {booking.guestLastName}</p>
                               {isOverdue && <AlertTriangle size={12} className="text-rose-500 animate-bounce" />}
                             </div>
-                             <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">ID: {booking.bookingCode}</p>
+                             <p className="break-all text-[8px] font-bold uppercase tracking-wider text-slate-500">Ref: {getBookingReferenceDisplay(booking.bookingCode)}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="responsive-table-padding col-priority-med">
+                      <td data-label="Dates" className="responsive-table-padding col-priority-med">
                         <p className={`adaptive-text-sm font-black ${isOverdue ? 'text-rose-500' : isIncomingSoon ? 'text-blue-400' : 'text-slate-300'}`}>{new Date(isCheckedIn ? booking.checkOut : booking.checkIn).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}</p>
                          <p className={`text-[8px] font-bold uppercase mt-1 ${isOverdue ? 'text-rose-600 animate-pulse' : 'text-slate-600'}`}>
                           {isOverdue ? 'OVERDUE' : isCheckedIn ? 'Checking Out' : 'Checking In'}
                         </p>
                       </td>
-                      <td className="responsive-table-padding col-priority-low">
+                      <td data-label="Room" className="responsive-table-padding col-priority-low">
                         <p className="adaptive-text-sm font-black text-slate-300 leading-none">Room {room?.roomNumber || "..."}</p>
                         <p className="text-[8px] text-slate-600 font-bold uppercase mt-1">{room?.category}</p>
                       </td>
-                      <td className="responsive-table-padding">
+                      <td data-label="Status" className="responsive-table-padding">
                         <div className="flex flex-col gap-1.5">
                           <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border flex items-center gap-1.5 w-fit ${
                             isOverdue ? "bg-rose-500/10 text-rose-500 border-rose-500/20" :
@@ -342,7 +340,7 @@ const Dashboard: React.FC = () => {
                           <span className={`text-[8px] font-bold uppercase tracking-widest px-1 ${isPaid ? 'text-emerald-500' : 'text-rose-500'}`}>{isPaid ? 'Paid' : 'Unpaid'}</span>
                         </div>
                       </td>
-                      <td className="responsive-table-padding text-right">
+                      <td data-label="Payment" className="responsive-table-padding text-right">
                         <div className="flex flex-col items-end">
                            <p className={`adaptive-text-base font-black ${isPaid ? 'text-white' : 'text-rose-500'}`}>₦{booking.amount?.toLocaleString() || "0"}</p>
                             <p className="text-[8px] text-slate-700 font-black uppercase mt-1">{isPaid ? 'Paid' : 'Unpaid'}</p>

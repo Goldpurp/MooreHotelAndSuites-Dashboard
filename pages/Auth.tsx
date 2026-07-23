@@ -77,8 +77,8 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 font-sans text-slate-50">
-      <div className="w-full max-w-6xl h-[700px] flex overflow-hidden rounded-[3rem] glass-card shadow-2xl animate-in zoom-in-95 duration-700">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-slate-950 p-3 sm:p-6 font-sans text-slate-50">
+      <div className="w-full max-w-6xl min-h-[560px] lg:h-[700px] flex overflow-hidden rounded-3xl sm:rounded-[3rem] glass-card shadow-2xl animate-in zoom-in-95 duration-700">
         <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-550 to-indigo-900 p-16 flex-col justify-between relative border-r border-white/5">
           <div className="relative z-10">
             <Logo size="2xl" className="mb-8" />
@@ -98,7 +98,7 @@ const Auth: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 bg-slate-900/40 p-12 lg:p-20 flex flex-col justify-center">
+        <div className="flex-1 bg-slate-900/40 p-5 sm:p-10 lg:p-20 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
             {mode === "login" ? (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">

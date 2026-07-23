@@ -1,5 +1,6 @@
-// Fallback to the production API if the environment variable is missing
-const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'https://api.moorehotelandsuites.com';
+import { appConfig } from '../config/environment';
+
+const TOKEN_KEY = 'mhs_token';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
@@ -7,146 +8,166 @@ interface RequestOptions extends RequestInit {
   silent?: boolean;
 }
 
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { params, timeout = 15000, silent = false, ...init } = options;
-  
-  // Ensure we have a valid base URL and clean endpoint
-  const base = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-  const sanitizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${base}${sanitizedEndpoint}`;
-  
-  let finalUrl = url;
-  if (params) {
-    const searchParams = new URLSearchParams(params);
-    const separator = finalUrl.includes('?') ? '&' : '?';
-    finalUrl = finalUrl + separator + searchParams.toString();
-  }
-
-  if (!silent) console.debug(`[MHS Fetch] ${init.method || 'GET'} -> ${finalUrl}`);
-
-  const controller = new AbortController();
-  const abortId = setTimeout(() => controller.abort(), timeout);
-
-  const headers = new Headers(init.headers);
-  const token = sessionStorage.getItem('mhs_token');
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-  
-  if (!(init.body instanceof FormData) && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
-  }
-
-  try {
-    const response = await fetch(finalUrl, { 
-      ...init, 
-      headers,
-      signal: controller.signal,
-      redirect: 'follow' 
-    });
-    clearTimeout(abortId);
-
-    if (response.redirected || (response.url && response.url.includes('Account/Login'))) {
-       console.error(`[MHS Security] Unauthorized redirect detected to: ${response.url}`);
-       if (!endpoint.toLowerCase().includes('login')) {
-         sessionStorage.removeItem('mhs_token');
-         throw new Error("Authorization Required: Your session has expired or is invalid.");
-       }
-    }
-
-    const text = await response.text();
-    let data: any = {};
-    
-    try {
-      data = text ? JSON.parse(text) : {};
-    } catch (e) {
-      data = { raw: text };
-    }
-
-    if (!response.ok) {
-      if (!silent) {
-        console.error(`[MHS Protocol Fault] Status ${response.status} at ${finalUrl}:`, data);
-      }
-      
-      // RFC 7807: Always read the 'detail' property to display helpful messages
-      const errorMessage = 
-        data.detail || 
-        data.message || 
-        data.error || 
-        data.title || 
-        (data.errors ? Object.values(data.errors).flat().join(', ') : null) || 
-        `System Error (${response.status})`;
-      
-      throw new Error(errorMessage);
-    }
-
-    return data as T;
-  } catch (error: any) {
-    clearTimeout(abortId);
-    if (error.name === 'AbortError') throw new Error("Connection Timeout: The API server is not responding.");
-    throw error;
-  }
-}
-
 export interface ApiCallOptions {
   params?: Record<string, string>;
   silent?: boolean;
 }
 
+function joinApiUrl(endpoint: string): string {
+  const base = appConfig.apiBaseUrl.replace(/\/+$/, '');
+  let path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  // Both frontends use a base ending in /api. Keep compatibility with older
+  // dashboard call sites that already include /api without producing /api/api.
+  if (base.toLowerCase().endsWith('/api') && path.toLowerCase().startsWith('/api/')) {
+    path = path.slice(4);
+  } else if (base.toLowerCase().endsWith('/api') && path.toLowerCase() === '/api') {
+    path = '';
+  }
+
+  return `${base}${path}`;
+}
+
+function readMessage(payload: unknown, status: number): string {
+  if (status >= 500) return 'The hotel service is temporarily unavailable. Please try again shortly.';
+  if (status === 429) return 'Too many requests. Please wait a moment and try again.';
+  if (!payload || typeof payload !== 'object') return `Request failed (${status}).`;
+
+  const data = payload as Record<string, unknown>;
+  if (data.errors && typeof data.errors === 'object') {
+    const errors = Object.values(data.errors as Record<string, unknown>)
+      .flatMap((value) => (Array.isArray(value) ? value : [value]))
+      .filter((value): value is string => typeof value === 'string' && Boolean(value.trim()));
+    if (errors.length) return errors.join(' | ');
+  }
+
+  for (const key of ['detail', 'message', 'error', 'title']) {
+    const value = data[key];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+  return `Request failed (${status}).`;
+}
+
+function endSession(reason: 'expired' | 'suspended'): void {
+  try {
+    sessionStorage.removeItem(TOKEN_KEY);
+    window.dispatchEvent(new CustomEvent('mhs:session-ended', { detail: { reason } }));
+  } catch {
+    // The in-memory UI will still return to login after the request rejects.
+  }
+}
+
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  const { params, timeout = appConfig.requestTimeoutMs, silent = false, ...init } = options;
+  let finalUrl = joinApiUrl(endpoint);
+  if (params) {
+    const query = new URLSearchParams(params).toString();
+    if (query) finalUrl += `${finalUrl.includes('?') ? '&' : '?'}${query}`;
+  }
+
+  if (!silent && import.meta.env.DEV) {
+    console.debug(`[Moore API] ${init.method || 'GET'} ${endpoint.split('?')[0]}`);
+  }
+
+  const controller = new AbortController();
+  const abortId = window.setTimeout(() => controller.abort(), timeout);
+  const headers = new Headers(init.headers);
+  headers.set('Accept', 'application/json');
+  headers.set('X-Moore-App-Environment', appConfig.environment);
+
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  try {
+    const response = await fetch(finalUrl, {
+      ...init,
+      headers,
+      signal: controller.signal,
+      cache: token ? 'no-store' : init.cache,
+      credentials: 'omit',
+      redirect: 'error',
+      referrerPolicy: 'no-referrer',
+    });
+
+    const apiEnvironment = response.headers.get('X-Moore-API-Environment')?.trim().toLowerCase();
+    if (apiEnvironment && apiEnvironment !== appConfig.environment) {
+      throw new Error(
+        `Environment mismatch: this ${appConfig.environment} dashboard reached the ${apiEnvironment} API.`,
+      );
+    }
+
+    const payload = response.status === 204
+      ? undefined
+      : await response.json().catch(() => undefined);
+
+    if (response.status === 401) {
+      const hadSession = Boolean(token);
+      if (hadSession) endSession('expired');
+      throw new Error(hadSession ? 'Your session has expired. Please sign in again.' : readMessage(payload, 401));
+    }
+
+    const errorCode =
+      payload && typeof payload === 'object'
+        ? String((payload as Record<string, unknown>).errorCode ?? '')
+        : '';
+    if (response.status === 403 && ['ACCOUNT_SUSPENDED', 'SESSION_REVOKED'].includes(errorCode)) {
+      endSession(errorCode === 'ACCOUNT_SUSPENDED' ? 'suspended' : 'expired');
+    }
+
+    if (!response.ok) throw new Error(readMessage(payload, response.status));
+    return payload as T;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('Connection timed out. Check that the correct API profile is running.');
+    }
+    if (error instanceof Error) throw error;
+    throw new Error('The request could not be completed.');
+  } finally {
+    window.clearTimeout(abortId);
+  }
+}
+
 export const api = {
-  getToken: () => sessionStorage.getItem('mhs_token'),
+  getToken: () => sessionStorage.getItem(TOKEN_KEY),
   setToken: (token: string) => {
-    if (token) sessionStorage.setItem('mhs_token', token);
+    if (token) sessionStorage.setItem(TOKEN_KEY, token);
   },
-  removeToken: () => sessionStorage.removeItem('mhs_token'),
+  removeToken: () => sessionStorage.removeItem(TOKEN_KEY),
 
   get<T>(endpoint: string, options?: ApiCallOptions): Promise<T> {
     return request<T>(endpoint, { method: 'GET', ...options });
   },
-
-  post<T>(endpoint: string, body?: any, options?: ApiCallOptions): Promise<T> {
+  post<T>(endpoint: string, body?: unknown, options?: ApiCallOptions): Promise<T> {
     return request<T>(endpoint, {
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
-      ...options
+      body: body === undefined || body === null ? undefined : JSON.stringify(body),
+      ...options,
     });
   },
-
-  put<T>(endpoint: string, body?: any, options?: ApiCallOptions): Promise<T> {
+  put<T>(endpoint: string, body?: unknown, options?: ApiCallOptions): Promise<T> {
     return request<T>(endpoint, {
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
-      ...options
+      body: body === undefined || body === null ? undefined : JSON.stringify(body),
+      ...options,
     });
   },
-
-  patch<T>(endpoint: string, body?: any, options?: ApiCallOptions): Promise<T> {
+  patch<T>(endpoint: string, body?: unknown, options?: ApiCallOptions): Promise<T> {
     return request<T>(endpoint, {
       method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
-      ...options
+      body: body === undefined || body === null ? undefined : JSON.stringify(body),
+      ...options,
     });
   },
-
   delete<T>(endpoint: string, options?: ApiCallOptions): Promise<T> {
     return request<T>(endpoint, { method: 'DELETE', ...options });
   },
-
-   // NEW: Method for Multipart/Form-Data (Images)
   postForm<T>(endpoint: string, formData: FormData, options?: ApiCallOptions): Promise<T> {
-    return request<T>(endpoint, {
-      method: 'POST',
-      body: formData, // Do NOT stringify
-      ...options
-    });
+    return request<T>(endpoint, { method: 'POST', body: formData, ...options });
   },
-
-  // NEW: Method for Multipart/Form-Data Updates
   putForm<T>(endpoint: string, formData: FormData, options?: ApiCallOptions): Promise<T> {
-    return request<T>(endpoint, {
-      method: 'PUT',
-      body: formData, // Do NOT stringify
-      ...options
-    });
+    return request<T>(endpoint, { method: 'PUT', body: formData, ...options });
   },
 };

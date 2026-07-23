@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Room, RoomStatus, RoomCategory, PropertyFloor } from '../types';
 import { X, Check, Camera, Plus, Trash2, Save, Loader2, AlertCircle, Image as ImageIcon, Globe, ShieldCheck } from 'lucide-react';
 import { sileo } from 'sileo';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface RoomModalProps {
   isOpen: boolean;
@@ -72,6 +73,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
   const [error, setError] = useState<string | null>(null);
   const [validationFields, setValidationFields] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useAccessibleModal(isOpen, onClose, !isSubmitting);
 
   useEffect(() => {
     if (editingRoom) {
@@ -120,13 +122,34 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      Array.from(files).forEach((file: File) => {
+      const selected = Array.from(files);
+      const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
+      const existingNewImages = formData.images.filter(image => image.startsWith('data:image')).length;
+      const validationMessage =
+        selected.some(file => !allowedTypes.has(file.type))
+          ? 'Use JPEG, PNG, WebP, or AVIF images.'
+          : selected.some(file => file.size > 8 * 1024 * 1024)
+            ? 'Each room image must be 8 MB or smaller.'
+            : existingNewImages + selected.length > 10
+              ? 'Upload no more than 10 new images in one room update.'
+              : selected.reduce((total, file) => total + file.size, 0) > 25 * 1024 * 1024
+                ? 'The selected images cannot exceed 25 MB combined.'
+                : null;
+
+      if (validationMessage) {
+        sileo.error({ title: 'Images not added', description: validationMessage });
+        e.target.value = '';
+        return;
+      }
+
+      selected.forEach((file: File) => {
         const reader = new FileReader();
         reader.onloadend = () => {
           setFormData(prev => ({ ...prev, images: [...prev.images, reader.result as string] }));
         };
         reader.readAsDataURL(file);
       });
+      e.target.value = '';
     }
   };
 
@@ -176,7 +199,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto custom-scrollbar">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-label={editingRoom ? 'Modify room' : 'Add room'} tabIndex={-1} className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto custom-scrollbar">
       <div className="glass-card w-full max-w-5xl max-h-[95vh] sm:max-h-[92vh] flex flex-col rounded-[1.5rem] sm:rounded-[2.5rem] shadow-3xl overflow-hidden border border-white/15 animate-in zoom-in-95 duration-300">
         
           <>
@@ -192,7 +215,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                     <p className="text-[8px] sm:text-[10px] text-slate-500 font-black uppercase tracking-widest mt-0.5">Asset Configuration Protocol</p>
                  </div>
               </div>
-              <button onClick={onClose} disabled={isSubmitting} className="p-2 sm:p-2.5 hover:bg-white/10 text-slate-500 hover:text-white rounded-xl transition-all active:scale-90"><X className="w-5 h-5 sm:w-6 sm:h-6" /></button>
+              <button type="button" data-modal-close aria-label="Close room editor" onClick={onClose} disabled={isSubmitting} className="p-2 sm:p-2.5 hover:bg-white/10 text-slate-500 hover:text-white rounded-xl transition-all active:scale-90"><X className="w-5 h-5 sm:w-6 sm:h-6" /></button>
             </div>
 
             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-5 sm:p-10 custom-scrollbar space-y-6 sm:space-y-8">

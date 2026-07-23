@@ -13,7 +13,7 @@ import StaffSuspensionModal from '../components/StaffSuspensionModal';
 import { StaffUser, UserRole } from '../types';
 
 const StaffManagement: React.FC = () => {
-  const { staff, toggleStaffStatus, refreshData, currentUser } = useHotel();
+  const { staff, toggleStaffStatus, refreshData, currentUser, selectedProfileId, setSelectedProfileId } = useHotel();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuspensionOpen, setIsSuspensionOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState<StaffUser | null>(null);
@@ -55,6 +55,15 @@ const StaffManagement: React.FC = () => {
   const totalPages = Math.ceil(filteredStaff.length / PAGE_SIZE);
 
   useEffect(() => {
+    if (!selectedProfileId) return;
+    const resultIndex = filteredStaff.findIndex((profile) => profile.id === selectedProfileId);
+    if (resultIndex < 0) return;
+    setCurrentPage(Math.floor(resultIndex / PAGE_SIZE) + 1);
+    setSelectedStaffId(selectedProfileId);
+    setSelectedProfileId(null);
+  }, [filteredStaff, selectedProfileId, setSelectedProfileId]);
+
+  useEffect(() => {
     if (paginatedStaff.length > 0 && !selectedStaffId) {
       setSelectedStaffId(paginatedStaff[0].id);
     }
@@ -86,8 +95,8 @@ const StaffManagement: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-row gap-6 h-[calc(100vh-120px)] animate-in fade-in duration-700 overflow-hidden">
-      <div className="split-main flex flex-col gap-4">
+    <div className="master-detail-workspace flex h-full min-h-0 flex-row gap-6 overflow-hidden">
+      <div className="split-main flex min-h-0 flex-col gap-4">
         <div className="flex items-end justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -117,8 +126,8 @@ const StaffManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left min-w-[700px]">
+          <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+            <table className="mobile-card-table w-full text-left min-w-[700px]">
               <thead className="sticky top-0 bg-slate-950/90 z-10 border-b border-white/10">
                 <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
                   <th className="responsive-table-padding">Name</th>
@@ -136,7 +145,7 @@ const StaffManagement: React.FC = () => {
                     const isActive = String(user.status).toLowerCase() === 'active';
                     return (
                       <tr key={user.id} onClick={() => setSelectedStaffId(user.id)} className={`hover:bg-brand-500/[0.02] transition-all group border-l-4 ${selectedStaffId === user.id ? 'bg-white/[0.04] border-brand-500' : 'border-transparent'}`}>
-                        <td className="responsive-table-padding">
+                        <td data-label="Name" className="responsive-table-padding">
                           <div className="flex items-center gap-4">
                             <img src={user.avatarUrl} className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl object-cover ring-2 ring-white/5" alt=""/>
                             <div className="min-w-0">
@@ -145,14 +154,14 @@ const StaffManagement: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="responsive-table-padding"><RoleBadge role={user.role} /></td>
-                        <td className="responsive-table-padding col-priority-med">
+                        <td data-label="Role" className="responsive-table-padding"><RoleBadge role={user.role} /></td>
+                        <td data-label="Joined" className="responsive-table-padding col-priority-med">
                            <p className="text-[11px] font-black text-slate-500 uppercase whitespace-nowrap">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}</p>
                         </td>
-                        <td className="responsive-table-padding text-center">
+                        <td data-label="Status" className="responsive-table-padding text-center">
                           <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border ${isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.1)]' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>{isActive ? 'Active' : 'Suspended'}</span>
                         </td>
-                        <td className="responsive-table-padding text-right">
+                        <td data-label="Actions" className="responsive-table-padding text-right">
                            <div className="flex justify-end" onClick={e => e.stopPropagation()}>
                              {currentUser?.role === UserRole.Admin && user.role !== UserRole.Admin ? (
                                <button onClick={() => handleToggleAccessRequest(user)} className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isActive ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>{isActive ? <ShieldOff size={16} /> : <ShieldCheck size={16} />}</button>
@@ -179,7 +188,7 @@ const StaffManagement: React.FC = () => {
 
       {selectedStaff && (
         <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
-          <div className="glass-card rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
+          <div className="glass-card scroll-pane rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
             <div className="flex justify-between items-start mb-10">
               <div className="space-y-1">
                  <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Staff Details</h3>
