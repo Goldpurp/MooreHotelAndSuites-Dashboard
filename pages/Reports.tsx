@@ -1,14 +1,18 @@
-import React, { useMemo, useState } from 'react';
-import { 
+import React, { useEffect, useMemo, useState } from 'react';
+import {
   FileDown, Printer, Building, CreditCard, Users, Activity, 
-  ChevronLeft, ChevronRight, Eye, X, RefreshCw
+  ChevronLeft, ChevronRight, Eye, X, RefreshCw, ShieldCheck,
+  CalendarClock, Layers3
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
 import { BookingStatus, RoomStatus, AuditLog } from '../types';
 import { downloadPDF } from '../lib/utils';
+import { useConfirmation } from '../components/ConfirmationProvider';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
+import { formatPrivateDateTime, getFriendlyAreaName } from '../lib/displayPrivacy';
 
-import { 
+import {
   XAxis as ReXAxis, YAxis as ReYAxis, 
   CartesianGrid as ReCartesianGrid, Tooltip as ReTooltip, 
   ResponsiveContainer as ReResponsiveContainer, Cell as ReCell,
@@ -16,12 +20,41 @@ import {
   AreaChart as ReAreaChart, Area as ReArea
 } from 'recharts';
 
+const getAuditPresentation = (log: AuditLog) => {
+  const area = getFriendlyAreaName(log.entityType);
+  const action = String(log.action || '').toUpperCase();
+
+  if (action === 'INSERT' || action === 'CREATE') {
+    return {
+      label: 'Created',
+      classes: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
+      description: `A new ${area.toLowerCase()} entry was added to the hotel records.`,
+    };
+  }
+
+  if (action === 'DELETE' || action === 'REMOVE') {
+    return {
+      label: 'Removed',
+      classes: 'border-rose-500/20 bg-rose-500/10 text-rose-400',
+      description: `A ${area.toLowerCase()} entry was removed from the hotel records.`,
+    };
+  }
+
+  return {
+    label: 'Updated',
+    classes: 'border-blue-500/20 bg-blue-500/10 text-blue-400',
+    description: `Information in ${area.toLowerCase()} was updated.`,
+  };
+};
+
 const Reports: React.FC = () => {
-  const { bookings, rooms, auditLogs, refreshData } = useHotel();
+  const { bookings, rooms, auditLogs, refreshData, selectedAuditLogId, setSelectedAuditLogId } = useHotel();
+  const confirm = useConfirmation();
   const [reportTab, setReportTab] = useState<'analytics' | 'audit'>('analytics');
   const [inspectingLog, setInspectingLog] = useState<AuditLog | null>(null);
   const [auditPage, setAuditPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const auditModalRef = useAccessibleModal(Boolean(inspectingLog), () => setInspectingLog(null));
   const AUDIT_PAGE_SIZE = 12;
 
   const handleManualRefresh = async () => {
@@ -34,7 +67,15 @@ const Reports: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  const handleExportLedger = () => {
+  const handleExportLedger = async () => {
+    const accepted = await confirm({
+      title: 'Export operational records?',
+      message: 'The PDF can contain guest names, stay dates, booking references, and payment status. Store it securely.',
+      confirmLabel: 'Export PDF',
+      tone: 'warning',
+    });
+    if (!accepted) return;
+
     const exportData = (bookings || []).map(b => ({
       Ref: b.bookingCode,
       Guest: `${b.guestFirstName} ${b.guestLastName}`,
@@ -52,7 +93,14 @@ const Reports: React.FC = () => {
     });
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    const accepted = await confirm({
+      title: 'Print this report?',
+      message: 'Printed reports may contain sensitive operational and financial information.',
+      confirmLabel: 'Open print dialog',
+      tone: 'warning',
+    });
+    if (!accepted) return;
     window.print();
   };
 
@@ -100,6 +148,16 @@ const Reports: React.FC = () => {
   }, [auditLogs, auditPage]);
 
   const totalAuditPages = Math.ceil((auditLogs?.length || 0) / AUDIT_PAGE_SIZE);
+
+  useEffect(() => {
+    if (!selectedAuditLogId) return;
+    const resultIndex = auditLogs.findIndex((log) => log.id === selectedAuditLogId);
+    if (resultIndex < 0) return;
+    setReportTab('audit');
+    setAuditPage(Math.floor(resultIndex / AUDIT_PAGE_SIZE) + 1);
+    setInspectingLog(auditLogs[resultIndex]);
+    setSelectedAuditLogId(null);
+  }, [auditLogs, selectedAuditLogId, setSelectedAuditLogId]);
 
   return (
     <div className="space-y-4 lg:space-y-6 animate-in fade-in duration-700">
@@ -197,35 +255,34 @@ const Reports: React.FC = () => {
       ) : (
         <div className="glass-card rounded-xl border border-white/5 overflow-hidden flex flex-col shadow-2xl bg-slate-900/20 backdrop-blur-3xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[700px]">
+            <table className="mobile-card-table w-full text-left min-w-[700px]">
               <thead>
                 <tr className="text-slate-600 adaptive-text-xs font-black uppercase tracking-widest border-b border-white/5 bg-slate-950/40">
                   <th className="responsive-table-padding">Time</th>
-                  <th className="responsive-table-padding">Staff ID</th>
+                  <th className="responsive-table-padding">Handled By</th>
                   <th className="responsive-table-padding">Action</th>
-                  <th className="responsive-table-padding">Target</th>
+                  <th className="responsive-table-padding">Area</th>
                   <th className="responsive-table-padding text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {paginatedAuditLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-white/[0.01] transition-all group border-l-2 border-transparent hover:border-brand-500">
-                    <td className="responsive-table-padding">
+                    <td data-label="Time" className="responsive-table-padding">
                       <div className="min-w-0">
                         <p className="adaptive-text-sm font-black text-white truncate leading-none mb-1">{new Date(log.createdAt).toLocaleDateString('en-GB')}</p>
                         <p className="text-[7px] text-slate-700 font-bold uppercase truncate">{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </td>
-                    <td className="responsive-table-padding"><p className="adaptive-text-sm font-black text-slate-300 uppercase truncate max-w-[100px]">{log.profileId}</p></td>
-                    <td className="responsive-table-padding">
-                      <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase border ${log.action === 'INSERT' ? 'bg-emerald-500/10 text-emerald-400' : log.action === 'DELETE' ? 'bg-rose-500/10 text-rose-400' : 'bg-blue-500/10 text-blue-400'}`}>{log.action}</span>
+                    <td data-label="Handled By" className="responsive-table-padding"><p className="adaptive-text-sm font-black text-slate-300 uppercase truncate max-w-[140px]">{log.profileId ? 'Authorized staff' : 'Automated system'}</p></td>
+                    <td data-label="Action" className="responsive-table-padding">
+                      <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase border ${getAuditPresentation(log).classes}`}>{getAuditPresentation(log).label}</span>
                     </td>
-                    <td className="responsive-table-padding">
-                      <p className="adaptive-text-xs font-black text-white uppercase leading-none mb-1 truncate">{log.entityType}</p>
-                      <p className="text-[7px] text-slate-700 font-bold uppercase">ID: {log.entityId.slice(0, 8)}</p>
+                    <td data-label="Area" className="responsive-table-padding">
+                      <p className="adaptive-text-xs font-black text-white uppercase leading-none truncate">{getFriendlyAreaName(log.entityType)}</p>
                     </td>
-                    <td className="responsive-table-padding text-right">
-                      <button onClick={() => setInspectingLog(log)} className="bg-white/5 hover:bg-white/10 text-brand-400 p-1.5 rounded-lg border border-white/5 transition-all"><Eye size={14}/></button>
+                    <td data-label="Details" className="responsive-table-padding text-right">
+                      <button type="button" aria-label="View change summary" onClick={() => setInspectingLog(log)} className="bg-white/5 hover:bg-white/10 text-brand-400 p-1.5 rounded-lg border border-white/5 transition-all"><Eye size={14}/></button>
                     </td>
                   </tr>
                 ))}
@@ -233,7 +290,7 @@ const Reports: React.FC = () => {
             </table>
           </div>
           <div className="px-4 py-2 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
-            <p className="text-[8px] text-slate-700 font-black uppercase">System Logs</p>
+            <p className="text-[8px] text-slate-700 font-black uppercase">Change History</p>
             <div className="flex gap-1.5">
               <button onClick={() => setAuditPage(p => Math.max(1, p - 1))} disabled={auditPage === 1} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronLeft size={12} /></button>
               <button onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))} disabled={auditPage === totalAuditPages} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronRight size={12} /></button>
@@ -243,23 +300,42 @@ const Reports: React.FC = () => {
       )}
 
       {inspectingLog && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-300 overflow-hidden">
-           <div className="w-full max-w-2xl bg-[#0a0f1d] border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-3xl flex flex-col max-h-[92vh] sm:max-h-[80vh]">
-              <div className="px-5 sm:px-6 py-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
-                 <h3 className="text-base sm:adaptive-text-lg font-black text-white uppercase">Record Details</h3>
-                 <button onClick={() => setInspectingLog(null)} className="p-2 hover:bg-white/10 text-slate-500 rounded-xl transition-all active:scale-90"><X size={18}/></button>
-              </div>
-              <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4 sm:space-y-6">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white/5 p-3 sm:p-4 rounded-xl border border-white/5"><p className="text-[8px] text-slate-600 font-black uppercase mb-1">Staff</p><p className="text-[10px] sm:text-[11px] font-black text-brand-400 truncate">{inspectingLog.profileId}</p></div>
-                    <div className="bg-white/5 p-3 sm:p-4 rounded-xl border border-white/5"><p className="text-[8px] text-slate-600 font-black uppercase mb-1">Entity</p><p className="text-[10px] sm:text-[11px] font-black text-white truncate">{inspectingLog.entityType}</p></div>
+        <div ref={auditModalRef} role="dialog" aria-modal="true" aria-label="Audit record details" tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-300 overflow-hidden">
+           <div className="w-full max-w-lg bg-[#0a0f1d] border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-3xl flex flex-col max-h-[92vh] sm:max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="px-5 sm:px-7 py-5 border-b border-white/5 flex items-center justify-between gap-4 bg-slate-950/40">
+                 <div>
+                   <p className="text-[9px] font-black uppercase tracking-[0.18em] text-brand-400">Change history</p>
+                   <h3 className="text-lg font-black text-white">Change summary</h3>
                  </div>
-                 <div className="bg-[#05080f] rounded-xl border border-white/5 p-4 sm:p-6 font-mono text-[10px] text-slate-400 leading-relaxed overflow-auto max-h-[250px] custom-scrollbar shadow-inner">
-                    <pre className="whitespace-pre-wrap break-all">{JSON.stringify(inspectingLog.newData || inspectingLog.oldData, null, 2)}</pre>
-                 </div>
+                 <button type="button" data-modal-close aria-label="Close audit details" onClick={() => setInspectingLog(null)} className="p-2 hover:bg-white/10 text-slate-500 rounded-xl transition-all active:scale-90"><X size={18}/></button>
               </div>
-              <div className="px-5 sm:px-6 py-4 bg-slate-950/60 border-t border-white/5 flex justify-end">
-                 <button onClick={() => setInspectingLog(null)} className="px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95">Close</button>
+              <div className="scroll-pane flex-1 space-y-5 overflow-y-auto p-5 sm:p-7">
+                 <section className="rounded-2xl border border-brand-500/15 bg-brand-500/[0.06] p-5">
+                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                     <span className={`rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase tracking-wider ${getAuditPresentation(inspectingLog).classes}`}>{getAuditPresentation(inspectingLog).label}</span>
+                     <span className="text-[10px] font-bold text-slate-500">{formatPrivateDateTime(inspectingLog.createdAt)}</span>
+                   </div>
+                   <p className="text-sm font-semibold leading-6 text-slate-200">{getAuditPresentation(inspectingLog).description}</p>
+                 </section>
+
+                 <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                   <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
+                     <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><ShieldCheck size={14}/> Handled by</dt>
+                     <dd className="text-sm font-black text-white">{inspectingLog.profileId ? 'Authorized staff' : 'Automated system'}</dd>
+                   </div>
+                   <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
+                     <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><Layers3 size={14}/> Area</dt>
+                     <dd className="truncate text-sm font-black text-white">{getFriendlyAreaName(inspectingLog.entityType)}</dd>
+                   </div>
+                   <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4 sm:col-span-2">
+                     <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><CalendarClock size={14}/> Recorded</dt>
+                     <dd className="text-sm font-black text-white">{formatPrivateDateTime(inspectingLog.createdAt)}</dd>
+                   </div>
+                 </dl>
+              </div>
+              <div className="px-5 sm:px-7 py-4 bg-slate-950/60 border-t border-white/5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                 <p className="flex items-center gap-2 text-[9px] font-bold text-slate-600"><ShieldCheck size={14}/> Internal IDs and raw system data are hidden.</p>
+                 <button type="button" data-modal-close onClick={() => setInspectingLog(null)} className="px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95">Close</button>
               </div>
            </div>
         </div>

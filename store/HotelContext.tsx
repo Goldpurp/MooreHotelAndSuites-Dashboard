@@ -4,6 +4,7 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useRef,
 } from "react";
 import { sileo } from "sileo";
 import {
@@ -46,6 +47,14 @@ interface HotelContextType {
   setSelectedGuestId: (id: string | null) => void;
   selectedRoomId: string | null;
   setSelectedRoomId: (id: string | null) => void;
+  selectedPaymentBookingId: string | null;
+  setSelectedPaymentBookingId: (id: string | null) => void;
+  selectedProfileId: string | null;
+  setSelectedProfileId: (id: string | null) => void;
+  selectedVisitRecordId: string | null;
+  setSelectedVisitRecordId: (id: string | null) => void;
+  selectedAuditLogId: string | null;
+  setSelectedAuditLogId: (id: string | null) => void;
   setActiveTab: (tab: string) => void;
   toggleSidebar: () => void;
   login: (email: string, password?: string) => Promise<void>;
@@ -56,13 +65,11 @@ interface HotelContextType {
   deleteRoom: (id: string) => Promise<void>;
   toggleRoomMaintenance: (id: string) => Promise<void>;
   addBooking: (payload: any) => Promise<BookingInitResponse>;
-  updateBooking: (id: string, updates: Partial<Booking>) => Promise<void>;
-  updatePaymentStatus: (id: string, status: PaymentStatus) => Promise<void>;
-  confirmTransfer: (bookingCode: string) => Promise<void>;
+  confirmTransfer: (bookingCode: string, confirmationText: string) => Promise<void>;
   checkInBooking: (bookingId: string) => Promise<void>;
   checkOutBooking: (bookingId: string) => Promise<void>;
   checkInBookingByCode: (code: string) => Promise<void>;
-  verifyMonnify: (bookingCode: string, transactionReference: string) => Promise<void>;
+  verifyMonnify: (bookingCode: string) => Promise<void>;
   /**
    * CHANGE: Updated signature for the new cancellation API.
    * Targets: POST /api/bookings/{id}/cancel?reason={reason}
@@ -76,7 +83,6 @@ interface HotelContextType {
   addGuest: (
     guest: Omit<Guest, "id" | "totalStays" | "totalSpent">,
   ) => Promise<string>;
-  updateGuest: (id: string, updates: Partial<Guest>) => Promise<void>;
   isRoomAvailable: (
     roomId: string,
     checkIn: string,
@@ -89,11 +95,33 @@ interface HotelContextType {
   addStaff: (user: any) => Promise<void>;
   updateStaff: (id: string, updates: Partial<StaffUser>) => Promise<void>;
   toggleStaffStatus: (id: string) => Promise<void>;
-  updateCurrentUserProfile: (updates: Partial<AppUser>) => Promise<void>;
-  refreshData: () => Promise<void>;
+  updateCurrentUserProfile: (
+    updates: Partial<AppUser>,
+    options?: { persist?: boolean },
+  ) => Promise<void>;
+  refreshData: (options?: { silent?: boolean }) => Promise<void>;
 }
 
 const HotelContext = createContext<HotelContextType | undefined>(undefined);
+
+const VALID_TABS = new Set([
+  "dashboard",
+  "bookings",
+  "rooms",
+  "guests",
+  "reports",
+  "operation_log",
+  "staff",
+  "clients",
+  "settings",
+  "settlements",
+]);
+
+function readInitialTab(): string {
+  if (typeof window === "undefined") return "dashboard";
+  const requested = new URL(window.location.href).searchParams.get("view") || "dashboard";
+  return VALID_TABS.has(requested) ? requested : "dashboard";
+}
 
 export const useHotel = () => {
   const context = useContext(HotelContext);
@@ -120,12 +148,66 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userRole, setUserRole] = useState<UserRole>(UserRole.Staff);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTabState] = useState(readInitialTab);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null,
   );
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedPaymentBookingId, setSelectedPaymentBookingId] = useState<string | null>(null);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  const [selectedVisitRecordId, setSelectedVisitRecordId] = useState<string | null>(null);
+  const [selectedAuditLogId, setSelectedAuditLogId] = useState<string | null>(null);
+  const lastAnnouncedNotificationIdRef = useRef<string | null>(null);
+
+  const setActiveTab = useCallback((tab: string) => {
+    const nextTab = VALID_TABS.has(tab) ? tab : "dashboard";
+    setActiveTabState(nextTab);
+
+    const url = new URL(window.location.href);
+    if (nextTab === "dashboard") url.searchParams.delete("view");
+    else url.searchParams.set("view", nextTab);
+    window.history.pushState({ view: nextTab }, "", url);
+  }, []);
+
+  useEffect(() => {
+    const handleHistoryNavigation = () => setActiveTabState(readInitialTab());
+    window.addEventListener("popstate", handleHistoryNavigation);
+    return () => window.removeEventListener("popstate", handleHistoryNavigation);
+  }, []);
+
+  useEffect(() => {
+    const handleSessionEnded = (event: Event) => {
+      const reason = (event as CustomEvent<{ reason?: string }>).detail?.reason;
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      setUserRole(UserRole.Staff);
+      setRooms([]);
+      setBookings([]);
+      setGuests([]);
+      setStaff([]);
+      setNotifications([]);
+      setAuditLogs([]);
+      setVisitHistory([]);
+      setSelectedBookingId(null);
+      setSelectedGuestId(null);
+      setSelectedRoomId(null);
+      setSelectedPaymentBookingId(null);
+      setSelectedProfileId(null);
+      setSelectedVisitRecordId(null);
+      setSelectedAuditLogId(null);
+      sileo.error({
+        title: reason === "suspended" ? "Account suspended" : "Session expired",
+        description:
+          reason === "suspended"
+            ? "Your access has been suspended. Contact an administrator."
+            : "Please sign in again to continue.",
+      });
+    };
+
+    window.addEventListener("mhs:session-ended", handleSessionEnded);
+    return () => window.removeEventListener("mhs:session-ended", handleSessionEnded);
+  }, []);
 
   const normalizeData = (res: any): any[] => {
     if (!res) return [];
@@ -200,6 +282,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
         b.transactionReference || b.TransactionReference || "",
       createdAt: b.createdAt || b.CreatedAt || new Date().toISOString(),
       notes: b.notes || b.Notes || "",
+      notificationMessage: b.notificationMessage || b.NotificationMessage || undefined,
+      paymentExpiresAtUtc: b.paymentExpiresAtUtc || b.PaymentExpiresAtUtc || null,
       statusHistory: b.statusHistory || b.StatusHistory || [],
     };
   };
@@ -291,14 +375,17 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       department: data.department || data.Department || "",
       avatarUrl:
         data.avatarUrl ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "P")}&background=020617&color=fff`,
+        "/avatar-placeholder.svg",
       createdAt: dateValue,
     } as any;
   };
 
-  const refreshData = useCallback(async () => {
+  const refreshData = useCallback(async (options: { silent?: boolean } = {}) => {
     const token = api.getToken();
-    if (!token) return;
+    if (!token) {
+      setIsInitialLoading(false);
+      return;
+    }
 
     try {
       const [
@@ -310,13 +397,15 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
         auditLogsRes,
         visitHistoryRes,
       ] = await Promise.all([
-        api.get("/api/rooms").catch(() => []),
-        api.get("/api/bookings").catch(() => []),
-        api.get("/api/admin/management/employees").catch(() => []),
-        api.get("/api/admin/management/clients").catch(() => []),
-        api.get("/api/notifications/staff").catch(() => []),
-        api.get("/api/audit-logs").catch(() => []),
-        api.get("/api/visit-records").catch(() => []),
+        // Rooms and bookings are core dashboard data. Do not silently turn a
+        // connectivity/authentication failure into a misleading empty hotel.
+        api.get("/api/rooms"),
+        api.get("/api/bookings"),
+        api.get("/api/admin/management/employees").catch(() => null),
+        api.get("/api/admin/management/clients").catch(() => null),
+        api.get("/api/notifications/staff").catch(() => null),
+        api.get("/api/audit-logs").catch(() => null),
+        api.get("/api/visit-records").catch(() => null),
       ]);
 
       const rawRooms = normalizeData(roomsRes);
@@ -338,7 +427,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
           ...r,
           id: String(r.id || r.Id),
           roomNumber: String(r.roomNumber || r.RoomNumber || ""),
-          category: r.category || r.Category || "Standard",
+          category:
+            (r.category || r.Category) === "PresidentialSuite"
+              ? "Presidential Suite"
+              : r.category || r.Category || "Standard",
           status: statusMap[rawStatus] || RoomStatus.Available,
           pricePerNight: Number(r.pricePerNight || r.PricePerNight || 0),
           isOnline:
@@ -349,29 +441,53 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       });
 
-      const allUsersRaw = [
-        ...normalizeData(employeesRes),
-        ...normalizeData(clientsRes),
-      ];
-
-      const mergedStaff = allUsersRaw
-        .map((u) => normalizeUser(u))
-        .filter((u): u is StaffUser => u !== null)
-        .filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i);
+      const normalizedEmployees =
+        employeesRes === null
+          ? null
+          : normalizeData(employeesRes)
+              .map((u) => normalizeUser(u))
+              .filter((u): u is StaffUser => u !== null);
+      const normalizedClients =
+        clientsRes === null
+          ? null
+          : normalizeData(clientsRes)
+              .map((u) => normalizeUser(u))
+              .filter((u): u is StaffUser => u !== null);
 
       setRooms(normalizedRooms);
       setBookings(normalizeData(bookingsRes).map(normalizeBooking));
-      setStaff(mergedStaff);
-      setNotifications(normalizeData(notificationsRes));
-      setAuditLogs(normalizeData(auditLogsRes));
-      setGuests(normalizeData(clientsRes));
-      setVisitHistory(normalizeData(visitHistoryRes).map(normalizeVisitRecord));
+      setStaff((current) => {
+        const employees =
+          normalizedEmployees ??
+          current.filter((profile) => profile.role !== UserRole.Client);
+        const clients =
+          normalizedClients ??
+          current.filter((profile) => profile.role === UserRole.Client);
+        return [...employees, ...clients].filter(
+          (profile, index, profiles) =>
+            profiles.findIndex((item) => item.id === profile.id) === index,
+        );
+      });
+      if (notificationsRes !== null) {
+        setNotifications(normalizeData(notificationsRes));
+      }
+      if (auditLogsRes !== null) {
+        setAuditLogs(normalizeData(auditLogsRes));
+      }
+      if (clientsRes !== null) {
+        setGuests(normalizeData(clientsRes));
+      }
+      if (visitHistoryRes !== null) {
+        setVisitHistory(normalizeData(visitHistoryRes).map(normalizeVisitRecord));
+      }
     } catch (error: any) {
       console.error("System Sync Failed:", error);
-      sileo.error({
-        title: 'Connection Error',
-        description: 'The system could not update. Some data might be old.'
-      });
+      if (!options.silent) {
+        sileo.error({
+          title: 'Connection Error',
+          description: 'The system could not update. Some data might be old.'
+        });
+      }
       if (error.message?.includes("Authorization Required")) {
         setIsAuthenticated(false);
         api.removeToken();
@@ -391,7 +507,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       
       const timeDiff = Date.now() - new Date(latest.createdAt).getTime();
       // Only toast if it's within last 10 seconds (recent)
-      if (timeDiff < 10000) {
+      if (
+        timeDiff < 10000 &&
+        latest.id !== lastAnnouncedNotificationIdRef.current
+      ) {
+        lastAnnouncedNotificationIdRef.current = latest.id;
         sileo.show({
           title: latest.title,
           description: latest.message,
@@ -403,23 +523,37 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const token = api.getToken();
     if (token) {
-      setIsAuthenticated(true);
-      api
-        .get<any>("/api/profile/me")
-        .then((data) => {
+      let active = true;
+      const restoreSession = async () => {
+        try {
+          const data = await api.get<any>("/api/profile/me");
           const user = normalizeUser(data);
-          if (user) {
-            setCurrentUser(user);
-            setUserRole(user.role);
+          if (!user) throw new Error("The signed-in profile could not be loaded.");
+          if (user.role === UserRole.Client) {
+            throw new Error("Guest accounts must use the guest website, not the staff dashboard.");
           }
-        })
-        .catch(() => {
+          if (!active) return;
+          // Establish the verified role before authentication becomes visible.
+          // This prevents a valid Admin/Manager deep link being redirected by
+          // the default Staff role during session restoration.
+          setCurrentUser(user);
+          setUserRole(user.role);
+          setIsAuthenticated(true);
+          await refreshData();
+        } catch {
+          if (!active) return;
           setIsAuthenticated(false);
+          setCurrentUser(null);
+          setUserRole(UserRole.Staff);
           api.removeToken();
-        })
-        .finally(() => {
-          refreshData();
-        });
+        } finally {
+          if (active) setIsInitialLoading(false);
+        }
+      };
+      void restoreSession();
+      return () => {
+        active = false;
+      };
     } else {
       setIsInitialLoading(false);
     }
@@ -436,6 +570,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       api.setToken(token);
       const user = normalizeUser(response);
       if (user) {
+        if (user.role === UserRole.Client) {
+          api.removeToken();
+          throw new Error("Guest accounts must use the guest website, not the staff dashboard.");
+        }
         setCurrentUser(user);
         setUserRole(user.role);
       }
@@ -451,6 +589,20 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsAuthenticated(false);
     setCurrentUser(null);
     setUserRole(UserRole.Staff);
+    setRooms([]);
+    setBookings([]);
+    setGuests([]);
+    setStaff([]);
+    setNotifications([]);
+    setAuditLogs([]);
+    setVisitHistory([]);
+    setSelectedBookingId(null);
+    setSelectedGuestId(null);
+    setSelectedRoomId(null);
+    setSelectedPaymentBookingId(null);
+    setSelectedProfileId(null);
+    setSelectedVisitRecordId(null);
+    setSelectedAuditLogId(null);
   };
 
   // const addRoom = async (room: Omit<Room, 'id'>) => {
@@ -463,13 +615,17 @@ const addRoom = async (room: Omit<Room, "id">) => {
 
   formData.append("RoomNumber", room.roomNumber);
   formData.append("Name", room.name);
-  formData.append("Category", room.category);
+  formData.append(
+    "Category",
+    room.category === "Presidential Suite" ? "PresidentialSuite" : room.category,
+  );
   formData.append("Floor", room.floor);
   formData.append("Status", room.status);
   formData.append("Size", room.size || "");
   formData.append("Description", room.description || "");
   formData.append("PricePerNight", String(room.pricePerNight || 0));
   formData.append("Capacity", String(room.capacity || 2));
+  formData.append("IsOnline", String(room.isOnline ?? true));
 
   if (room.amenities) {
     room.amenities.forEach((a) => formData.append("Amenities", a));
@@ -480,7 +636,8 @@ const addRoom = async (room: Omit<Room, "id">) => {
       if (room.images[i].startsWith("data:image")) {
         const res = await fetch(room.images[i]);
         const blob = await res.blob();
-        formData.append("files", blob, `room_${i}.jpg`);
+        const extension = blob.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
+        formData.append("files", blob, `room_${i}.${extension}`);
       }
     }
   }
@@ -496,27 +653,35 @@ const addRoom = async (room: Omit<Room, "id">) => {
 const updateRoom = async (id: string, updates: Partial<Room>) => {
   const formData = new FormData();
 
-  if (updates.name) formData.append("Name", updates.name);
-  if (updates.category) formData.append("Category", updates.category);
-  if (updates.floor) formData.append("Floor", updates.floor);
-  if (updates.status) formData.append("Status", updates.status);
+  if (updates.name !== undefined) formData.append("Name", updates.name);
+  if (updates.category !== undefined) {
+    formData.append(
+      "Category",
+      updates.category === "Presidential Suite" ? "PresidentialSuite" : updates.category,
+    );
+  }
+  if (updates.floor !== undefined) formData.append("Floor", updates.floor);
+  if (updates.status !== undefined) formData.append("Status", updates.status);
   if (updates.pricePerNight !== undefined) formData.append("PricePerNight", String(updates.pricePerNight));
   if (updates.capacity !== undefined) formData.append("Capacity", String(updates.capacity));
   if (updates.isOnline !== undefined) formData.append("IsOnline", String(updates.isOnline));
-  if (updates.description) formData.append("Description", updates.description);
-  if (updates.size) formData.append("Size", updates.size);
-  if (updates.amenities) {
+  if (updates.description !== undefined) formData.append("Description", updates.description);
+  if (updates.size !== undefined) formData.append("Size", updates.size);
+  if (updates.amenities !== undefined) {
+    formData.append("ReplaceAmenities", "true");
     updates.amenities.forEach((a) => formData.append("Amenities", a));
   }
 
-  if (updates.images) {
+  if (updates.images !== undefined) {
+    formData.append("ReplaceImages", "true");
     for (let i = 0; i < updates.images.length; i++) {
       const img = updates.images[i];
       if (img.startsWith("data:image")) {
         // New file upload
         const res = await fetch(img);
         const blob = await res.blob();
-        formData.append("files", blob, `update_room_${id}_${i}.jpg`);
+        const extension = blob.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
+        formData.append("files", blob, `update_room_${id}_${i}.${extension}`);
       } else {
         // Existing URL to keep in the DB
         formData.append("Images", img);
@@ -563,30 +728,35 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
       paymentStatus: (data.paymentStatus ||
         data.PaymentStatus ||
         PaymentStatus.Unpaid) as PaymentStatus,
+      paymentExpiresAtUtc:
+        data.paymentExpiresAtUtc || data.PaymentExpiresAtUtc || null,
     };
 
     await refreshData();
     return response;
   };
 
-  const updateBooking = async (id: string, updates: Partial<Booking>) => {
-    await api.put(`/api/bookings/${id}`, { ...updates, id });
-    await refreshData();
-  };
-  const updatePaymentStatus = async (id: string, status: PaymentStatus) => {
-    await api.put(`/api/bookings/${id}`, { id, paymentStatus: status });
-    await refreshData();
-  };
+  const confirmTransfer = async (code: string, confirmationText: string) => {
+    if (confirmationText !== "ACCEPT") {
+      throw new Error('Type "ACCEPT" exactly to confirm this manual payment.');
+    }
 
-  const confirmTransfer = async (code: string) => {
-    await api.post(`/api/bookings/${code}/confirm-transfer`);
-    await refreshData();
-  };
-
-  const verifyMonnify = async (code: string, ref: string) => {
-    await api.post(`/api/bookings/${code}/verify-monnify`, null, {
-      params: { transactionReference: ref },
+    // Keep the dashboard compatible with the current API while the backend moves
+    // to server-generated manual confirmation references. The acknowledgement is
+    // sent separately and must also be validated by the updated backend.
+    const legacyManualReference = `MANUAL-${code.toUpperCase()}-${crypto.randomUUID()}`;
+    await api.post(`/api/bookings/${code}/confirm-transfer`, {
+      confirmationText,
+      confirmationMethod: "TypedAcknowledgement",
+      transactionReference: legacyManualReference,
     });
+    await refreshData();
+  };
+
+  const verifyMonnify = async (code: string) => {
+    // The API verifies only the server-owned reference saved when checkout was
+    // initialized. Staff must never type or override a Monnify reference.
+    await api.post(`/api/bookings/${code}/verify-monnify`);
     await refreshData();
   };
 
@@ -638,10 +808,6 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     const res = await api.post<any>("/api/Auth/register", g);
     await refreshData();
     return res.email;
-  };
-  const updateGuest = async (id: string, updates: Partial<Guest>) => {
-    await api.put(`/api/profile/me`, updates);
-    await refreshData();
   };
 
   const parseLocalMidnight = (dateStr: string) => {
@@ -700,7 +866,6 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
       email: p.email,
       phoneNumber: p.phone,
       phone: p.phone,
-      temporaryPassword: p.password,
       assignedRole: String(p.role).toLowerCase(),
       status: String(p.status).toLowerCase(),
       department: p.department || "",
@@ -710,7 +875,13 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
   };
 
   const updateStaff = async (id: string, updates: Partial<StaffUser>) => {
-    await api.put(`/api/admin/management/employees/${id}`, { ...updates, id });
+    await api.put(`/api/admin/management/employees/${id}`, {
+      fullName: updates.name,
+      email: updates.email,
+      phone: updates.phone,
+      assignedRole: updates.role,
+      department: updates.department,
+    });
     await refreshData();
   };
 
@@ -726,8 +897,17 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     }
   };
 
-  const updateCurrentUserProfile = async (updates: Partial<AppUser>) => {
-    await api.put("/api/profile/me", updates);
+  const updateCurrentUserProfile = async (
+    updates: Partial<AppUser>,
+    options: { persist?: boolean } = {},
+  ) => {
+    if (options.persist !== false) {
+      await api.put("/api/profile/me", {
+        fullName: updates.name,
+        phone: updates.phone,
+        avatarUrl: updates.avatarUrl,
+      });
+    }
     if (currentUser) setCurrentUser({ ...currentUser, ...updates });
   };
 
@@ -751,6 +931,14 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     setSelectedGuestId,
     selectedRoomId,
     setSelectedRoomId,
+    selectedPaymentBookingId,
+    setSelectedPaymentBookingId,
+    selectedProfileId,
+    setSelectedProfileId,
+    selectedVisitRecordId,
+    setSelectedVisitRecordId,
+    selectedAuditLogId,
+    setSelectedAuditLogId,
     setActiveTab,
     toggleSidebar: () => setIsSidebarCollapsed(!isSidebarCollapsed),
     login,
@@ -761,8 +949,6 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     deleteRoom,
     toggleRoomMaintenance,
     addBooking,
-    updateBooking,
-    updatePaymentStatus,
     confirmTransfer,
     verifyMonnify,
     checkInBooking,
@@ -771,7 +957,6 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     cancelBooking,
     completeRefund,
     addGuest,
-    updateGuest,
     isRoomAvailable,
     dismissNotification,
     markNotificationAsRead,

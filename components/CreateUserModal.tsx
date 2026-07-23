@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus, Save, Loader2, Fingerprint, Mail, Lock, ShieldCheck, Activity, User, KeyRound, Building2, Phone, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { X, UserPlus, Save, Loader2, Fingerprint, Mail, ShieldCheck, Activity, User, KeyRound, Building2, Phone, ShieldAlert } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useHotel } from '../store/HotelContext';
-import { calculateStrength } from '../lib/utils';
 import { UserRole, StaffUser, ProfileStatus } from '../types';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -14,22 +14,22 @@ interface CreateUserModalProps {
 const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, editingUser }) => {
   const { addStaff, updateStaff, currentUser } = useHotel();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [validationFields, setValidationFields] = useState<string[]>([]);
+  const modalRef = useAccessibleModal(isOpen, onClose, !isSubmitting);
   
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
+    name: '', email: '', phone: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
   });
 
   useEffect(() => {
     if (editingUser) {
       setFormData({
-        name: editingUser.name, email: editingUser.email, phone: editingUser.phone || '', 
-        password: '', role: editingUser.role, status: editingUser.status, department: editingUser.department || ''
+        name: editingUser.name, email: editingUser.email, phone: editingUser.phone || '',
+        role: editingUser.role, status: editingUser.status, department: editingUser.department || ''
       });
     } else {
       setFormData({
-        name: '', email: '', phone: '', password: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
+        name: '', email: '', phone: '', role: UserRole.Staff, status: ProfileStatus.Active, department: ''
       });
     }
   }, [editingUser, isOpen]);
@@ -43,7 +43,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
     // Basic Field Validation
     if (!formData.name.trim()) missing.push('name');
     if (!formData.email.trim() || !formData.email.includes('@')) missing.push('email');
-    if (!editingUser && (!formData.password || formData.password.length < 6)) missing.push('password');
 
     if (missing.length > 0) {
       setValidationFields(missing);
@@ -94,19 +93,19 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
   const getAllowedRoles = () => {
     if (!currentUser) return [];
     if (currentUser.role === UserRole.Admin) {
-      return [UserRole.Admin, UserRole.Manager, UserRole.Staff, UserRole.Client];
+      return [UserRole.Manager, UserRole.Staff];
     }
     if (currentUser.role === UserRole.Manager) {
-      return [UserRole.Staff, UserRole.Client];
+      return [UserRole.Staff];
     }
     return [];
   };
 
   const allowedRoles = getAllowedRoles();
-  const isStaffRole = formData.role === UserRole.Staff;
+  const isStaffRole = formData.role === UserRole.Staff || formData.role === UserRole.Manager;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-label={editingUser ? 'Edit staff member' : 'Add staff member'} tabIndex={-1} className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
       <div className="w-full max-w-5xl flex flex-col lg:flex-row glass-card rounded-[1.5rem] sm:rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(59,130,246,0.15)] animate-in zoom-in-95 duration-300 min-h-[500px] lg:h-[720px] my-4 sm:my-8 max-h-[95vh] sm:max-h-[92vh]">
           <>
             {/* Left Visual Sidebar */}
@@ -145,7 +144,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                      <span className="w-6 h-[1.5px] bg-brand-500 hidden sm:block"></span>
                      <span className="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">Adding new staff</span>
                   </div>
-                  <button onClick={onClose} disabled={isSubmitting} type="button" className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
+                  <button data-modal-close aria-label="Close staff form" onClick={onClose} disabled={isSubmitting} type="button" className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
                </div>
 
                <div className="flex-1 space-y-6 sm:space-y-10">
@@ -199,57 +198,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                   </div>
 
                   {!editingUser && (
-                    <div className="space-y-4 sm:space-y-6">
-                        <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
-                          <Lock size={14} /> Security
-                        </h4>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center px-1">
-                             <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Secret PIN</label>
-                             {validationFields.includes('password') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">6+ characters required</p>}
-                          </div>
-                          <div className="relative">
-                            <input 
-                              required 
-                              value={formData.password} 
-                              onChange={e => { setFormData({...formData, password: e.target.value}); setValidationFields(prev => prev.filter(f => f !== 'password')); }} 
-                              type={showPassword ? "text" : "password"} 
-                              className={`w-full bg-white/5 border ${validationFields.includes('password') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 pl-4 pr-12 text-sm text-white focus:bg-white/10 outline-none transition-all tracking-widest font-mono`} 
-                              placeholder="••••••••" 
-                            />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
-                              {showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
-                            </button>
-                          </div>
-
-                          {formData.password && (
-                            <div className="px-1 space-y-1.5">
-                              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest">
-                                <span className="text-slate-500">Security Strength</span>
-                                <span className={
-                                  calculateStrength(formData.password) <= 2 ? "text-rose-500" :
-                                  calculateStrength(formData.password) <= 4 ? "text-amber-500" : "text-emerald-500"
-                                }>
-                                  {calculateStrength(formData.password) <= 2 ? "Weak" :
-                                   calculateStrength(formData.password) <= 4 ? "Medium" : "Strong"}
-                                </span>
-                              </div>
-                              <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden flex gap-0.5">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <div 
-                                    key={s}
-                                    className={`h-full flex-1 transition-all duration-500 ${
-                                      calculateStrength(formData.password) >= s 
-                                        ? (calculateStrength(formData.password) <= 2 ? "bg-rose-500" :
-                                           calculateStrength(formData.password) <= 4 ? "bg-amber-500" : "bg-emerald-500")
-                                        : "bg-transparent"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-[10px] font-bold leading-relaxed text-amber-100/80">
+                      A secure, single-use password setup link will be emailed to this staff member. Administrators never see or send staff passwords.
                     </div>
                   )}
 
@@ -275,7 +225,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                </div>
 
                <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/5 flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <button type="button" onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 sm:py-5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:text-white transition-all border border-white/5">Cancel</button>
+                  <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 sm:py-5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:text-white transition-all border border-white/5">Cancel</button>
                   <button 
                     type="submit" 
                     disabled={isSubmitting} 

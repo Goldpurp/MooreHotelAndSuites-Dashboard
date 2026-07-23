@@ -1,21 +1,51 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { VisitAction, VisitRecord } from '../types';
-import { 
+import {
   Search, Clock, Bed, 
   Calendar, Zap, LogOut, RefreshCw, ChevronLeft, ChevronRight,
-  X, FileDown
+  X, FileDown, ShieldCheck, UserRound, ReceiptText
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { downloadPDF } from '../lib/utils';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
+import {
+  formatPrivateDateTime,
+  getBookingReferenceDisplay,
+  getPrivateGuestName,
+  getStaffDisplayName,
+} from '../lib/displayPrivacy';
+
+const getActivityDescription = (record: VisitRecord) => {
+  const guest = getPrivateGuestName(record.guestName);
+  const room = record.roomNumber && record.roomNumber !== '---'
+    ? `Room ${record.roomNumber}`
+    : 'the assigned room';
+
+  switch (String(record.action)) {
+    case VisitAction.RESERVATION:
+      return `A new reservation was recorded for ${guest} for ${room}.`;
+    case VisitAction.CHECK_IN:
+      return `${guest} was checked into ${room}.`;
+    case VisitAction.CHECK_OUT:
+      return `${guest} was checked out of ${room}.`;
+    case VisitAction.VOID:
+      return `The reservation for ${guest} was cancelled.`;
+    case 'NoShow':
+      return `${guest} was marked as a no-show for ${room}.`;
+    default:
+      return `A hotel activity was recorded for ${guest}.`;
+  }
+};
 
 const OperationLog: React.FC = () => {
-  const { visitHistory, refreshData, bookings, rooms } = useHotel();
+  const { visitHistory, refreshData, bookings, rooms, selectedVisitRecordId, setSelectedVisitRecordId } = useHotel();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [inspectingRecord, setInspectingRecord] = useState<VisitRecord | null>(null);
   const [localSearch, setLocalSearch] = useState('');
   const [activeProtocol, setActiveProtocol] = useState<'All' | VisitAction | 'NoShow'>('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const detailsModalRef = useAccessibleModal(Boolean(inspectingRecord), () => setInspectingRecord(null));
   const PAGE_SIZE = 15;
 
   useEffect(() => { setCurrentPage(1); }, [localSearch, activeProtocol]);
@@ -68,6 +98,16 @@ const OperationLog: React.FC = () => {
     return filteredLogs.slice(start, start + PAGE_SIZE);
   }, [filteredLogs, currentPage]);
 
+  useEffect(() => {
+    if (!selectedVisitRecordId) return;
+    const record = visitHistory.find((item) => item.id === selectedVisitRecordId);
+    if (!record) return;
+    setActiveProtocol('All');
+    setLocalSearch('');
+    setInspectingRecord(record);
+    setSelectedVisitRecordId(null);
+  }, [selectedVisitRecordId, setSelectedVisitRecordId, visitHistory]);
+
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
@@ -81,11 +121,11 @@ const OperationLog: React.FC = () => {
   const handleExportData = () => {
     const exportData = filteredLogs.map(log => ({
       Time: new Date(log.timestamp).toLocaleString(),
-      Guest: log.guestName,
-      Action: log.action,
+      Guest: getPrivateGuestName(log.guestName),
+      Activity: getActionBadge(log.action).label,
       Room: log.roomNumber,
-      Staff: log.authorizedBy,
-      Code: log.bookingCode
+      HandledBy: getStaffDisplayName(log.authorizedBy),
+      Reference: getBookingReferenceDisplay(log.bookingCode),
     }));
     downloadPDF(exportData, "Activity History", `ActivityLog_${new Date().toISOString().split('T')[0]}.pdf`);
     sileo.success({
@@ -106,7 +146,7 @@ const OperationLog: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -121,7 +161,7 @@ const OperationLog: React.FC = () => {
         </div>
       </div>
 
-      <div className="glass-card rounded-2xl border border-white/5 overflow-hidden flex flex-col min-h-[600px] shadow-2xl bg-slate-900/10 backdrop-blur-3xl">
+      <div className="glass-card min-h-0 flex-1 rounded-2xl border border-white/5 overflow-hidden flex flex-col shadow-2xl bg-slate-900/10 backdrop-blur-3xl">
         <div className="px-6 py-4 border-b border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 bg-slate-950/60">
            <div className="relative w-full md:w-96 group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
@@ -134,8 +174,8 @@ const OperationLog: React.FC = () => {
            </div>
         </div>
 
-        <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left min-w-[800px]">
+        <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+          <table className="mobile-card-table w-full text-left min-w-[800px]">
             <thead>
               <tr className="text-slate-600 text-[10px] font-black uppercase tracking-widest bg-slate-950/40 border-b border-white/5">
                 <th className="responsive-table-padding">Time</th>
@@ -153,7 +193,7 @@ const OperationLog: React.FC = () => {
                   const badge = getActionBadge(log.action);
                   return (
                     <tr key={log.id} onClick={() => setInspectingRecord(log)} className="hover:bg-brand-500/[0.02] transition-all group border-l-4 border-transparent hover:border-brand-500 cursor-pointer">
-                      <td className="responsive-table-padding">
+                      <td data-label="Time" className="responsive-table-padding">
                         <div className="flex items-center gap-4">
                           <div className="p-2 bg-black/60 rounded-xl border border-white/5 text-slate-700 shrink-0"><Clock size={16} /></div>
                           <div>
@@ -162,18 +202,18 @@ const OperationLog: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="responsive-table-padding">
+                      <td data-label="Guest" className="responsive-table-padding">
                         <div className="min-w-0">
-                            <p className="adaptive-text-sm font-black text-white uppercase truncate leading-none mb-1.5">{log.guestName || 'System'}</p>
-                           <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Code: {log.bookingCode || 'SYSTEM'}</p>
+                            <p className="adaptive-text-sm font-black text-white uppercase truncate leading-none mb-1.5">{getPrivateGuestName(log.guestName)}</p>
+                           <p className="break-all text-[9px] font-black uppercase tracking-wider text-slate-500">Ref: {getBookingReferenceDisplay(log.bookingCode)}</p>
                         </div>
                       </td>
-                      <td className="responsive-table-padding">
+                      <td data-label="Action" className="responsive-table-padding">
                          <div className="flex justify-center">
                             <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border flex items-center gap-2 w-fit ${badge.classes}`}>{badge.icon} {badge.label}</span>
                          </div>
                       </td>
-                      <td className="responsive-table-padding hide-on-tablet">
+                      <td data-label="Room" className="responsive-table-padding hide-on-tablet">
                          <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/5 rounded-xl border border-white/5 text-slate-700 shrink-0"><Bed size={16} /></div>
                             <div>
@@ -182,10 +222,10 @@ const OperationLog: React.FC = () => {
                             </div>
                          </div>
                       </td>
-                      <td className="responsive-table-padding text-right">
+                      <td data-label="Staff" className="responsive-table-padding text-right">
                          <div className="min-w-0">
-                            <p className="adaptive-text-sm font-black text-slate-300 uppercase truncate leading-none mb-1.5">{log.authorizedBy || 'System'}</p>
-                            <p className="text-[8px] text-emerald-500 font-black uppercase tracking-widest">Staff</p>
+                            <p className="adaptive-text-sm font-black text-slate-300 uppercase truncate leading-none mb-1.5">{getStaffDisplayName(log.authorizedBy)}</p>
+                            <p className="text-[8px] text-emerald-500 font-black uppercase tracking-widest">Handled by</p>
                          </div>
                       </td>
                     </tr>
@@ -207,21 +247,53 @@ const OperationLog: React.FC = () => {
       </div>
 
       {inspectingRecord && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-500 overflow-hidden">
-           <div className="w-full max-w-2xl bg-[#0a0f1d] border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-3xl flex flex-col max-h-[92vh] sm:max-h-[85vh]">
-              <div className="px-6 sm:px-10 py-4 sm:py-6 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
-                 <h3 className="text-base sm:adaptive-text-xl font-black text-white uppercase leading-none">Details</h3>
-                 <button onClick={() => setInspectingRecord(null)} className="p-2 hover:bg-white/10 text-slate-500 rounded-xl transition-all active:scale-90"><X size={20}/></button>
-              </div>
-              <div className="p-6 sm:p-10 overflow-y-auto space-y-6 sm:space-y-8 flex-1 custom-scrollbar">
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div className="bg-white/5 p-4 sm:p-6 rounded-xl sm:rounded-3xl border border-white/5 space-y-1"><p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Staff</p><p className="adaptive-text-base font-black text-brand-400 uppercase">{inspectingRecord.authorizedBy}</p></div>
-                    <div className="bg-white/5 p-4 sm:p-6 rounded-xl sm:rounded-3xl border border-white/5 space-y-1"><p className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Guest</p><p className="adaptive-text-base font-black text-white uppercase truncate">{inspectingRecord.guestName}</p></div>
+        <div ref={detailsModalRef} role="dialog" aria-modal="true" aria-label="Activity record details" tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-500 overflow-hidden">
+           <div className="w-full max-w-xl bg-[#0a0f1d] border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-3xl flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="px-5 sm:px-8 py-5 border-b border-white/5 flex items-center justify-between gap-4 bg-slate-950/40">
+                 <div className="flex min-w-0 items-center gap-3">
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${getActionBadge(inspectingRecord.action).classes}`}>
+                      {getActionBadge(inspectingRecord.action).icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-brand-400">Activity summary</p>
+                      <h3 className="truncate text-lg font-black text-white">{getActionBadge(inspectingRecord.action).label}</h3>
+                    </div>
                  </div>
-                 <div className="bg-[#05080f] rounded-xl sm:rounded-3xl border border-white/5 p-4 sm:p-10 font-mono text-[10px] sm:text-[11px] text-slate-400 leading-relaxed shadow-inner overflow-auto"><pre className="whitespace-pre-wrap break-all">{JSON.stringify(inspectingRecord, null, 2)}</pre></div>
+                 <button type="button" data-modal-close aria-label="Close activity details" onClick={() => setInspectingRecord(null)} className="p-2 hover:bg-white/10 text-slate-500 rounded-xl transition-all active:scale-90"><X size={20}/></button>
               </div>
-              <div className="px-6 sm:px-10 py-4 sm:py-6 bg-slate-950/60 border-t border-white/5 flex justify-end">
-                 <button onClick={() => setInspectingRecord(null)} className="px-8 sm:px-10 py-2 sm:py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-[11px] sm:text-[12px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95">Close</button>
+              <div className="scroll-pane flex-1 space-y-5 overflow-y-auto p-5 sm:p-8">
+                 <section className="rounded-2xl border border-brand-500/15 bg-brand-500/[0.06] p-5">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <span className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[9px] font-black uppercase tracking-wider ${getActionBadge(inspectingRecord.action).classes}`}>
+                        {getActionBadge(inspectingRecord.action).icon} {getActionBadge(inspectingRecord.action).label}
+                      </span>
+                      <span className="text-right text-[10px] font-bold text-slate-500">{formatPrivateDateTime(inspectingRecord.timestamp)}</span>
+                    </div>
+                    <p className="text-sm font-semibold leading-6 text-slate-200">{getActivityDescription(inspectingRecord)}</p>
+                 </section>
+
+                 <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
+                      <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><UserRound size={14}/> Guest</dt>
+                      <dd className="truncate text-sm font-black text-white">{getPrivateGuestName(inspectingRecord.guestName)}</dd>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
+                      <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><Bed size={14}/> Room</dt>
+                      <dd className="truncate text-sm font-black text-white">{inspectingRecord.roomNumber && inspectingRecord.roomNumber !== '---' ? `Room ${inspectingRecord.roomNumber}` : 'Not assigned'}</dd>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
+                      <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><ShieldCheck size={14}/> Handled by</dt>
+                      <dd className="truncate text-sm font-black text-white">{getStaffDisplayName(inspectingRecord.authorizedBy)}</dd>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
+                      <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><ReceiptText size={14}/> Booking reference</dt>
+                      <dd className="break-all text-sm font-black text-white">{getBookingReferenceDisplay(inspectingRecord.bookingCode)}</dd>
+                    </div>
+                 </dl>
+              </div>
+              <div className="px-5 sm:px-8 py-4 bg-slate-950/60 border-t border-white/5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                 <p className="flex items-center gap-2 text-[9px] font-bold text-slate-600"><ShieldCheck size={14}/> Booking references are shown in full; private system credentials remain protected.</p>
+                 <button type="button" data-modal-close onClick={() => setInspectingRecord(null)} className="px-8 sm:px-10 py-2 sm:py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-[11px] sm:text-[12px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95">Close</button>
               </div>
            </div>
         </div>

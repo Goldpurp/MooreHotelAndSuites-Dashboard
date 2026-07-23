@@ -100,7 +100,7 @@ const Rooms: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-700 pb-10">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden lg:gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -124,7 +124,7 @@ const Rooms: React.FC = () => {
         ))}
       </div>
 
-      <div className="glass-card rounded-2xl flex flex-col overflow-hidden border border-white/5 shadow-xl min-h-[600px]">
+      <div className="glass-card min-h-0 flex-1 rounded-2xl flex flex-col overflow-hidden border border-white/5 shadow-xl">
         <div className="px-6 py-4 border-b border-white/5 flex flex-col lg:flex-row items-center justify-between bg-slate-900/40 gap-4">
           <div className="flex items-center gap-3 flex-1 w-full max-w-2xl">
              <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all shrink-0 ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
@@ -160,13 +160,13 @@ const Rooms: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 flex-1">
+        <div className="scroll-pane min-h-0 overflow-auto p-4 flex-1">
           {paginatedRooms.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 opacity-20"><SearchX size={64} className="mb-4 text-slate-700" /><p className="adaptive-text-lg font-black uppercase text-slate-500">No rooms found</p></div>
           ) : (
             viewMode === 'list' ? (
               <div className="overflow-x-auto h-full">
-                <table className="w-full text-left min-w-[700px]">
+                <table className="mobile-card-table w-full text-left min-w-[700px]">
                   <thead>
                     <tr className="text-slate-600 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/10">
                       <th className="responsive-table-padding">Room</th>
@@ -179,7 +179,7 @@ const Rooms: React.FC = () => {
                   <tbody className="divide-y divide-white/5">
                     {paginatedRooms.map((room) => (
                       <tr key={room.id} onClick={() => { setViewingRoom(room); setIsDetailOpen(true); }} className="hover:bg-white/[0.02] transition-all group cursor-pointer border-l-4 border-transparent hover:border-blue-500">
-                        <td className="responsive-table-padding">
+                        <td data-label="Room" className="responsive-table-padding">
                           <div className="flex items-center gap-4">
                             <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=100'} className="w-12 h-10 rounded-lg object-cover ring-1 ring-white/5 shadow-lg shrink-0" alt=""/>
                             <div className="min-w-0">
@@ -188,17 +188,17 @@ const Rooms: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="responsive-table-padding col-priority-med">
+                        <td data-label="Category" className="responsive-table-padding col-priority-med">
                             <p className="adaptive-text-sm font-black text-slate-300 uppercase truncate">{room.category}</p>
                             <p className="text-[8px] text-slate-700 font-bold uppercase mt-1">{room.floor.replace(/(?!^)([A-Z])/g, ' $1')}</p>
                         </td>
-                        <td className="responsive-table-padding text-center">
+                        <td data-label="Status" className="responsive-table-padding text-center">
                             <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border whitespace-nowrap ${getStatusClasses(room.status)}`}>{room.status}</span>
                         </td>
-                        <td className="responsive-table-padding col-priority-low">
+                        <td data-label="Price" className="responsive-table-padding col-priority-low">
                           <p className="adaptive-text-sm font-black text-white">₦{room.pricePerNight.toLocaleString()}</p>
                         </td>
-                        <td className="responsive-table-padding text-right">
+                        <td data-label="Actions" className="responsive-table-padding text-right">
                             <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                                <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
                                  <button onClick={(e) => { e.stopPropagation(); setRoomForMaintenance(room); setIsMaintenanceModalOpen(true); }} className={`p-2 rounded-lg border transition-all ${room.status === RoomStatus.Maintenance ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-white/5 text-slate-600 border-white/5 hover:text-amber-500'}`}><Wrench size={14}/></button>

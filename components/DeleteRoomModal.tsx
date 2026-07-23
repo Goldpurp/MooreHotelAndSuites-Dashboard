@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, AlertTriangle, ShieldAlert, Loader2, Trash } from 'lucide-react';
 import { sileo } from 'sileo';
 import { Room } from '../types';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface DeleteRoomModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface DeleteRoomModalProps {
 
 const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onConfirm, room }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const modalRef = useAccessibleModal(isOpen, onClose, !isSubmitting);
 
   if (!isOpen || !room) return null;
 
@@ -35,7 +37,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label="Delete room permanently" tabIndex={-1} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className="glass-card w-full max-w-md rounded-[2rem] shadow-[0_0_50px_rgba(244,63,94,0.15)] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300">
           <>
             <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-rose-500/5">
@@ -48,7 +50,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
                   <p className="text-[8px] text-rose-400 font-black uppercase tracking-[0.15em]">Protocol: Physical Removal</p>
                 </div>
               </div>
-              <button onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all">
+              <button type="button" data-modal-close aria-label="Close delete room confirmation" onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all">
                 <X size={18} />
               </button>
             </div>
@@ -72,7 +74,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
             </div>
 
             <div className="px-8 py-6 border-t border-white/5 flex gap-3 bg-slate-950/40">
-              <button onClick={onClose} disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">
                 Abort Protocol
               </button>
               <button 

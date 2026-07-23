@@ -19,7 +19,10 @@
 html,
 body,
 #root {
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-width: 100%;
   margin: 0;
   padding: 0;
   background-color: #020617;
@@ -27,9 +30,128 @@ body,
   font-family: var(--font-sans);
 }
 
+html,
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#root {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
 * {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
+}
+
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  button[aria-label] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .fluid-padding {
+    padding: 0.75rem;
+  }
+
+  .split-side {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .mobile-card-table {
+    display: block;
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .mobile-card-table thead {
+    display: none;
+  }
+
+  .mobile-card-table tbody {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .mobile-card-table tbody tr {
+    display: grid;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    background: rgba(15, 23, 42, 0.68);
+  }
+
+  .mobile-card-table tbody td:not([colspan]) {
+    display: grid !important;
+    grid-template-columns: minmax(5rem, 34%) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0.75rem 0.875rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: left !important;
+  }
+
+  .mobile-card-table tbody td:not([colspan]):last-child {
+    border-bottom: 0;
+  }
+
+  .mobile-card-table tbody td:not([colspan])::before {
+    content: attr(data-label);
+    color: #64748b;
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .mobile-card-table tbody td:not([colspan]) > * {
+    min-width: 0;
+    max-width: 100%;
+    justify-self: end;
+  }
+
+  .mobile-card-table tbody td[colspan] {
+    display: block;
+    width: 100%;
+    padding: 3rem 1rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Core Animations */
@@ -95,6 +217,122 @@ body,
 
 *::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* App shell and deliberate scroll regions */
+.app-scroll-region,
+.scroll-pane {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(100, 116, 139, 0.42) transparent !important;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-scroll-region::-webkit-scrollbar,
+.scroll-pane::-webkit-scrollbar {
+  display: block !important;
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.app-scroll-region::-webkit-scrollbar-track,
+.scroll-pane::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-scroll-region::-webkit-scrollbar-thumb,
+.scroll-pane::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.42);
+}
+
+.workspace-viewport {
+  padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+}
+
+.route-stage {
+  animation: route-stage-in 240ms ease-out;
+}
+
+@keyframes route-stage-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.mobile-nav-backdrop {
+  animation: surface-fade-in 180ms ease-out both;
+}
+
+.mobile-nav-sheet {
+  transform-origin: bottom center;
+  animation: mobile-sheet-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes surface-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mobile-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .workspace-viewport {
+    padding-bottom: clamp(1rem, 2vw, 2.5rem);
+  }
+}
+
+@media (max-width: 1023px) {
+  .master-detail-workspace > .split-main {
+    width: 100%;
+  }
+
+  .master-detail-workspace > .split-side {
+    position: fixed;
+    z-index: 80;
+    inset: 4.75rem 0.75rem calc(5.75rem + env(safe-area-inset-bottom));
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    border-radius: 1rem;
+    filter: drop-shadow(0 28px 60px rgba(0, 0, 0, 0.65));
+    animation: detail-pane-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .master-detail-workspace > .split-side {
+    inset: 5.75rem 1.25rem 1.25rem calc(5rem + 1.25rem);
+  }
+}
+
+@keyframes detail-pane-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 
 .glass-card {

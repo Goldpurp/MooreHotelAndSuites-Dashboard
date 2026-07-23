@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Room, RoomStatus } from '../types';
-import { X, Bed, Users, Square, Info, Check, Shield } from 'lucide-react';
+import { X, Bed, Users, Square, Info, Check, Shield, ChevronLeft, ChevronRight, Images } from 'lucide-react';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface RoomDetailModalProps {
   isOpen: boolean;
@@ -9,15 +10,119 @@ interface RoomDetailModalProps {
 }
 
 const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room }) => {
+  const modalRef = useAccessibleModal(isOpen, onClose);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const galleryImages = useMemo(() => {
+    const uploadedImages = (room?.images || []).filter(Boolean);
+    return uploadedImages.length > 0
+      ? uploadedImages
+      : ['https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800'];
+  }, [room?.images]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveImageIndex(0);
+    galleryRef.current?.scrollTo({ left: 0, behavior: 'instant' });
+  }, [isOpen, room?.id]);
+
+  const showImage = (index: number) => {
+    const safeIndex = Math.max(0, Math.min(index, galleryImages.length - 1));
+    const gallery = galleryRef.current;
+    if (!gallery) return;
+    gallery.scrollTo({ left: safeIndex * gallery.clientWidth, behavior: 'smooth' });
+    setActiveImageIndex(safeIndex);
+  };
+
+  const handleGalleryScroll = () => {
+    const gallery = galleryRef.current;
+    if (!gallery?.clientWidth) return;
+    const index = Math.round(gallery.scrollLeft / gallery.clientWidth);
+    setActiveImageIndex(Math.max(0, Math.min(index, galleryImages.length - 1)));
+  };
+
+  const handleGalleryKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'ArrowLeft' && activeImageIndex > 0) {
+      event.preventDefault();
+      showImage(activeImageIndex - 1);
+    }
+    if (event.key === 'ArrowRight' && activeImageIndex < galleryImages.length - 1) {
+      event.preventDefault();
+      showImage(activeImageIndex + 1);
+    }
+  };
+
   if (!isOpen || !room) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto custom-scrollbar">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-label={`Room ${room.roomNumber} details`} tabIndex={-1} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto custom-scrollbar">
       <div className="glass-card w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 flex flex-col md:flex-row h-auto md:h-[600px] my-8">
-        <div className="w-full md:w-1/2 relative bg-slate-900 overflow-hidden shrink-0 h-64 md:h-full">
-          <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800'} className="w-full h-full object-cover" alt={room.name} />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
-          <div className="absolute bottom-6 left-6 pr-6">
+        <div className="group/gallery w-full md:w-1/2 relative bg-slate-900 overflow-hidden shrink-0 h-64 md:h-full">
+          <div
+            ref={galleryRef}
+            tabIndex={0}
+            role="region"
+            aria-label={`${room.name} photo gallery. Use the arrow keys or swipe to view more photos.`}
+            onScroll={handleGalleryScroll}
+            onKeyDown={handleGalleryKeyDown}
+            className="scroll-pane flex h-full w-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth touch-pan-x outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+          >
+            {galleryImages.map((image, index) => (
+              <div key={`${image}-${index}`} className="h-full w-full shrink-0 snap-center snap-always">
+                <img
+                  src={image}
+                  className="h-full w-full select-none object-cover"
+                  alt={`${room.name} photo ${index + 1} of ${galleryImages.length}`}
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/20"></div>
+
+          <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white backdrop-blur-md">
+            <Images size={14} className="text-brand-400" />
+            Photo {activeImageIndex + 1} of {galleryImages.length}
+          </div>
+
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Show previous room photo"
+                onClick={() => showImage(activeImageIndex - 1)}
+                disabled={activeImageIndex === 0}
+                className="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-slate-950/65 text-white shadow-xl backdrop-blur-md transition-all hover:bg-slate-900 disabled:pointer-events-none disabled:opacity-25 md:opacity-0 md:group-hover/gallery:opacity-100 md:focus:opacity-100"
+              >
+                <ChevronLeft size={22} />
+              </button>
+              <button
+                type="button"
+                aria-label="Show next room photo"
+                onClick={() => showImage(activeImageIndex + 1)}
+                disabled={activeImageIndex === galleryImages.length - 1}
+                className="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-slate-950/65 text-white shadow-xl backdrop-blur-md transition-all hover:bg-slate-900 disabled:pointer-events-none disabled:opacity-25 md:opacity-0 md:group-hover/gallery:opacity-100 md:focus:opacity-100"
+              >
+                <ChevronRight size={22} />
+              </button>
+
+              <div className="absolute right-4 top-4 z-20 flex max-w-[42%] items-center gap-1.5 overflow-x-auto rounded-full border border-white/10 bg-slate-950/65 px-2.5 py-2 backdrop-blur-md">
+                {galleryImages.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    aria-label={`Show room photo ${index + 1}`}
+                    aria-current={activeImageIndex === index ? 'true' : undefined}
+                    onClick={() => showImage(index)}
+                    className={`h-2 shrink-0 rounded-full transition-all ${activeImageIndex === index ? 'w-6 bg-brand-400' : 'w-2 bg-white/35 hover:bg-white/70'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="pointer-events-none absolute bottom-6 left-6 z-10 max-w-[78%] pr-4">
             <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest inline-flex items-center gap-1.5 border mb-3 ${
               room.status === RoomStatus.Available ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' :
               room.status === RoomStatus.Occupied ? 'bg-blue-500/20 text-blue-400 border-blue-500/40' :
@@ -45,7 +150,7 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
               <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Nightly Tariff</p>
               <h3 className="text-3xl font-black text-white">₦{room.pricePerNight.toLocaleString()}</h3>
             </div>
-            <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl transition-all border border-white/5">
+            <button type="button" data-modal-close aria-label="Close room details" onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl transition-all border border-white/5">
               <X size={20} />
             </button>
           </div>

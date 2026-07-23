@@ -169,7 +169,7 @@ const SecurityLedger: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto overflow-y-auto max-h-[600px] custom-scrollbar">
-          <table className="w-full text-left">
+          <table className="mobile-card-table w-full text-left">
             <thead className="sticky top-0 bg-slate-950/80 backdrop-blur-md z-10 border-b border-white/10">
               <tr className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
                 <th className="px-8 py-5">Time</th>
@@ -190,7 +190,7 @@ const SecurityLedger: React.FC = () => {
               ) : (
                 filteredHistory.map((log) => (
                   <tr key={log.id} className="hover:bg-white/5 transition-all group">
-                    <td className="px-8 py-6">
+                    <td data-label="Time" className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className="p-2.5 bg-black/40 rounded-xl border border-white/5 text-slate-500">
                           <Clock size={16} />
@@ -201,19 +201,19 @@ const SecurityLedger: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td data-label="Guest" className="px-8 py-6">
                        <div>
                           <p className="text-[15px] font-black text-white group-hover:text-blue-400 transition-colors">{log.guestName}</p>
-                          <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest mt-0.5">Ref: {log.bookingCode}</p>
+                          <p className="mt-0.5 break-all text-[9px] font-black uppercase tracking-wider text-slate-500">Ref: {log.bookingCode}</p>
                        </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td data-label="Action" className="px-8 py-6">
                        <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border flex items-center gap-2 w-fit transition-all ${getActionStyles(log.action)}`}>
                          {getActionIcon(log.action)}
                          {log.action}
                        </span>
                     </td>
-                    <td className="px-8 py-6">
+                    <td data-label="Room" className="px-8 py-6">
                        <div className="flex items-center gap-3">
                           <div className="p-2.5 bg-white/5 rounded-xl border border-white/5 text-slate-500 group-hover:text-blue-500 group-hover:border-blue-500/20 transition-all">
                              <Bed size={16} />
@@ -224,7 +224,7 @@ const SecurityLedger: React.FC = () => {
                           </div>
                        </div>
                     </td>
-                    <td className="px-8 py-6 text-right">
+                    <td data-label="Staff" className="px-8 py-6 text-right">
                        <div>
                          <p className="text-[13px] font-black text-slate-200">{log.authorizedBy}</p>
                          <p className="text-[8px] text-emerald-500 font-black uppercase tracking-dash mt-0.5">Staff</p>

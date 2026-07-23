@@ -70,6 +70,7 @@ export interface BookingInitResponse {
   amount: number;
   status: BookingStatus;
   paymentStatus: PaymentStatus;
+  paymentExpiresAtUtc?: string | null;
 }
 
 export interface Room {
@@ -132,6 +133,7 @@ export interface Booking {
   createdAt: string;
   notes?: string;
   notificationMessage?: string;
+  paymentExpiresAtUtc?: string | null;
   statusHistory: BookingStatusHistory[];
 }
 

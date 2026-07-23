@@ -1,14 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
-import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, ArrowRight, Camera, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, Camera, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { calculateStrength } from '../lib/utils';
 import RoleBadge from '../components/RoleBadge';
 import { sileo } from 'sileo';
 import { api } from '../lib/api';
 import { UserRole } from '../types';
+import { useConfirmation } from '../components/ConfirmationProvider';
 
 const Settings: React.FC = () => {
-  const { userRole, currentUser, updateCurrentUserProfile, isInitialLoading } = useHotel();
+  const { userRole, currentUser, updateCurrentUserProfile, isInitialLoading, logout } = useHotel();
+  const confirm = useConfirmation();
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security'>('profile');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -23,6 +25,7 @@ const Settings: React.FC = () => {
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Fix: Using UserRole enum members instead of lowercase strings to fix overlapping type comparison error.
   const roles = [UserRole.Admin, UserRole.Manager, UserRole.Staff] as const;
@@ -31,29 +34,73 @@ const Settings: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateCurrentUserProfile({ avatarUrl: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(file.type)) {
+      sileo.error({ title: 'Unsupported image', description: 'Use a JPEG, PNG, WebP, or AVIF image.' });
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      sileo.error({ title: 'Image too large', description: 'Choose an image smaller than 8 MB.' });
+      e.target.value = '';
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const response = await api.putForm<{
+        data: { avatarUrl: string };
+      }>('/api/profile/me/avatar', form);
+      await updateCurrentUserProfile({ avatarUrl: response.data.avatarUrl }, { persist: false });
+      sileo.success({ title: 'Photo updated', description: 'Your profile photo is now saved.' });
+    } catch (err) {
+      sileo.error({
+        title: 'Photo not updated',
+        description: err instanceof Error ? err.message : 'The image could not be uploaded.',
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      e.target.value = '';
     }
   };
 
   const handleRotateSecurity = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsRotating(true);
     setRotationStatus('idle');
     setErrorMessage('');
 
     if (securityForm.newPassword !== securityForm.confirmNewPassword) {
       setRotationStatus('error');
       setErrorMessage("Confirmation password does not match.");
-      setIsRotating(false);
       return;
     }
+
+    if (
+      securityForm.newPassword.length < 8 ||
+      !/[a-z]/.test(securityForm.newPassword) ||
+      !/[A-Z]/.test(securityForm.newPassword) ||
+      !/\d/.test(securityForm.newPassword) ||
+      !/[^A-Za-z0-9]/.test(securityForm.newPassword)
+    ) {
+      setRotationStatus('error');
+      setErrorMessage('Use 8+ characters with upper and lowercase, a number, and a symbol.');
+      return;
+    }
+
+    const accepted = await confirm({
+      title: 'Change your account password?',
+      message: 'This will revoke your existing session. You will sign in again with the new password.',
+      confirmLabel: 'Change password',
+      cancelLabel: 'Keep current password',
+      tone: 'secure',
+    });
+    if (!accepted) return;
+
+    setIsRotating(true);
 
       try {
         await api.post('/api/Profile/rotate-security', {
@@ -62,10 +109,12 @@ const Settings: React.FC = () => {
           confirmNewPassword: securityForm.confirmNewPassword
         });
         sileo.success({
-          title: 'Security Updated',
-          description: 'Your details have been successfully updated.'
+          title: 'Password updated',
+          description: 'Signing you out so you can use the new password.'
         });
+        setRotationStatus('success');
         setSecurityForm({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
+        window.setTimeout(logout, 1200);
       } catch (err: any) {
         sileo.error({
           title: 'Update Failed',
@@ -138,13 +187,13 @@ const Settings: React.FC = () => {
           <div className="space-y-8">
             <div className="flex items-center gap-6">
               <div 
-                onClick={handleAvatarClick}
+                onClick={isUploadingAvatar ? undefined : handleAvatarClick}
                 className="w-24 h-24 bg-slate-800 rounded-2xl flex items-center justify-center font-black text-3xl text-slate-400 border border-white/10 relative overflow-hidden group shadow-2xl cursor-pointer"
               >
                 <img src={currentUser?.avatarUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt=""/>
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[8px] font-black uppercase tracking-widest gap-1">
-                  <Camera size={14} />
-                  Change
+                  {isUploadingAvatar ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+                  {isUploadingAvatar ? 'Uploading' : 'Change'}
                 </div>
                 <input 
                   type="file" 
@@ -209,7 +258,7 @@ const Settings: React.FC = () => {
               </div>
               <div>
                 <p className="text-[15px] font-black text-white tracking-tight uppercase">Secure Login</p>
-                <p className="text-[11px] text-slate-500 uppercase tracking-widest font-bold mt-1">Your account is protected by modern security.</p>
+                <p className="text-[11px] text-slate-500 uppercase tracking-widest font-bold mt-1">Password, lockout, role, and session controls are active.</p>
               </div>
             </div>
           </div>
@@ -328,16 +377,6 @@ const Settings: React.FC = () => {
             </button>
           </form>
           
-          <div className="pt-8 border-t border-white/10">
-             <div className="flex items-start gap-4 p-6 bg-rose-500/5 rounded-2xl border border-rose-500/20 shadow-lg">
-                <AlertCircle size={28} className="text-rose-400 mt-1 shrink-0" />
-                <div className="space-y-2">
-                   <p className="text-[16px] font-black text-white uppercase tracking-tight">Delete Account</p>
-                   <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">This will close your account and log you out. This cannot be undone easily.</p>
-                   <button className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 hover:text-rose-300 transition-all pt-2 flex items-center gap-2">Delete My Account <ArrowRight size={14}/></button>
-                </div>
-             </div>
-          </div>
         </div>
       )}
     </div>

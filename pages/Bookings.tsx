@@ -27,6 +27,22 @@ import BookingModal from "../components/BookingModal";
 import VoidBookingModal from "../components/VoidBookingModal";
 import CheckInConfirmModal from "../components/CheckInConfirmModal";
 
+const getPaymentStatusLabel = (status?: string, uppercase = false) => {
+  const normalized = (status || "").replace(/[\s_-]/g, "").toLowerCase();
+  const label =
+    normalized === "paid"
+      ? "Paid"
+      : normalized === "awaitingverification"
+        ? "Awaiting verification"
+        : normalized === "refundpending"
+          ? "Refund pending"
+          : normalized === "refunded"
+            ? "Refunded"
+            : "Unpaid";
+
+  return uppercase ? label.toUpperCase() : label;
+};
+
 const Bookings: React.FC = () => {
   const hotel = useHotel();
   const {
@@ -187,11 +203,11 @@ const Bookings: React.FC = () => {
   useEffect(() => {
     if (selectedBookingId) {
       const found = (bookings || []).find((b) => b.id === selectedBookingId);
-      if (found) setSelectedBooking(found);
-    } else if (bookings && bookings.length > 0 && !selectedBooking) {
-      setSelectedBooking(filteredBookings[0] || null);
+      setSelectedBooking(found || null);
+    } else {
+      setSelectedBooking(null);
     }
-  }, [selectedBookingId, bookings, filteredBookings]);
+  }, [selectedBookingId, bookings]);
 
   const handleSelectBooking = (b: Booking) => {
     setSelectedBooking(b);
@@ -254,8 +270,8 @@ const Bookings: React.FC = () => {
 
 
   return (
-    <div className="flex flex-row gap-6 h-[calc(100vh-120px)] animate-in fade-in duration-700 overflow-hidden">
-      <div className="split-main flex flex-col gap-4">
+    <div className="relative flex h-full min-h-0 flex-col gap-4 overflow-hidden lg:flex-row lg:gap-6">
+      <div className="flex min-h-0 flex-[4] min-w-0 flex-col gap-4">
         <div className="flex items-end justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -273,6 +289,9 @@ const Bookings: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
+              aria-label="Refresh bookings"
+              title="Refresh bookings"
               onClick={handleManualRefresh}
               className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? "animate-spin" : ""}`}
             >
@@ -294,6 +313,9 @@ const Bookings: React.FC = () => {
               />
             </div>
             <button
+              type="button"
+              aria-label="Create walk-in booking"
+              title="Create walk-in booking"
               onClick={() => {
                 setPreFillData(null);
                 setIsWalkIn(true);
@@ -305,6 +327,9 @@ const Bookings: React.FC = () => {
               <span className="hidden lg:inline">Walk-In</span>
             </button>
             <button
+              type="button"
+              aria-label="Create new booking"
+              title="Create new booking"
               onClick={() => {
                 setPreFillData(null);
                 setIsWalkIn(false);
@@ -318,7 +343,7 @@ const Bookings: React.FC = () => {
           </div>
         </div>
 
-        <div className="glass-card rounded-2xl flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
+        <div className="glass-card min-h-0 rounded-2xl flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
           <div className="px-6 py-4 border-b border-white/5 flex items-center bg-slate-950/60 overflow-x-auto no-scrollbar">
             <div className="flex gap-2 bg-black/40 p-1.5 rounded-xl border border-white/5 shrink-0">
               {[
@@ -348,8 +373,8 @@ const Bookings: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left min-w-[600px]">
+          <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+            <table className="mobile-card-table w-full text-left min-w-[600px]">
               <thead className="sticky top-0 bg-slate-950/90 z-10 border-b border-white/10">
                 <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
                   <th className="responsive-table-padding">Guest Details</th>
@@ -393,7 +418,7 @@ const Bookings: React.FC = () => {
                         onClick={() => handleSelectBooking(b)}
                         className={`cursor-pointer transition-all group border-l-4 ${isSelected ? cfg.band + " border-brand-500" : "hover:bg-white/[0.02] border-transparent"}`}
                       >
-                        <td className="responsive-table-padding">
+                        <td data-label="Guest" className="responsive-table-padding">
                           <div className="flex items-center gap-4">
                             <div
                               className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${b.status?.toLowerCase() === "checkedin" ? "bg-emerald-500/10 text-emerald-400" : "bg-white/5 text-slate-500"}`}
@@ -404,13 +429,13 @@ const Bookings: React.FC = () => {
                               <p className="adaptive-text-sm font-black text-white group-hover:text-brand-400 transition-colors uppercase truncate leading-none mb-1.5">
                                 {guestName}
                               </p>
-                              <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">
+                              <p className="break-all text-[9px] font-black uppercase tracking-wider text-slate-500">
                                 Booking: {b.bookingCode}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="responsive-table-padding col-priority-med">
+                        <td data-label="Stay" className="responsive-table-padding col-priority-med">
                           <div className="flex flex-col gap-1">
                             <span
                               className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border w-fit flex items-center gap-1.5 ${cfg.bg} ${cfg.text} ${cfg.border}`}
@@ -430,7 +455,7 @@ const Bookings: React.FC = () => {
                             </p>
                           </div>
                         </td>
-                        <td className="responsive-table-padding text-center col-priority-low">
+                        <td data-label="Room" className="responsive-table-padding text-center col-priority-low">
                           <p className="adaptive-text-sm font-black text-slate-300 uppercase leading-none mb-1.5">
                             Room {room?.roomNumber || "---"}
                           </p>
@@ -438,7 +463,7 @@ const Bookings: React.FC = () => {
                             {room?.category}
                           </p>
                         </td>
-                        <td className="responsive-table-padding text-right">
+                        <td data-label="Status" className="responsive-table-padding text-right">
                           <div className="flex flex-col items-end">
                             <p
                               className={`adaptive-text-sm font-black tracking-tighter ${isPaid ? "text-white" : "text-rose-400"}`}
@@ -448,11 +473,11 @@ const Bookings: React.FC = () => {
                             <p
                               className={`text-[8px] font-black uppercase mt-1 ${isPaid ? "text-emerald-500" : "text-rose-500 animate-pulse"}`}
                             >
-                              {isPaid ? "Paid" : "Unpaid"}
+                              {getPaymentStatusLabel(b.paymentStatus)}
                             </p>
                           </div>
                         </td>
-                        <td className="responsive-table-padding text-right">
+                        <td data-label="Actions" className="responsive-table-padding text-right">
                           <div
                             className="flex items-center justify-end gap-2"
                             onClick={(e) => e.stopPropagation()}
@@ -538,11 +563,23 @@ const Bookings: React.FC = () => {
       </div>
 
       {selectedBooking && (
-        <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden">
-          <div className="glass-card rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] relative">
-            <div className="flex justify-between items-start mb-10">
+        <>
+          <button
+            type="button"
+            aria-label="Close booking details"
+            onClick={() => hotel.setSelectedBookingId(null)}
+            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
+          />
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="booking-details-title"
+            className="fixed inset-x-3 top-3 bottom-[5.75rem] z-50 flex min-w-0 max-w-none flex-col gap-4 overflow-hidden animate-in slide-in-from-right-4 duration-300 lg:static lg:inset-auto lg:z-auto lg:h-full lg:min-w-[350px] lg:max-w-[480px] lg:flex-[1.3] lg:duration-500"
+          >
+          <div className="glass-card rounded-2xl p-5 sm:p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] relative shadow-2xl shadow-black/60">
+            <div className="flex justify-between items-start mb-6 sm:mb-10">
               <div className="space-y-1">
-                <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">
+                <h3 id="booking-details-title" className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">
                   Booking Details
                 </h3>
                 <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">
@@ -550,6 +587,8 @@ const Bookings: React.FC = () => {
                 </p>
               </div>
               <button
+                type="button"
+                aria-label="Close booking details"
                 onClick={() => hotel.setSelectedBookingId(null)}
                 className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"
               >
@@ -557,11 +596,11 @@ const Bookings: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-8 flex-1 overflow-y-auto pr-1">
-              <div className="flex flex-col items-center text-center p-8 bg-[#161d2b] rounded-3xl border border-white/5 shadow-inner">
+            <div className="scroll-pane min-h-0 space-y-8 flex-1 overflow-y-auto pr-1">
+              <div className="flex flex-col items-center text-center p-5 sm:p-8 bg-[#161d2b] rounded-3xl border border-white/5 shadow-inner">
                 <div className="w-20 h-20 rounded-2xl bg-[#05080f] flex items-center justify-center font-black text-white text-4xl mb-4 border border-white/5 shadow-2xl relative overflow-hidden ring-4 ring-white/5">
                   <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(resolveGuestName(selectedBooking))}&background=05080f&color=fff&size=128`}
+                    src="/avatar-placeholder.svg"
                     className="absolute inset-0 w-full h-full object-cover opacity-60"
                     alt=""
                   />
@@ -602,13 +641,19 @@ const Bookings: React.FC = () => {
                       <AlertCircle size={14} />
                     )}
                     <span className="adaptive-text-xs font-black uppercase">
-                      {(selectedBooking.paymentStatus || "").toLowerCase() ===
-                      "paid"
-                        ? "PAID"
-                        : "UNPAID"}
+                      {getPaymentStatusLabel(selectedBooking.paymentStatus, true)}
                     </span>
                   </div>
                 </div>
+              </div>
+
+              <div className="rounded-2xl border border-brand-500/15 bg-brand-500/[0.055] px-5 py-4">
+                <span className="mb-1 block text-[9px] font-black uppercase tracking-widest text-slate-500">
+                  Booking Reference
+                </span>
+                <span className="block break-all text-sm font-black tracking-wide text-white">
+                  {selectedBooking.bookingCode || "Not available"}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
@@ -670,7 +715,7 @@ const Bookings: React.FC = () => {
                   {getBookingStatus(selectedBooking) === "NoShow" 
                     ? "EXPIRED"
                     : (selectedBooking.paymentStatus || "").toLowerCase() !== "paid"
-                      ? "UNPAID"
+                      ? getPaymentStatusLabel(selectedBooking.paymentStatus, true)
                       : "CHECK IN"}
                 </button>
               ) : selectedBooking.status?.toLowerCase() === "checkedin" ||
@@ -691,7 +736,8 @@ const Bookings: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+          </aside>
+        </>
       )}
 
       <BookingModal
@@ -710,7 +756,7 @@ const Bookings: React.FC = () => {
             ? ({
                 firstName: bookingToVoid.guestFirstName,
                 lastName: bookingToVoid.guestLastName,
-                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(resolveGuestName(bookingToVoid))}&background=020617&color=fff`,
+                avatarUrl: "/avatar-placeholder.svg",
               } as any)
             : null
         }

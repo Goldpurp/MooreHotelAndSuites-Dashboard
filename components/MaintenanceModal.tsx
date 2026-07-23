@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Wrench, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { Room, RoomStatus } from '../types';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 interface MaintenanceModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface MaintenanceModalProps {
 
 const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, onConfirm, room }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const modalRef = useAccessibleModal(isOpen, onClose, !isSubmitting);
 
   if (!isOpen || !room) return null;
 
@@ -37,7 +39,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label={isEnteringMaintenance ? 'Place room in maintenance' : 'Restore room to inventory'} tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className={`glass-card w-full max-w-md rounded-[2rem] shadow-3xl overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 ${
         isEnteringMaintenance ? 'shadow-amber-950/20' : 'shadow-emerald-950/20'
       }`}>
@@ -58,7 +60,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
                   </p>
                 </div>
               </div>
-              <button onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all">
+              <button type="button" data-modal-close aria-label="Close maintenance confirmation" onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all">
                 <X size={18} />
               </button>
             </div>
@@ -117,7 +119,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
                   </>
                 )}
               </button>
-              <button onClick={onClose} disabled={isSubmitting} className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Abort Protocol</button>
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Abort Protocol</button>
             </div>
           </>
       </div>
