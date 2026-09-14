@@ -1,18 +1,27 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
-import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, Camera, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, Camera, Loader2, CheckCircle2, Eye, EyeOff, BellRing, Volume2, VolumeX, Play } from 'lucide-react';
 import { calculateStrength } from '../lib/utils';
 import RoleBadge from '../components/RoleBadge';
 import { sileo } from 'sileo';
 import { api } from '../lib/api';
 import { UserRole } from '../types';
 import { useConfirmation } from '../components/ConfirmationProvider';
+import {
+  isNotificationSoundEnabled,
+  playNotificationSound,
+  setNotificationSoundEnabled,
+  subscribeToNotificationSoundPreference,
+} from '../lib/notificationSound';
 
 const Settings: React.FC = () => {
   const { userRole, currentUser, updateCurrentUserProfile, isInitialLoading, logout } = useHotel();
   const confirm = useConfirmation();
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security'>('profile');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'notifications' | 'security'>('profile');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [notificationSoundEnabled, setNotificationSoundState] = useState(
+    isNotificationSoundEnabled,
+  );
 
   const [securityForm, setSecurityForm] = useState({
     oldPassword: '',
@@ -26,6 +35,11 @@ const Settings: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  useEffect(
+    () => subscribeToNotificationSoundPreference(setNotificationSoundState),
+    [],
+  );
 
   // Fix: Using UserRole enum members instead of lowercase strings to fix overlapping type comparison error.
   const roles = [UserRole.Admin, UserRole.Manager, UserRole.Staff] as const;
@@ -80,14 +94,14 @@ const Settings: React.FC = () => {
     }
 
     if (
-      securityForm.newPassword.length < 8 ||
+      securityForm.newPassword.length < 12 ||
       !/[a-z]/.test(securityForm.newPassword) ||
       !/[A-Z]/.test(securityForm.newPassword) ||
       !/\d/.test(securityForm.newPassword) ||
       !/[^A-Za-z0-9]/.test(securityForm.newPassword)
     ) {
       setRotationStatus('error');
-      setErrorMessage('Use 8+ characters with upper and lowercase, a number, and a symbol.');
+      setErrorMessage('Use 12+ characters with upper and lowercase, a number, and a symbol.');
       return;
     }
 
@@ -126,6 +140,43 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleNotificationSoundToggle = async () => {
+    const nextEnabled = !notificationSoundEnabled;
+    setNotificationSoundState(nextEnabled);
+    setNotificationSoundEnabled(nextEnabled);
+
+    if (!nextEnabled) {
+      sileo.show({
+        title: 'Notification sound muted',
+        description: 'New alerts will remain visible but will not play a sound.',
+      });
+      return;
+    }
+
+    const played = await playNotificationSound({ preview: true });
+    if (played) {
+      sileo.success({
+        title: 'Notification sound enabled',
+        description: 'This is the sound you will hear for a new alert.',
+      });
+    } else {
+      sileo.error({
+        title: 'Sound could not play',
+        description: 'Check that this browser tab and your system audio are not muted.',
+      });
+    }
+  };
+
+  const handleNotificationSoundPreview = async () => {
+    const played = await playNotificationSound({ preview: true });
+    if (!played) {
+      sileo.error({
+        title: 'Sound could not play',
+        description: 'Enable notification sound and check your browser or system volume.',
+      });
+    }
+  };
+
   if (isInitialLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -143,8 +194,8 @@ const Settings: React.FC = () => {
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
             <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em]">Settings</p>
           </div>
-          <h2 className="adaptive-text-3xl font-black text-white tracking-tight uppercase leading-none">Settings</h2>
-          <p className="text-slate-400 text-[11px] font-medium uppercase tracking-widest mt-1 opacity-70">Manage your profile and password</p>
+          <h1 className="adaptive-text-3xl font-black text-white tracking-tight uppercase leading-none">Settings</h1>
+          <p className="text-slate-400 text-[11px] font-medium uppercase tracking-widest mt-1 opacity-70">Manage your profile, alerts, and password</p>
         </div>
 
         <div className="flex bg-black/40 p-1.5 rounded-xl border border-white/10 gap-1.5 shadow-2xl">
@@ -163,18 +214,26 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex gap-1 bg-black/20 p-1 rounded-xl w-fit border border-white/5">
-        <button 
+      <div className="flex w-full gap-1 rounded-xl border border-white/5 bg-black/20 p-1 sm:w-fit">
+        <button
           onClick={() => setActiveSubTab('profile')}
-          className={`px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all sm:flex-none sm:px-6 ${
             activeSubTab === 'profile' ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
           <User size={14} /> Profile
         </button>
-        <button 
+        <button
+          onClick={() => setActiveSubTab('notifications')}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all sm:flex-none sm:px-6 ${
+            activeSubTab === 'notifications' ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <BellRing size={14} /> Alerts
+        </button>
+        <button
           onClick={() => setActiveSubTab('security')}
-          className={`px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all sm:flex-none sm:px-6 ${
             activeSubTab === 'security' ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
@@ -265,6 +324,88 @@ const Settings: React.FC = () => {
         </div>
       )}
 
+      {activeSubTab === 'notifications' && (
+        <div className="glass-card p-6 sm:p-8 rounded-2xl border border-white/5 space-y-7 mt-4 animate-in slide-in-from-right-4 shadow-xl">
+          <div>
+            <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Notification alerts</h3>
+            <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">
+              Control the sound used when a genuinely new hotel notification arrives.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-black/25 p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+              <div className="flex items-start gap-4">
+                <div className={`p-3 rounded-xl border ${
+                  notificationSoundEnabled
+                    ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                    : 'border-white/10 bg-white/5 text-slate-500'
+                }`}>
+                  {notificationSoundEnabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
+                </div>
+                <div>
+                  <p className="text-[14px] font-black text-white uppercase tracking-tight">New notification sound</p>
+                  <p className="mt-1.5 max-w-xl text-[11px] leading-relaxed text-slate-500">
+                    Plays one short chime when a notification first reaches this signed-in session.
+                    Initial notification history and repeated background refreshes remain silent.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={notificationSoundEnabled}
+                onClick={handleNotificationSoundToggle}
+                className={`relative h-8 w-14 shrink-0 rounded-full border transition-all duration-300 ${
+                  notificationSoundEnabled
+                    ? 'border-emerald-400/40 bg-emerald-500/25'
+                    : 'border-white/10 bg-slate-800'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 h-6 w-6 rounded-full shadow-lg transition-all duration-300 ${
+                    notificationSoundEnabled
+                      ? 'left-7 bg-emerald-400'
+                      : 'left-1 bg-slate-500'
+                  }`}
+                />
+                <span className="sr-only">
+                  {notificationSoundEnabled ? 'Disable notification sound' : 'Enable notification sound'}
+                </span>
+              </button>
+            </div>
+
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/10 pt-5">
+              <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+                <span className={`h-2 w-2 rounded-full ${
+                  notificationSoundEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'
+                }`} />
+                <span className={notificationSoundEnabled ? 'text-emerald-400' : 'text-slate-500'}>
+                  {notificationSoundEnabled ? 'Sound active' : 'Sound muted'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleNotificationSoundPreview}
+                disabled={!notificationSoundEnabled}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 text-[9px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                <Play size={13} /> Test sound
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-xl border border-blue-500/15 bg-blue-500/5 p-4 text-[10px] leading-relaxed text-slate-400">
+            <ShieldCheck size={16} className="mt-0.5 shrink-0 text-blue-400" />
+            <p>
+              Your browser or operating-system mute controls can still silence alerts. The setting
+              is saved on this device and does not expose notification or guest data.
+            </p>
+          </div>
+        </div>
+      )}
+
       {activeSubTab === 'security' && (
         <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8 mt-4 animate-in slide-in-from-right-4 shadow-xl">
             <div>
@@ -312,6 +453,8 @@ const Settings: React.FC = () => {
                     <input 
                       type={showNewPassword ? "text" : "password"} 
                       required
+                      minLength={12}
+                      autoComplete="new-password"
                       value={securityForm.newPassword}
                       onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
                       placeholder="••••••••"
@@ -355,6 +498,8 @@ const Settings: React.FC = () => {
                     <input 
                       type={showConfirmPassword ? "text" : "password"} 
                       required
+                      minLength={12}
+                      autoComplete="new-password"
                       value={securityForm.confirmNewPassword}
                       onChange={(e) => setSecurityForm({...securityForm, confirmNewPassword: e.target.value})}
                       placeholder="••••••••"

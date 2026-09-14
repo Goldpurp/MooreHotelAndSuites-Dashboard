@@ -280,9 +280,9 @@ const Bookings: React.FC = () => {
                 Bookings
               </p>
             </div>
-            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">
+            <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">
               Bookings
-            </h2>
+            </h1>
           </div>
 
           <div className="flex items-center gap-2">

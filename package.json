@@ -1,13 +1,25 @@
 {
   "name": "moore-hotels-dashboard",
+  "productName": "Moore Hotels & Suites",
+  "description": "Secure staff operations dashboard for Moore Hotels & Suites.",
+  "author": "Moore Hotels & Suites",
+  "license": "UNLICENSED",
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "npm run dev:local",
     "dev:local": "vite --mode localhost",
     "dev:development": "vite --mode development",
     "dev:cloud": "node scripts/check-environment.mjs cloud --config-only && vite --mode cloud",
+    "desktop": "electron .",
+    "desktop:dev": "node scripts/run-desktop-dev.mjs",
+    "desktop:pack": "electron-builder --dir",
+    "desktop:dist": "electron-builder --publish never",
+    "desktop:dist:win": "electron-builder --win nsis --x64 --publish never",
+    "extension:validate": "node scripts/validate-extension.mjs",
+    "extension:pack": "npm run extension:validate && node scripts/package-extension.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "build": "npm run build:production",
@@ -38,8 +50,63 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.3",
     "vite": "^6.1.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "overrides": {
+    "dompurify": "3.4.13",
+    "fflate": "0.8.3"
+  },
+  "build": {
+    "appId": "com.moorehotelandsuites.dashboard",
+    "productName": "Moore Hotels & Suites",
+    "artifactName": "Moore-Hotels-Dashboard-Setup-${version}-${arch}.${ext}",
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "build/icon.png",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "signtoolOptions": {
+        "publisherName": "Moore Hotels & Suites"
+      },
+      "verifyUpdateCodeSignature": true
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Moore Hotels & Suites",
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Goldpurp",
+      "repo": "MooreHotelAndSuites-Dashboard"
+    }
   }
 }

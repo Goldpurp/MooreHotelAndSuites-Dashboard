@@ -94,7 +94,7 @@ const SecurityLedger: React.FC = () => {
             <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
             <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em]">Activity</p>
           </div>
-          <h2 className="text-3xl font-black text-white tracking-tight uppercase">Activity Log</h2>
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Activity Log</h1>
           <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-1">History</p>
         </div>
         <div className="flex gap-2">

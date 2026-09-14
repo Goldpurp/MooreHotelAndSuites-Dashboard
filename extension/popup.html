@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moore Hotels & Suites</title>
+    <link rel="icon" href="icons/icon-32.png" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <div class="glow glow-primary"></div>
+      <div class="glow glow-gold"></div>
+
+      <header class="brand">
+        <img src="icons/icon-48.png" alt="" width="48" height="48" />
+        <div>
+          <p class="eyebrow">Staff workspace</p>
+          <p class="brand-name">Moore Hotels & Suites</p>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="status" aria-live="polite">
+          <span class="status-dot"></span>
+          <span id="connectionStatus">Secure production access</span>
+        </div>
+
+        <h1>Your hotel dashboard, one click away.</h1>
+        <p class="description">
+          Open reservations, guests, rooms, payments, and daily operations in the
+          complete secured dashboard.
+        </p>
+
+        <button id="openDashboard" type="button">
+          <span>Open dashboard</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </button>
+
+        <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+      </section>
+
+      <footer>
+        <span>Private by design</span>
+        <span class="separator"></span>
+        <span>No hotel data is stored</span>
+      </footer>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

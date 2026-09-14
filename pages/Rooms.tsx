@@ -107,7 +107,7 @@ const Rooms: React.FC = () => {
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
             <p className="adaptive-text-xs text-blue-400 font-black uppercase tracking-widest leading-none">Rooms</p>
           </div>
-          <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Rooms</h2>
+          <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Rooms</h1>
         </div>
         
         <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>

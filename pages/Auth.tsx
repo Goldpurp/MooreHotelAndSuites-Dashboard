@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  ShieldCheck,
+  KeyRound,
 } from "lucide-react";
 import { useHotel } from "../store/HotelContext";
 import { sileo } from "sileo";
@@ -20,19 +22,35 @@ import { calculateStrength } from "../lib/utils";
 const Auth: React.FC = () => {
   const { login } = useHotel();
   const [mode, setMode] = useState<"login" | "reset">("login");
+  const [securityStep, setSecurityStep] = useState<"password" | "two-factor" | "mfa-setup" | "recovery">("password");
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [resetEmail, setResetEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const [mfaKey, setMfaKey] = useState("");
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
     try {
-      await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password, {
+        twoFactorCode: securityStep === "two-factor" ? twoFactorCode.trim() : undefined,
+        useRecoveryCode: securityStep === "two-factor" && useRecoveryCode,
+      });
+      if (result.requiresTwoFactor) {
+        setSecurityStep("two-factor");
+        return;
+      }
+      if (result.mfaSetupRequired) {
+        setSecurityStep("mfa-setup");
+        return;
+      }
       sileo.success({
         title: 'Logged In',
         description: 'You have successfully logged in.'
@@ -46,6 +64,59 @@ const Auth: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCreateMfaKey = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const response = await api.post<any>("/api/mfa/setup", {
+        currentPassword: formData.password,
+      });
+      const key = response.sharedKey || response.data?.sharedKey;
+      const refreshedToken = response.accessToken || response.data?.accessToken;
+      if (!key) throw new Error("The authenticator setup key was not returned.");
+      if (refreshedToken) api.setToken(refreshedToken);
+      setMfaKey(key);
+    } catch (err: any) {
+      setError(err.message || "Could not create the authenticator setup key.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEnableMfa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+    try {
+      const response = await api.post<any>("/api/mfa/enable", {
+        code: twoFactorCode.trim(),
+        currentPassword: formData.password,
+      });
+      const codes = response.recoveryCodes || response.data?.recoveryCodes || [];
+      if (!Array.isArray(codes) || codes.length === 0) {
+        throw new Error("Recovery codes were not returned.");
+      }
+      setRecoveryCodes(codes);
+      api.removeToken();
+      setSecurityStep("recovery");
+    } catch (err: any) {
+      setError(err.message || "The authenticator code could not be verified.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const returnToPasswordLogin = () => {
+    api.removeToken();
+    setSecurityStep("password");
+    setFormData((current) => ({ ...current, password: "" }));
+    setTwoFactorCode("");
+    setUseRecoveryCode(false);
+    setMfaKey("");
+    setRecoveryCodes([]);
+    setError(null);
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -78,7 +149,7 @@ const Auth: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-slate-950 p-3 sm:p-6 font-sans text-slate-50">
-      <div className="w-full max-w-6xl min-h-[560px] lg:h-[700px] flex overflow-hidden rounded-3xl sm:rounded-[3rem] glass-card shadow-2xl animate-in zoom-in-95 duration-700">
+      <div className="flex min-h-[560px] w-full max-w-6xl overflow-hidden rounded-3xl glass-card shadow-2xl animate-in zoom-in-95 duration-700 sm:rounded-[3rem] lg:min-h-[700px]">
         <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-550 to-indigo-900 p-16 flex-col justify-between relative border-r border-white/5">
           <div className="relative z-10">
             <Logo size="2xl" className="mb-8" />
@@ -100,7 +171,92 @@ const Auth: React.FC = () => {
 
         <div className="flex-1 bg-slate-900/40 p-5 sm:p-10 lg:p-20 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
-            {mode === "login" ? (
+            {securityStep === "two-factor" ? (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400">
+                  <ShieldCheck size={26} />
+                </div>
+                <h2 className="mb-2 text-3xl font-black uppercase tracking-tight text-white">Confirm sign in</h2>
+                <p className="mb-8 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Enter the current code from your authenticator app
+                </p>
+                {error && (
+                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-rose-400">
+                    <AlertCircle size={18} /><p className="text-[11px] font-black uppercase">{error}</p>
+                  </div>
+                )}
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                      {useRecoveryCode ? "Recovery code" : "Authenticator code"}
+                    </label>
+                    <input
+                      required
+                      autoFocus
+                      inputMode={useRecoveryCode ? "text" : "numeric"}
+                      autoComplete="one-time-code"
+                      maxLength={32}
+                      value={twoFactorCode}
+                      onChange={(e) => setTwoFactorCode(e.target.value)}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-mono text-sm tracking-widest text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </div>
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3 text-xs font-bold text-slate-400">
+                    <input type="checkbox" checked={useRecoveryCode} onChange={(e) => setUseRecoveryCode(e.target.checked)} className="h-4 w-4 accent-blue-600" />
+                    Use a one-time recovery code
+                  </label>
+                  <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-blue-700 disabled:opacity-50">
+                    {isLoading ? <Loader2 className="animate-spin" size={18} /> : <><ShieldCheck size={18} /> Verify and sign in</>}
+                  </button>
+                  <button type="button" onClick={returnToPasswordLogin} className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white">Back to password sign in</button>
+                </form>
+              </div>
+            ) : securityStep === "mfa-setup" ? (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                  <KeyRound size={26} />
+                </div>
+                <h2 className="mb-2 text-3xl font-black uppercase tracking-tight text-white">Protect your account</h2>
+                <p className="mb-8 text-[10px] font-black uppercase leading-relaxed tracking-widest text-slate-500">
+                  Staff accounts require an authenticator before the dashboard opens
+                </p>
+                {error && (
+                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-rose-400">
+                    <AlertCircle size={18} /><p className="text-[11px] font-black uppercase">{error}</p>
+                  </div>
+                )}
+                {!mfaKey ? (
+                  <button type="button" onClick={handleCreateMfaKey} disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-emerald-700 disabled:opacity-50">
+                    {isLoading ? <Loader2 className="animate-spin" size={18} /> : <><KeyRound size={18} /> Create authenticator key</>}
+                  </button>
+                ) : (
+                  <form onSubmit={handleEnableMfa} className="space-y-5">
+                    <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Authenticator account</p>
+                      <p className="mt-2 break-all text-sm font-bold text-white">{formData.email}</p>
+                      <p className="mt-5 text-[9px] font-black uppercase tracking-widest text-slate-500">Manual setup key</p>
+                      <code className="mt-2 block break-all rounded-xl bg-black/40 p-4 font-mono text-sm tracking-wider text-emerald-300">{mfaKey}</code>
+                    </div>
+                    <p className="text-xs leading-relaxed text-slate-400">Add the key to Google Authenticator, Microsoft Authenticator, or another TOTP app. Then enter its current six-digit code.</p>
+                    <input required inputMode="numeric" autoComplete="one-time-code" maxLength={16} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="6-digit code" className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-center font-mono text-lg tracking-[0.35em] text-white outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                    <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-emerald-700 disabled:opacity-50">
+                      {isLoading ? <Loader2 className="animate-spin" size={18} /> : <><ShieldCheck size={18} /> Enable authenticator</>}
+                    </button>
+                  </form>
+                )}
+                <button type="button" onClick={returnToPasswordLogin} className="mt-4 w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white">Sign out</button>
+              </div>
+            ) : securityStep === "recovery" ? (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400"><CheckCircle2 size={26} /></div>
+                <h2 className="mb-2 text-3xl font-black uppercase tracking-tight text-white">Save recovery codes</h2>
+                <p className="mb-6 text-xs leading-relaxed text-slate-400">Store these one-time codes in a password manager or another secure offline location. They will not be shown again.</p>
+                <textarea readOnly rows={10} value={recoveryCodes.join("\n")} className="w-full resize-none rounded-2xl border border-white/10 bg-black/40 p-5 font-mono text-sm leading-7 text-emerald-300 outline-none" aria-label="MFA recovery codes" />
+                <button type="button" onClick={returnToPasswordLogin} className="mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-blue-700">
+                  I saved the codes — return to sign in
+                </button>
+              </div>
+            ) : mode === "login" ? (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                 <h2 className="text-3xl font-black text-white tracking-tight uppercase mb-2">
                   Log In
