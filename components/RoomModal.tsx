@@ -51,6 +51,35 @@ export const AMENITIES_DATA = [
   },
 ];
 
+const TRUSTED_ROOM_IMAGE_HOSTS = new Set([
+  'res.cloudinary.com',
+  'images.unsplash.com',
+]);
+const SAFE_INLINE_ROOM_IMAGE = /^data:image\/(?:jpeg|png|webp|avif);base64,[a-z0-9+/]+={0,2}$/i;
+
+export const getSafeRoomImageUrl = (candidate: string): string => {
+  const value = candidate.trim();
+  if (SAFE_INLINE_ROOM_IMAGE.test(value)) return value;
+
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol === 'https:' &&
+      !url.username &&
+      !url.password &&
+      !url.port &&
+      TRUSTED_ROOM_IMAGE_HOSTS.has(url.hostname)
+    ) {
+      return url.href;
+    }
+  } catch {
+    // Reject malformed and relative values. Room images are provider-hosted or
+    // locally selected safe image data URLs only.
+  }
+
+  return '';
+};
+
 const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingRoom }) => {
   const [formData, setFormData] = useState<Omit<Room, 'id'>>({
     roomNumber: '',
@@ -78,7 +107,11 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
   useEffect(() => {
     if (editingRoom) {
       const { id, createdAt, ...data } = editingRoom;
-      setFormData({ ...data, isOnline: data.isOnline || false });
+      setFormData({
+        ...data,
+        images: data.images.map(getSafeRoomImageUrl).filter(Boolean),
+        isOnline: data.isOnline || false,
+      });
       setPriceStr(data.pricePerNight.toString());
       setSizeNum(parseInt(data.size) || 0);
     } else {
@@ -145,7 +178,12 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
       selected.forEach((file: File) => {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setFormData(prev => ({ ...prev, images: [...prev.images, reader.result as string] }));
+          const safeImageUrl = getSafeRoomImageUrl(String(reader.result ?? ''));
+          if (!safeImageUrl) {
+            sileo.error({ title: 'Image rejected', description: 'The selected image could not be safely displayed.' });
+            return;
+          }
+          setFormData(prev => ({ ...prev, images: [...prev.images, safeImageUrl] }));
         };
         reader.readAsDataURL(file);
       });
@@ -238,12 +276,17 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
                           )}
                       </div>
                       <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4">
-                          {formData.images.map((img, idx) => (
-                            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-white/10 shadow-lg">
-                              <img src={img} className="w-full h-full object-cover" alt="" />
-                              <button type="button" onClick={() => { setFormData(p => ({...p, images: p.images.filter((_,i) => i !== idx)})); if (formData.images.length <= 1) setValidationFields(prev => [...prev, 'images']); }} className="absolute inset-0 bg-rose-600/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"><Trash2 size={16}/></button>
-                            </div>
-                          ))}
+                          {formData.images.map((img, idx) => {
+                            const safeImageUrl = getSafeRoomImageUrl(img);
+                            if (!safeImageUrl) return null;
+
+                            return (
+                              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-white/10 shadow-lg">
+                                <img src={safeImageUrl} className="w-full h-full object-cover" alt="" />
+                                <button type="button" onClick={() => { setFormData(p => ({...p, images: p.images.filter((_,i) => i !== idx)})); if (formData.images.length <= 1) setValidationFields(prev => [...prev, 'images']); }} className="absolute inset-0 bg-rose-600/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"><Trash2 size={16}/></button>
+                              </div>
+                            );
+                          })}
                           <button type="button" onClick={() => fileInputRef.current?.click()} className={`aspect-square rounded-xl border-2 border-dashed ${validationFields.includes('images') ? 'border-rose-500/30 bg-rose-500/5' : 'border-white/10 hover:border-blue-500/50'} flex flex-col items-center justify-center gap-1.5 text-slate-600 hover:text-blue-500 transition-all bg-slate-900/40`}>
                             <Camera size={20} />
                             <span className="text-[7px] font-black uppercase">Attach</span>
