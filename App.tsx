@@ -6,6 +6,7 @@ import { ConfirmationProvider } from "./components/ConfirmationProvider";
 import { Toaster } from "sileo";
 import { HotelProvider, useHotel } from "./store/HotelContext";
 import { UserRole } from "./types";
+import { installNotificationSoundUnlock } from "./lib/notificationSound";
 
 // Lazy loading pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -30,6 +31,8 @@ const AppContent: React.FC = () => {
     userRole,
     refreshData,
   } = useHotel();
+
+  useEffect(() => installNotificationSoundUnlock(), []);
 
   const restrictedTabs: Partial<Record<string, UserRole[]>> = {
     reports: [UserRole.Admin, UserRole.Manager],

@@ -26,6 +26,17 @@ import {
   BookingInitResponse,
 } from "../types";
 import { api } from "../lib/api";
+import { playNotificationSound } from "../lib/notificationSound";
+
+export interface LoginOptions {
+  twoFactorCode?: string;
+  useRecoveryCode?: boolean;
+}
+
+export interface LoginResult {
+  requiresTwoFactor: boolean;
+  mfaSetupRequired: boolean;
+}
 
 interface HotelContextType {
   rooms: Room[];
@@ -57,7 +68,11 @@ interface HotelContextType {
   setSelectedAuditLogId: (id: string | null) => void;
   setActiveTab: (tab: string) => void;
   toggleSidebar: () => void;
-  login: (email: string, password?: string) => Promise<void>;
+  login: (
+    email: string,
+    password?: string,
+    options?: LoginOptions,
+  ) => Promise<LoginResult>;
   logout: () => void;
   setUserRole: (role: UserRole) => void;
   addRoom: (room: Omit<Room, "id">) => Promise<void>;
@@ -158,7 +173,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [selectedVisitRecordId, setSelectedVisitRecordId] = useState<string | null>(null);
   const [selectedAuditLogId, setSelectedAuditLogId] = useState<string | null>(null);
-  const lastAnnouncedNotificationIdRef = useRef<string | null>(null);
+  const knownNotificationIdsRef = useRef<Set<string>>(new Set());
+  const notificationBaselineReadyRef = useRef(false);
 
   const setActiveTab = useCallback((tab: string) => {
     const nextTab = VALID_TABS.has(tab) ? tab : "dashboard";
@@ -196,6 +212,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       setSelectedProfileId(null);
       setSelectedVisitRecordId(null);
       setSelectedAuditLogId(null);
+      knownNotificationIdsRef.current = new Set();
+      notificationBaselineReadyRef.current = false;
       sileo.error({
         title: reason === "suspended" ? "Account suspended" : "Session expired",
         description:
@@ -469,7 +487,14 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       });
       if (notificationsRes !== null) {
-        setNotifications(normalizeData(notificationsRes));
+        const nextNotifications = normalizeData(notificationsRes) as AppNotification[];
+        if (!notificationBaselineReadyRef.current) {
+          knownNotificationIdsRef.current = new Set(
+            nextNotifications.map((notification) => notification.id),
+          );
+          notificationBaselineReadyRef.current = true;
+        }
+        setNotifications(nextNotifications);
       }
       if (auditLogsRes !== null) {
         setAuditLogs(normalizeData(auditLogsRes));
@@ -498,27 +523,28 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    // Toast new notifications
-    const unread = notifications.filter(n => !n.isRead);
-    if (unread.length > 0) {
-      const latest = [...unread].sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )[0];
-      
-      const timeDiff = Date.now() - new Date(latest.createdAt).getTime();
-      // Only toast if it's within last 10 seconds (recent)
-      if (
-        timeDiff < 10000 &&
-        latest.id !== lastAnnouncedNotificationIdRef.current
-      ) {
-        lastAnnouncedNotificationIdRef.current = latest.id;
-        sileo.show({
-          title: latest.title,
-          description: latest.message,
-        });
-      }
+    if (!isAuthenticated || !notificationBaselineReadyRef.current) return;
+
+    const newUnread = notifications.filter(
+      (notification) =>
+        !notification.isRead &&
+        !knownNotificationIdsRef.current.has(notification.id),
+    );
+    for (const notification of notifications) {
+      knownNotificationIdsRef.current.add(notification.id);
     }
-  }, [notifications]);
+    if (newUnread.length === 0) return;
+
+    const latest = [...newUnread].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )[0];
+    sileo.show({
+      title: latest.title,
+      description: latest.message,
+    });
+    void playNotificationSound();
+  }, [isAuthenticated, notifications]);
 
   useEffect(() => {
     const token = api.getToken();
@@ -559,15 +585,30 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [refreshData]);
 
-  const login = async (email: string, password?: string) => {
+  const login = async (
+    email: string,
+    password?: string,
+    options: LoginOptions = {},
+  ): Promise<LoginResult> => {
     const response = await api.post<any>("/api/Auth/login", {
       email,
       password,
+      twoFactorCode: options.twoFactorCode,
+      useRecoveryCode: options.useRecoveryCode ?? false,
     });
+    if (response.requiresTwoFactor || response.data?.requiresTwoFactor) {
+      return { requiresTwoFactor: true, mfaSetupRequired: false };
+    }
     const token =
       response.token || response.data?.token || response.accessToken;
     if (token) {
       api.setToken(token);
+      const mfaSetupRequired = Boolean(
+        response.mfaSetupRequired ?? response.data?.mfaSetupRequired,
+      );
+      if (mfaSetupRequired) {
+        return { requiresTwoFactor: false, mfaSetupRequired: true };
+      }
       const user = normalizeUser(response);
       if (user) {
         if (user.role === UserRole.Client) {
@@ -579,6 +620,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       setIsAuthenticated(true);
       await refreshData();
+      return { requiresTwoFactor: false, mfaSetupRequired: false };
     } else {
       throw new Error("Could not log in.");
     }
@@ -603,6 +645,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     setSelectedProfileId(null);
     setSelectedVisitRecordId(null);
     setSelectedAuditLogId(null);
+    knownNotificationIdsRef.current = new Set();
+    notificationBaselineReadyRef.current = false;
   };
 
   // const addRoom = async (room: Omit<Room, 'id'>) => {

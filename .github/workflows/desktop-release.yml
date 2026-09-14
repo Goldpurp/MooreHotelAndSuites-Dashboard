@@ -1,0 +1,62 @@
+name: Desktop installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "desktop-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Verify dashboard and desktop policies
+        run: |
+          npm run typecheck
+          npm test
+          npm run build:production
+
+      - name: Require code signing for public releases
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CSC_LINK) -or [string]::IsNullOrWhiteSpace($env:CSC_KEY_PASSWORD)) {
+            throw "Tagged desktop releases require WINDOWS_CSC_LINK and WINDOWS_CSC_KEY_PASSWORD repository secrets."
+          }
+
+      - name: Build Windows installer
+        run: npm run desktop:dist:win
+
+      - name: Upload testable installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: moore-hotels-windows-installer
+          path: release/*.exe
+          if-no-files-found: error
+
+      - name: Publish signed installer
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/*.exe \
+            --generate-notes \
+            --title "Moore Hotels & Suites Desktop $GITHUB_REF_NAME"

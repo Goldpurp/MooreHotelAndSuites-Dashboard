@@ -75,7 +75,7 @@ const ClientManagement: React.FC = () => {
               <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
               <p className="adaptive-text-xs text-emerald-400 font-black uppercase tracking-widest leading-none">Guests</p>
             </div>
-            <h2 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Guest List</h2>
+            <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Guest List</h1>
           </div>
           <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
         </div>

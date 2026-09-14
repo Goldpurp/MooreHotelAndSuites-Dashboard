@@ -50,3 +50,32 @@ and blocks guest accounts from entering the staff interface.
 
 For the complete Render configuration, security headers, release sequence and
 post-deploy acceptance checklist, follow `DASHBOARD_RENDER_DEPLOYMENT.md`.
+
+## Desktop application
+
+The Electron desktop shell provides an installable Windows version of the
+Production dashboard without affecting the Local, Development, cloud, or web
+profiles.
+
+```bash
+npm run desktop
+npm run desktop:dev
+```
+
+Installer security, signing, testing, and release instructions are in
+`docs/DESKTOP_APP.md`.
+
+## Chrome extension
+
+The Manifest V3 extension in `extension/` provides one-click Production
+dashboard access from Chrome on Windows, macOS, Linux, and ChromeOS. It requests
+no hotel-site or browser-history access and stores only its temporary dashboard
+tab ID.
+
+```bash
+npm run extension:validate
+npm run extension:pack
+```
+
+The Chrome Web Store upload package is written to `release/`. Privacy, testing,
+and publishing instructions are in `docs/CHROME_EXTENSION.md`.
