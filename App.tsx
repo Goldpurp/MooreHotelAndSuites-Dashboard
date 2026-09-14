@@ -70,6 +70,7 @@ const AppContent: React.FC = () => {
       if (
         disposed ||
         syncInProgress ||
+        document.visibilityState === "hidden" ||
         !navigator.onLine
       ) {
         return;
