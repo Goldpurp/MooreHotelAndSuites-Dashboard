@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import QRCode from "qrcode";
 import {
   Mail,
   Lock,
@@ -32,6 +33,7 @@ const Auth: React.FC = () => {
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [mfaKey, setMfaKey] = useState("");
+  const [mfaQrDataUrl, setMfaQrDataUrl] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,10 +76,22 @@ const Auth: React.FC = () => {
         currentPassword: formData.password,
       });
       const key = response.sharedKey || response.data?.sharedKey;
+      const authenticatorUri =
+        response.authenticatorUri || response.data?.authenticatorUri;
       const refreshedToken = response.accessToken || response.data?.accessToken;
       if (!key) throw new Error("The authenticator setup key was not returned.");
+      if (!authenticatorUri) {
+        throw new Error("The authenticator QR code information was not returned.");
+      }
+      const qrDataUrl = await QRCode.toDataURL(authenticatorUri, {
+        errorCorrectionLevel: "M",
+        margin: 2,
+        width: 256,
+        color: { dark: "#020617", light: "#ffffff" },
+      });
       if (refreshedToken) api.setToken(refreshedToken);
       setMfaKey(key);
+      setMfaQrDataUrl(qrDataUrl);
     } catch (err: any) {
       setError(err.message || "Could not create the authenticator setup key.");
     } finally {
@@ -115,6 +129,7 @@ const Auth: React.FC = () => {
     setTwoFactorCode("");
     setUseRecoveryCode(false);
     setMfaKey("");
+    setMfaQrDataUrl("");
     setRecoveryCodes([]);
     setError(null);
   };
@@ -231,13 +246,26 @@ const Auth: React.FC = () => {
                   </button>
                 ) : (
                   <form onSubmit={handleEnableMfa} className="space-y-5">
-                    <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Authenticator account</p>
-                      <p className="mt-2 break-all text-sm font-bold text-white">{formData.email}</p>
-                      <p className="mt-5 text-[9px] font-black uppercase tracking-widest text-slate-500">Manual setup key</p>
-                      <code className="mt-2 block break-all rounded-xl bg-black/40 p-4 font-mono text-sm tracking-wider text-emerald-300">{mfaKey}</code>
+                    <div className="rounded-2xl border border-white/10 bg-white p-4 text-center">
+                      {mfaQrDataUrl && (
+                        <img
+                          src={mfaQrDataUrl}
+                          alt="QR code for Moore Hotels authenticator setup"
+                          width={256}
+                          height={256}
+                          className="mx-auto h-56 w-56 sm:h-64 sm:w-64"
+                        />
+                      )}
+                      <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-slate-700">
+                        Scan with your authenticator app
+                      </p>
                     </div>
-                    <p className="text-xs leading-relaxed text-slate-400">Add the key to Google Authenticator, Microsoft Authenticator, or another TOTP app. Then enter its current six-digit code.</p>
+                    <p className="text-xs leading-relaxed text-slate-400">Open Google Authenticator, Microsoft Authenticator, or another TOTP app and scan the code. Then enter the current six-digit code below.</p>
+                    <details className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                      <summary className="cursor-pointer text-[9px] font-black uppercase tracking-widest text-slate-400">Cannot scan? Enter a setup key</summary>
+                      <p className="mt-4 break-all text-xs font-bold text-white">{formData.email}</p>
+                      <code className="mt-3 block break-all rounded-xl bg-black/40 p-4 font-mono text-sm tracking-wider text-emerald-300">{mfaKey}</code>
+                    </details>
                     <input required inputMode="numeric" autoComplete="one-time-code" maxLength={16} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="6-digit code" className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-center font-mono text-lg tracking-[0.35em] text-white outline-none focus:ring-2 focus:ring-emerald-500/20" />
                     <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-emerald-700 disabled:opacity-50">
                       {isLoading ? <Loader2 className="animate-spin" size={18} /> : <><ShieldCheck size={18} /> Enable authenticator</>}
