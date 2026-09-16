@@ -11,6 +11,7 @@ interface RequestOptions extends RequestInit {
 export interface ApiCallOptions {
   params?: Record<string, string>;
   silent?: boolean;
+  timeout?: number;
 }
 
 function joinApiUrl(endpoint: string): string {
@@ -59,6 +60,7 @@ function endSession(reason: 'expired' | 'suspended'): void {
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { params, timeout = appConfig.requestTimeoutMs, silent = false, ...init } = options;
+  const isMultipart = init.body instanceof FormData;
   let finalUrl = joinApiUrl(endpoint);
   if (params) {
     const query = new URLSearchParams(params).toString();
@@ -121,7 +123,14 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     return payload as T;
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('Connection timed out. Check that the correct API profile is running.');
+      throw new Error(
+        isMultipart
+          ? 'The upload timed out before the hotel service responded. Use fewer or smaller images and try again.'
+          : 'Connection timed out. Check that the correct API profile is running.',
+      );
+    }
+    if (error instanceof TypeError && /fetch|network|load/i.test(error.message)) {
+      throw new Error('The connection to the hotel service was interrupted. Check your internet connection and try again.');
     }
     if (error instanceof Error) throw error;
     throw new Error('The request could not be completed.');
@@ -165,9 +174,9 @@ export const api = {
     return request<T>(endpoint, { method: 'DELETE', ...options });
   },
   postForm<T>(endpoint: string, formData: FormData, options?: ApiCallOptions): Promise<T> {
-    return request<T>(endpoint, { method: 'POST', body: formData, ...options });
+    return request<T>(endpoint, { method: 'POST', body: formData, timeout: 120_000, ...options });
   },
   putForm<T>(endpoint: string, formData: FormData, options?: ApiCallOptions): Promise<T> {
-    return request<T>(endpoint, { method: 'PUT', body: formData, ...options });
+    return request<T>(endpoint, { method: 'PUT', body: formData, timeout: 120_000, ...options });
   },
 };
