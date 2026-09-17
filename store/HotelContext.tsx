@@ -654,6 +654,28 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   //   await refreshData();
   // };
 
+const dataImageToBlob = (dataUrl: string): Blob => {
+  const separatorIndex = dataUrl.indexOf(",");
+  const metadata = separatorIndex >= 0 ? dataUrl.slice(0, separatorIndex) : "";
+  const base64 = separatorIndex >= 0 ? dataUrl.slice(separatorIndex + 1) : "";
+  const contentType = /^data:(image\/(?:jpeg|png|webp|avif));base64$/i.exec(metadata)?.[1];
+
+  if (!contentType || !base64) {
+    throw new Error("The selected room image could not be prepared for upload.");
+  }
+
+  try {
+    const decoded = atob(base64);
+    const bytes = new Uint8Array(decoded.length);
+    for (let index = 0; index < decoded.length; index += 1) {
+      bytes[index] = decoded.charCodeAt(index);
+    }
+    return new Blob([bytes], { type: contentType.toLowerCase() });
+  } catch {
+    throw new Error("The selected room image could not be prepared for upload.");
+  }
+};
+
 const addRoom = async (room: Omit<Room, "id">) => {
   const formData = new FormData();
 
@@ -678,8 +700,7 @@ const addRoom = async (room: Omit<Room, "id">) => {
   if (room.images) {
     for (let i = 0; i < room.images.length; i++) {
       if (room.images[i].startsWith("data:image")) {
-        const res = await fetch(room.images[i]);
-        const blob = await res.blob();
+        const blob = dataImageToBlob(room.images[i]);
         const extension = blob.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
         formData.append("files", blob, `room_${i}.${extension}`);
       }
@@ -722,8 +743,7 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
       const img = updates.images[i];
       if (img.startsWith("data:image")) {
         // New file upload
-        const res = await fetch(img);
-        const blob = await res.blob();
+        const blob = dataImageToBlob(img);
         const extension = blob.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
         formData.append("files", blob, `update_room_${id}_${i}.${extension}`);
       } else {

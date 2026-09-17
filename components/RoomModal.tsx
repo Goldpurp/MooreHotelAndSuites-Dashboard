@@ -220,16 +220,16 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
     try {
       await onSave(formData);
       sileo.success({
-        title: 'Unit Inventory Synchronized',
-        description: `Asset data for Room ${formData.roomNumber} has been successfully reconciled with the property inventory. Diagnostics online.`
+        title: 'Room saved',
+        description: `Room ${formData.roomNumber} is now saved in the hotel inventory.`
       });
       onClose();
     } catch (err: any) {
-      const msg = err.message || "Property ledger synchronization failed.";
+      const msg = err.message || "The room could not be saved.";
       setError(msg);
       sileo.error({
-        title: 'Ledger Reconciliation Failed',
-        description: msg || "The property inventory system rejected the update. Please ensure the room number is unique and the data is valid."
+        title: 'Room could not be saved',
+        description: msg
       });
     } finally {
       setIsSubmitting(false);
