@@ -417,7 +417,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       ] = await Promise.all([
         // Rooms and bookings are core dashboard data. Do not silently turn a
         // connectivity/authentication failure into a misleading empty hotel.
-        api.get("/api/rooms"),
+        // Staff inventory includes rooms that are deliberately offline. The
+        // public feed hides those rooms from guests and must not drive the
+        // management dashboard.
+        api.get("/api/rooms/management"),
         api.get("/api/bookings"),
         api.get("/api/admin/management/employees").catch(() => null),
         api.get("/api/admin/management/clients").catch(() => null),
