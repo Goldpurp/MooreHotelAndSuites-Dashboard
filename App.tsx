@@ -1,12 +1,13 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useCallback, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import MobileNav from "./components/MobileNav";
 import { ConfirmationProvider } from "./components/ConfirmationProvider";
 import { Toaster } from "sileo";
 import { HotelProvider, useHotel } from "./store/HotelContext";
-import { UserRole } from "./types";
 import { installNotificationSoundUnlock } from "./lib/notificationSound";
+import { canOpenTab, firstAllowedTab } from "./lib/access";
+import { useStaffRealtime } from "./hooks/useStaffRealtime";
 
 // Lazy loading pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -19,6 +20,7 @@ const StaffManagement = lazy(() => import("./pages/StaffManagement"));
 const ClientManagement = lazy(() => import("./pages/ClientManagement"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Settlements = lazy(() => import("./pages/Settlements"));
+const PrivacyRequests = lazy(() => import("./pages/PrivacyRequests"));
 const Auth = lazy(() => import("./pages/Auth"));
 
 const AppContent: React.FC = () => {
@@ -28,26 +30,28 @@ const AppContent: React.FC = () => {
     isSidebarCollapsed,
     activeTab,
     setActiveTab,
-    userRole,
+    currentUser,
     refreshData,
+    logout,
   } = useHotel();
+
+  const refreshFromRealtime = useCallback(() => {
+    void refreshData({ silent: true });
+  }, [refreshData]);
+  const revokeSession = useCallback(() => logout(), [logout]);
+  useStaffRealtime(
+    isAuthenticated && canOpenTab(currentUser, "bookings"),
+    refreshFromRealtime,
+    revokeSession,
+  );
 
   useEffect(() => installNotificationSoundUnlock(), []);
 
-  const restrictedTabs: Partial<Record<string, UserRole[]>> = {
-    reports: [UserRole.Admin, UserRole.Manager],
-    operation_log: [UserRole.Admin, UserRole.Manager],
-    staff: [UserRole.Admin, UserRole.Manager],
-    clients: [UserRole.Admin, UserRole.Manager],
-    settlements: [UserRole.Admin, UserRole.Manager],
-  };
-
   useEffect(() => {
-    const allowedRoles = restrictedTabs[activeTab];
-    if (isAuthenticated && allowedRoles && !allowedRoles.includes(userRole)) {
-      setActiveTab("dashboard");
+    if (isAuthenticated && currentUser && !canOpenTab(currentUser, activeTab)) {
+      setActiveTab(firstAllowedTab(currentUser));
     }
-  }, [activeTab, isAuthenticated, setActiveTab, userRole]);
+  }, [activeTab, currentUser, isAuthenticated, setActiveTab]);
 
   // Watchdog to prevent permanent splash screen hang if synchronization is slow
   useEffect(() => {
@@ -175,6 +179,8 @@ const AppContent: React.FC = () => {
         return <Settings />;
       case "settlements":
         return <Settlements />;
+      case "privacy":
+        return <PrivacyRequests />;
       default:
         return <Dashboard />;
     }
@@ -188,6 +194,7 @@ const AppContent: React.FC = () => {
     "staff",
     "clients",
     "settlements",
+    "privacy",
   ]).has(activeTab);
 
   return (

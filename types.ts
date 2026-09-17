@@ -125,6 +125,8 @@ export interface Booking {
   guestPhone: string;
   checkIn: string;
   checkOut: string;
+  adultCount?: number;
+  childCount?: number;
   status: BookingStatus;
   amount: number;
   paymentStatus: PaymentStatus;
@@ -134,7 +136,26 @@ export interface Booking {
   notes?: string;
   notificationMessage?: string;
   paymentExpiresAtUtc?: string | null;
+  refundAmount?: number | null;
+  refundApprovedAmount?: number | null;
+  refundChannel?: string | null;
+  refundEvidenceType?: string | null;
   statusHistory: BookingStatusHistory[];
+}
+
+export interface PrivacyPolicy {
+  privacyPolicyVersion: string;
+  bookingTermsVersion: string;
+  privacyPolicyUrl: string;
+  bookingTermsUrl: string;
+}
+
+export interface CompleteRefundInput {
+  transactionReference: string;
+  amount: number;
+  channel: "BankTransfer" | "Cash" | "Monnify";
+  evidenceType: "BankStatement" | "CashVoucher" | "ProviderReceipt";
+  notes?: string;
 }
 
 export interface AuditLog {

@@ -37,6 +37,7 @@
     "preview:development": "vite preview --mode development"
   },
   "dependencies": {
+    "@microsoft/signalr": "10.0.11",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.475.0",

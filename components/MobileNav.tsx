@@ -13,13 +13,14 @@ import {
   UserSquare,
   Users,
   X,
+  FileLock2,
 } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
-import { UserRole } from '../types';
 import { useConfirmation } from './ConfirmationProvider';
+import { canOpenTab, isPrivileged } from '../lib/access';
 
 const MobileNav: React.FC = () => {
-  const { activeTab, setActiveTab, logout, userRole } = useHotel();
+  const { activeTab, setActiveTab, logout, currentUser } = useHotel();
   const confirm = useConfirmation();
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -39,21 +40,22 @@ const MobileNav: React.FC = () => {
     if (accepted) logout();
   };
 
-  const privileged = userRole === UserRole.Admin || userRole === UserRole.Manager;
+  const privileged = isPrivileged(currentUser);
   const primary = [
     { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
     { id: 'bookings', label: 'Bookings', icon: CalendarDays },
     { id: 'rooms', label: 'Rooms', icon: Bed },
     { id: 'settlements', label: 'Payments', icon: CheckCircle2, visible: privileged },
-  ].filter((item) => item.visible !== false);
+  ].filter((item) => item.visible !== false && canOpenTab(currentUser, item.id));
   const secondary = [
     { id: 'guests', label: 'Guests', icon: Users, visible: true },
     { id: 'reports', label: 'Reports', icon: FileBarChart, visible: privileged },
     { id: 'operation_log', label: 'Activity', icon: ClipboardList, visible: privileged },
+    { id: 'privacy', label: 'Privacy', icon: FileLock2, visible: true },
     { id: 'staff', label: 'Staff', icon: ShieldCheck, visible: privileged },
     { id: 'clients', label: 'Clients', icon: UserSquare, visible: privileged },
     { id: 'settings', label: 'Settings', icon: Settings, visible: true },
-  ].filter((item) => item.visible);
+  ].filter((item) => item.visible && canOpenTab(currentUser, item.id));
 
   return (
     <>

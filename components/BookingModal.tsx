@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { X, Calendar, Zap, FileCheck, Check, AlertCircle, Loader2, User, Bed, ShieldCheck, Globe, Clock, ChevronRight, Receipt, Wallet } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
-import { PaymentMethod, BookingInitResponse } from '../types';
+import { PaymentMethod, BookingInitResponse, PrivacyPolicy } from '../types';
 import { sileo } from 'sileo';
 import { useAccessibleModal } from '../hooks/useAccessibleModal';
+import { api } from '../lib/api';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -45,9 +46,13 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     guestPhone: '',
     checkIn: isWalkIn ? today : tomorrow,
     checkOut: isWalkIn ? tomorrow : dayAfter,
+    adultCount: 1,
+    childCount: 0,
     paymentMethod: PaymentMethod.DirectTransfer, 
     notes: ''
   });
+  const [policies, setPolicies] = useState<PrivacyPolicy | null>(null);
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [validationFields, setValidationFields] = useState<string[]>([]);
@@ -117,11 +122,18 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
         ...prefilled,
         checkIn: isWalkIn ? today : tomorrow,
         checkOut: isWalkIn ? tomorrow : dayAfter,
+        adultCount: 1,
+        childCount: 0,
         paymentMethod: PaymentMethod.DirectTransfer,
         notes: ''
       });
+      setAcceptedPolicies(false);
       setError(null);
       setIsSubmitting(false);
+
+      api.get<PrivacyPolicy>('/api/privacy/policies/current')
+        .then(setPolicies)
+        .catch(() => setError('The current privacy notice and booking terms could not be loaded.'));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]); 
@@ -161,6 +173,21 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     if (!formData.checkOut) missing.push('checkOut');
     if (!formData.roomId) missing.push('roomId');
 
+    if (formData.adultCount < 1 || formData.adultCount > 20 || formData.childCount < 0 || formData.childCount > 20) {
+      setError('Enter a valid number of adults and children.');
+      return;
+    }
+
+    if (selectedRoom && formData.adultCount + formData.childCount > selectedRoom.capacity) {
+      setError(`Room ${selectedRoom.roomNumber} allows up to ${selectedRoom.capacity} guests.`);
+      return;
+    }
+
+    if (!policies || !acceptedPolicies) {
+      setError('Confirm that the guest has accepted the current privacy notice and booking terms.');
+      return;
+    }
+
     if (missing.length > 0) {
       setValidationFields(missing);
       setError("Please fill in all highlighted fields.");
@@ -195,8 +222,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
         GuestPhone: formData.guestPhone,
         CheckIn: formData.checkIn,
         CheckOut: formData.checkOut,
+        AdultCount: formData.adultCount,
+        ChildCount: formData.childCount,
         PaymentMethod: formData.paymentMethod,
-        Notes: formData.notes
+        Notes: formData.notes,
+        AcceptPrivacyPolicy: true,
+        PrivacyPolicyVersion: policies?.privacyPolicyVersion,
+        AcceptBookingTerms: true,
+        BookingTermsVersion: policies?.bookingTermsVersion
       };
 
       // Only include GuestId if we have a definite match to avoid Foreign Key or mapping errors
@@ -388,6 +421,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                       </div>
                   </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Adults</label>
+                      <input type="number" min={1} max={20} value={formData.adultCount} onChange={e => setFormData({...formData, adultCount: Math.max(1, Number(e.target.value) || 1)})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Children</label>
+                      <input type="number" min={0} max={20} value={formData.childCount} onChange={e => setFormData({...formData, childCount: Math.max(0, Number(e.target.value) || 0)})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                      <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
@@ -441,7 +485,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                   </div>
 
                   <div className="pt-6 sm:pt-10 border-t border-white/5">
-                     <button type="button" onClick={validateAndShowConfirm} disabled={!formData.roomId || availableRooms.length === 0} className={`w-full py-5 sm:py-7 rounded-2xl sm:rounded-[2rem] font-black text-[11px] sm:text-[13px] uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 ${!formData.roomId ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : isWalkIn ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-amber-900/20' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-900/20'}`}>
+                     <label className="mb-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-[10px] font-bold leading-relaxed text-slate-400">
+                       <input type="checkbox" checked={acceptedPolicies} onChange={e => setAcceptedPolicies(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
+                       <span>The guest has reviewed and accepted the <a href={policies?.privacyPolicyUrl || '#'} target="_blank" rel="noreferrer" className="text-brand-400">Privacy Notice</a> and <a href={policies?.bookingTermsUrl || '#'} target="_blank" rel="noreferrer" className="text-brand-400">Booking Terms</a>.</span>
+                     </label>
+                     <button type="button" onClick={validateAndShowConfirm} disabled={!formData.roomId || availableRooms.length === 0 || !policies} className={`w-full py-5 sm:py-7 rounded-2xl sm:rounded-[2rem] font-black text-[11px] sm:text-[13px] uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 ${!formData.roomId || !policies ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : isWalkIn ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-amber-900/20' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-900/20'}`}>
                         Continue <ChevronRight size={18} strokeWidth={3} />
                      </button>
                   </div>
