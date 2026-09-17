@@ -13,15 +13,17 @@ import {
   ClipboardList,
   CheckCircle2,
   UserSquare,
+  FileLock2,
 } from "lucide-react";
 import { useHotel } from "../store/HotelContext";
 import PermissionWrapper from "./PermissionWrapper";
 import Logo from "./Logo";
 import { UserRole } from "../types";
 import { useConfirmation } from "./ConfirmationProvider";
+import { canOpenTab, isPrivileged } from "../lib/access";
 
 const Sidebar: React.FC = () => {
-  const { logout, isSidebarCollapsed, toggleSidebar, activeTab, setActiveTab, userRole } =
+  const { logout, isSidebarCollapsed, toggleSidebar, activeTab, setActiveTab, currentUser } =
     useHotel();
   const confirm = useConfirmation();
 
@@ -36,14 +38,14 @@ const Sidebar: React.FC = () => {
     if (accepted) logout();
   };
 
-  const privileged = userRole === UserRole.Admin || userRole === UserRole.Manager;
+  const privileged = isPrivileged(currentUser);
   const menuItems = [
     { id: "dashboard", label: "Home", icon: LayoutDashboard },
     { id: "bookings", label: "Bookings", icon: CalendarDays },
-    { id: "settlements", label: "Payments", icon: CheckCircle2, visible: privileged },
+    { id: "settlements", label: "Payments", icon: CheckCircle2 },
     { id: "rooms", label: "Rooms", icon: Bed },
     { id: "guests", label: "Guests", icon: Users },
-  ].filter((item) => item.visible !== false);
+  ].filter((item) => canOpenTab(currentUser, item.id));
 
   return (
     <aside
@@ -145,7 +147,7 @@ const Sidebar: React.FC = () => {
             <PermissionWrapper
               allowedRoles={[UserRole.Admin, UserRole.Manager]}
             >
-              <button
+              {canOpenTab(currentUser, "operation_log") && <button
                 onClick={() => setActiveTab("operation_log")}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
                   activeTab === "operation_log"
@@ -162,7 +164,15 @@ const Sidebar: React.FC = () => {
                 >
                   Activity
                 </span>
-              </button>
+              </button>}
+
+              {canOpenTab(currentUser, "privacy") && <button
+                onClick={() => setActiveTab("privacy")}
+                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${activeTab === "privacy" ? "bg-brand-600/20 text-white border border-brand-500/20" : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"}`}
+              >
+                <FileLock2 size={22} className={`shrink-0 ${activeTab === "privacy" ? "text-brand-500" : "group-hover:text-slate-200"}`} />
+                <span className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}>Privacy</span>
+              </button>}
 
               <button
                 onClick={() => setActiveTab("staff")}

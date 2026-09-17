@@ -23,10 +23,18 @@ import {
   VisitAction,
   ProfileStatus,
   PaymentMethod,
+  CompleteRefundInput,
   BookingInitResponse,
 } from "../types";
 import { api } from "../lib/api";
 import { playNotificationSound } from "../lib/notificationSound";
+import {
+  canReadGuestPii,
+  canReadOperations,
+  canReadReservations,
+  isAdmin,
+  isPrivileged,
+} from "../lib/access";
 
 export interface LoginOptions {
   twoFactorCode?: string;
@@ -94,7 +102,7 @@ interface HotelContextType {
    * CHANGE: New protocol for completing refunds.
    * Targets: POST /api/bookings/{id}/complete-refund?transactionRef={transactionRef}
    */
-  completeRefund: (bookingId: string, transactionRef: string) => Promise<void>;
+  completeRefund: (bookingId: string, details: CompleteRefundInput) => Promise<void>;
   addGuest: (
     guest: Omit<Guest, "id" | "totalStays" | "totalSpent">,
   ) => Promise<string>;
@@ -288,6 +296,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       guestPhone: b.guestPhone || b.GuestPhone || "",
       checkIn: b.checkIn || b.CheckIn || "",
       checkOut: b.checkOut || b.CheckOut || "",
+      adultCount: Number(b.adultCount ?? b.AdultCount ?? 1),
+      childCount: Number(b.childCount ?? b.ChildCount ?? 0),
       status: toCanonicalStatus(
         b.status || b.Status || BookingStatus.Pending,
       ) as BookingStatus,
@@ -302,6 +312,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       notes: b.notes || b.Notes || "",
       notificationMessage: b.notificationMessage || b.NotificationMessage || undefined,
       paymentExpiresAtUtc: b.paymentExpiresAtUtc || b.PaymentExpiresAtUtc || null,
+      refundAmount: b.refundAmount ?? b.RefundAmount ?? null,
+      refundApprovedAmount: b.refundApprovedAmount ?? b.RefundApprovedAmount ?? null,
+      refundChannel: b.refundChannel ?? b.RefundChannel ?? null,
+      refundEvidenceType: b.refundEvidenceType ?? b.RefundEvidenceType ?? null,
       statusHistory: b.statusHistory || b.StatusHistory || [],
     };
   };
@@ -406,6 +420,16 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
+      const profile = normalizeUser(await api.get<any>("/api/profile/me"));
+      if (!profile || profile.role === UserRole.Client) {
+        throw new Error("The signed-in staff profile is unavailable.");
+      }
+      setCurrentUser(profile);
+      setUserRole(profile.role);
+      const reservationsRead = canReadReservations(profile);
+      const guestPiiRead = canReadGuestPii(profile);
+      const operationsRead = canReadOperations(profile);
+      const privileged = isPrivileged(profile);
       const [
         roomsRes,
         bookingsRes,
@@ -415,18 +439,17 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
         auditLogsRes,
         visitHistoryRes,
       ] = await Promise.all([
-        // Rooms and bookings are core dashboard data. Do not silently turn a
-        // connectivity/authentication failure into a misleading empty hotel.
-        // Staff inventory includes rooms that are deliberately offline. The
-        // public feed hides those rooms from guests and must not drive the
-        // management dashboard.
-        api.get("/api/rooms/management"),
-        api.get("/api/bookings"),
-        api.get("/api/admin/management/employees").catch(() => null),
-        api.get("/api/admin/management/clients").catch(() => null),
-        api.get("/api/notifications/staff").catch(() => null),
-        api.get("/api/audit-logs").catch(() => null),
-        api.get("/api/visit-records").catch(() => null),
+        reservationsRead ? api.get("/api/rooms/management") : Promise.resolve([]),
+        reservationsRead ? api.get("/api/bookings") : Promise.resolve([]),
+        privileged ? api.get("/api/admin/management/employees") : Promise.resolve(null),
+        privileged
+          ? api.get("/api/admin/management/clients")
+          : guestPiiRead
+            ? api.get("/api/guests")
+            : Promise.resolve(null),
+        reservationsRead ? api.get("/api/notifications/staff") : api.get("/api/notifications/my").catch(() => null),
+        isAdmin(profile) ? api.get("/api/audit-logs") : Promise.resolve(null),
+        operationsRead ? api.get("/api/visit-records") : Promise.resolve(null),
       ]);
 
       const rawRooms = normalizeData(roomsRes);
@@ -469,7 +492,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
               .map((u) => normalizeUser(u))
               .filter((u): u is StaffUser => u !== null);
       const normalizedClients =
-        clientsRes === null
+        clientsRes === null || !privileged
           ? null
           : normalizeData(clientsRes)
               .map((u) => normalizeUser(u))
@@ -502,8 +525,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       if (auditLogsRes !== null) {
         setAuditLogs(normalizeData(auditLogsRes));
       }
-      if (clientsRes !== null) {
+      if (clientsRes !== null && guestPiiRead) {
         setGuests(normalizeData(clientsRes));
+      } else if (!guestPiiRead) {
+        setGuests([]);
       }
       if (visitHistoryRes !== null) {
         setVisitHistory(normalizeData(visitHistoryRes).map(normalizeVisitRecord));
@@ -827,26 +852,18 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     await refreshData();
   };
 
-  /**
-   * CHANGE: Implemented specialized cancellation API call.
-   * Includes mandatory reason parameter.
-   */
+  /** Cancel a booking with the reason required by the API audit trail. */
   const cancelBooking = async (
     id: string,
     reason: string = "Staff Requested Cancellation",
   ) => {
-    await api.post(`/api/bookings/${id}/cancel`, null, { params: { reason } });
+    await api.post(`/api/bookings/${id}/cancel`, { reason });
     await refreshData();
   };
 
-  /**
-   * CHANGE: Implemented specialized complete-refund API call.
-   * Includes mandatory transactionRef parameter.
-   */
-  const completeRefund = async (id: string, transactionRef: string) => {
-    await api.post(`/api/bookings/${id}/complete-refund`, null, {
-      params: { transactionRef },
-    });
+  /** Complete a refund with the accounting evidence required by the API. */
+  const completeRefund = async (id: string, details: CompleteRefundInput) => {
+    await api.post(`/api/bookings/${id}/complete-refund`, details);
     await refreshData();
   };
 
