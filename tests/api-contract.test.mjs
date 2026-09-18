@@ -33,3 +33,17 @@ test("dashboard implements privacy queue and single-use realtime tickets", async
   assert.match(realtime, /skipNegotiation: true/);
   assert.match(realtime, /AccessRevoked/);
 });
+
+test("room editor receives canonical API enum values and safe image arrays", async () => {
+  const [context, modal] = await Promise.all([
+    read("store/HotelContext.tsx"),
+    read("components/RoomModal.tsx"),
+  ]);
+
+  assert.match(context, /categoryMap\[enumKey\(rawCategory\)\]/);
+  assert.match(context, /floorMap\[enumKey\(rawFloor\)\]/);
+  assert.match(context, /firstfloor: PropertyFloor\.FirstFloor/);
+  assert.match(context, /presidentialsuite: "Presidential Suite"/);
+  assert.match(modal, /\(data\.images \|\| \[\]\)\.map/);
+  assert.match(modal, /data\.isOnline \?\? false/);
+});

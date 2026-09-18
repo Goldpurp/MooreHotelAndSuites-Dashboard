@@ -23,6 +23,7 @@ import {
   VisitAction,
   ProfileStatus,
   PaymentMethod,
+  PropertyFloor,
   CompleteRefundInput,
   BookingInitResponse,
 } from "../types";
@@ -454,6 +455,9 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const rawRooms = normalizeData(roomsRes);
       const normalizedRooms = rawRooms.map((r: any) => {
+        const enumKey = (value: unknown) => String(value ?? "")
+          .toLowerCase()
+          .replace(/[\s_-]/g, "");
         const rawStatus = String(r.status || r.Status || "Available")
           .toLowerCase()
           .replace(/[\s_-]/g, "");
@@ -464,19 +468,42 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
           maintenance: RoomStatus.Maintenance,
           reserved: RoomStatus.Reserved,
         };
+        const categoryMap: Record<string, Room["category"]> = {
+          standard: "Standard",
+          deluxe: "Deluxe",
+          executive: "Executive",
+          presidentialsuite: "Presidential Suite",
+        };
+        const floorMap: Record<string, PropertyFloor> = {
+          groundfloor: PropertyFloor.GroundFloor,
+          firstfloor: PropertyFloor.FirstFloor,
+          secondfloor: PropertyFloor.SecondFloor,
+          bungalow: PropertyFloor.Bungalow,
+        };
 
         const onlineVal = r.isOnline !== undefined ? r.isOnline : r.IsOnline;
+        const rawCategory = r.category ?? r.Category;
+        const rawFloor = r.floor ?? r.Floor;
 
         return {
           ...r,
           id: String(r.id || r.Id),
           roomNumber: String(r.roomNumber || r.RoomNumber || ""),
-          category:
-            (r.category || r.Category) === "PresidentialSuite"
-              ? "Presidential Suite"
-              : r.category || r.Category || "Standard",
+          name: String(r.name || r.Name || ""),
+          category: categoryMap[enumKey(rawCategory)] || "Standard",
+          floor: floorMap[enumKey(rawFloor)] || PropertyFloor.GroundFloor,
           status: statusMap[rawStatus] || RoomStatus.Available,
           pricePerNight: Number(r.pricePerNight || r.PricePerNight || 0),
+          capacity: Number(r.capacity || r.Capacity || 1),
+          size: String(r.size || r.Size || ""),
+          description: String(r.description || r.Description || ""),
+          amenities: Array.isArray(r.amenities ?? r.Amenities)
+            ? (r.amenities ?? r.Amenities)
+            : [],
+          images: Array.isArray(r.images ?? r.Images)
+            ? (r.images ?? r.Images)
+            : [],
+          createdAt: r.createdAt || r.CreatedAt,
           isOnline:
             onlineVal === true ||
             onlineVal === "true" ||
