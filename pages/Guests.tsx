@@ -576,7 +576,7 @@ const Guests: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <p className="adaptive-text-base font-black text-white italic tracking-tighter leading-none mb-1">
-                        Room {selectedResident.activeStay.room?.roomNumber}
+                        {selectedResident.activeStay.room?.name}
                       </p>
                       <p className="text-[8px] text-slate-600 font-bold uppercase truncate">
                         {selectedResident.activeStay.room?.category}
@@ -638,7 +638,7 @@ const Guests: React.FC = () => {
                           <p className="text-[11px] font-black text-white uppercase tracking-tighter leading-none mb-1.5">
                             Room{" "}
                             {rooms.find((r) => r.id === stay.roomId)
-                              ?.roomNumber || "---"}
+                              ?.name || "---"}
                           </p>
                           <p className="text-[8px] text-slate-700 font-bold uppercase truncate">
                             {new Date(stay.checkIn).toLocaleDateString(

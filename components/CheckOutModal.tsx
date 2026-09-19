@@ -25,7 +25,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
       await onConfirm(booking.id);
       sileo.success({
         title: 'Guest Checked Out',
-        description: `Booking ${booking.bookingCode} has been closed. Room ${room.roomNumber} is now marked for cleaning.`
+        description: `Booking ${booking.bookingCode} has been closed. ${room.name} is now marked for cleaning.`
       });
       onClose();
     } catch (err: any) {
@@ -69,7 +69,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Guest verified</span>
                     <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Room {room.roomNumber}</span>
+                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{room.name}</span>
                   </div>
                   <p className="mt-2 break-all text-[8px] font-black uppercase tracking-wider text-slate-500">
                     Ref: {booking.bookingCode || "Not available"}
@@ -104,7 +104,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
               <div className="flex items-start gap-4 p-4 bg-rose-500/10 rounded-xl border border-rose-500/20">
                 <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-rose-300 leading-relaxed font-bold uppercase tracking-tight">
-                  This will close the booking and mark <span className="text-white font-black">Room {room.roomNumber}</span> for cleaning.
+                  This will close the booking and mark <span className="text-white font-black">{room.name}</span> for cleaning.
                 </p>
               </div>
             </div>

@@ -138,7 +138,7 @@ const roomStatusLabel = (room: Room) =>
 
 const bookingRoomLabel = (booking: Booking, rooms: Room[]) => {
   const room = rooms.find((item) => item.id === booking.roomId);
-  return room ? `Room ${room.roomNumber}` : "Room not assigned";
+  return room ? room.name : "Room not assigned";
 };
 
 const candidateScore = (candidate: SearchCandidate, normalizedQuery: string) => {
@@ -206,12 +206,12 @@ export function buildGlobalSearchGroups({
     kind: "room",
     tab: "rooms",
     targetId: room.id,
-    title: `Room ${room.roomNumber} — ${room.name}`,
+    title: room.name,
     description: `${room.category} · ${room.floor.replace(/(?!^)([A-Z])/g, " $1")}`,
     meta: roomStatusLabel(room),
-    primary: [room.roomNumber, room.name, room.category],
+    primary: [room.name, room.category],
     searchable: [
-      room.id, room.floor, room.status, room.pricePerNight, room.capacity, room.size,
+      room.id, room.floor, room.status, room.pricePerNight, room.capacity,
       room.description, room.amenities, room.isOnline, ...dateSearchValues(room.createdAt),
     ],
   }));
@@ -293,7 +293,7 @@ export function buildGlobalSearchGroups({
       tab: "operation_log",
       targetId: record.id,
       title: `${record.action} · ${getPrivateGuestName(record.guestName)}`,
-      description: `${record.roomNumber && record.roomNumber !== "---" ? `Room ${record.roomNumber}` : "Room not assigned"} · ${formatPrivateDateTime(record.timestamp)}`,
+      description: `${record.roomNumber && record.roomNumber !== "---" ? record.roomNumber : "Room not assigned"} · ${formatPrivateDateTime(record.timestamp)}`,
       meta: getStaffDisplayName(record.authorizedBy),
       primary: [record.action, record.guestName, record.bookingCode, record.roomNumber],
       searchable: [

@@ -23,13 +23,13 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
       await onConfirm(room.id);
       sileo.success({
         title: 'Unit Decommissioned Successfully',
-        description: `Room ${room.roomNumber} and all its associated telemetry have been permanently purged from the property registry.`
+        description: `${room.name} and all its associated telemetry have been permanently purged from the property registry.`
       });
       onClose();
     } catch (err: any) {
       sileo.error({
         title: 'Decommissioning Request Blocked',
-        description: err.message || "The property security node rejected the removal of Unit ${room.roomNumber}. This may be due to active reservations or hardware locks."
+        description: err.message || "The property security node rejected the removal of Unit ${room.name}. This may be due to active reservations or hardware locks."
       });
     } finally {
       setIsSubmitting(false);
@@ -60,7 +60,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
                 <img src={room.images[0]} className="w-16 h-12 rounded-xl object-cover ring-2 ring-white/10 shadow-lg" alt="" />
                 <div className="min-w-0">
                   <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Target Asset</p>
-                  <p className="text-sm font-black text-white uppercase truncate">Room {room.roomNumber}</p>
+                  <p className="text-sm font-black text-white uppercase truncate">{room.name}</p>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 truncate">{room.category}</p>
                 </div>
               </div>
@@ -68,7 +68,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
               <div className="flex items-start gap-4 p-2">
                 <AlertTriangle size={24} className="text-rose-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-400 leading-relaxed font-bold uppercase tracking-tight">
-                  Permanent removal will <span className="text-rose-400 font-black">invalidate all current folio references</span> to Room {room.roomNumber} in the ledger history.
+                  Permanent removal will <span className="text-rose-400 font-black">invalidate all current folio references</span> to {room.name} in the ledger history.
                 </p>
               </div>
             </div>

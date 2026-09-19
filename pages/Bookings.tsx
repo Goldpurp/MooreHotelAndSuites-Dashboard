@@ -457,7 +457,7 @@ const Bookings: React.FC = () => {
                         </td>
                         <td data-label="Room" className="responsive-table-padding text-center col-priority-low">
                           <p className="adaptive-text-sm font-black text-slate-300 uppercase leading-none mb-1.5">
-                            Room {room?.roomNumber || "---"}
+                            {room?.name || "---"}
                           </p>
                           <p className="text-[8px] text-slate-700 font-bold uppercase">
                             {room?.category}
@@ -662,7 +662,7 @@ const Bookings: React.FC = () => {
                     Room No.
                   </span>
                   <span className="adaptive-text-base font-black text-brand-500 tracking-tighter whitespace-nowrap">
-                    Room {selectedRoom?.roomNumber || "---"}
+                    {selectedRoom?.name || "---"}
                   </span>
                 </div>
                 <div className="bg-[#0d131f] px-5 py-4 rounded-2xl border border-white/5">

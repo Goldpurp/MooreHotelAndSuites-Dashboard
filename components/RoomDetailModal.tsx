@@ -1,3 +1,4 @@
+import { SHOW_ROOM_SIZES } from "../config/roomPresentation";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Room, RoomStatus } from '../types';
 import { X, Bed, Users, Square, Info, Check, Shield, ChevronLeft, ChevronRight, Images } from 'lucide-react';
@@ -55,7 +56,7 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
   if (!isOpen || !room) return null;
 
   return (
-    <div ref={modalRef} role="dialog" aria-modal="true" aria-label={`Room ${room.roomNumber} details`} tabIndex={-1} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto custom-scrollbar">
+    <div ref={modalRef} role="dialog" aria-modal="true" aria-label={`${room.name} details`} tabIndex={-1} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto custom-scrollbar">
       <div className="glass-card w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 flex flex-col md:flex-row h-auto md:h-[600px] my-8">
         <div className="group/gallery w-full md:w-1/2 relative bg-slate-900 overflow-hidden shrink-0 h-64 md:h-full">
           <div
@@ -139,8 +140,8 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
               }`}></span>
               {room.status}
             </span>
-            <h2 className="text-3xl font-black text-white tracking-tight uppercase leading-none">Room {room.roomNumber}</h2>
-            <p className="text-blue-400 font-bold uppercase text-[10px] tracking-widest mt-1.5">{room.category} — {room.name}</p>
+            <h2 className="text-3xl font-black text-white tracking-tight uppercase leading-none">{room.name}</h2>
+            <p className="text-blue-400 font-bold uppercase text-[10px] tracking-widest mt-1.5">{room.category}</p>
           </div>
         </div>
 
@@ -155,7 +156,7 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
               <Bed size={20} className="text-blue-500 mx-auto mb-2" />
               <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{room.category}</p>
@@ -164,19 +165,19 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ isOpen, onClose, room
               <Users size={20} className="text-blue-500 mx-auto mb-2" />
               <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{room.capacity} Guests</p>
             </div>
-            <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
+            {SHOW_ROOM_SIZES && room.size && <div className="bg-white/5 p-4 rounded-xl border border-white/5 text-center">
               <Square size={20} className="text-blue-500 mx-auto mb-2" />
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{room.size} sqm</p>
-            </div>
+              <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{room.size}</p>
+            </div>}
           </div>
 
           <div className="space-y-8 flex-1">
-            <div>
+            {room.description && <div>
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><Info size={12}/> Overview</h4>
               <p className="text-sm text-slate-400 leading-relaxed font-medium">
-                {room.description || "Luxurious executive suite designed for modern, high-tier hospitality stays."}
+                {room.description}
               </p>
-            </div>
+            </div>}
 
             <div>
               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2"><Check size={12}/> Asset Features</h4>

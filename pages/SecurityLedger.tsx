@@ -219,7 +219,7 @@ const SecurityLedger: React.FC = () => {
                              <Bed size={16} />
                           </div>
                           <div>
-                            <p className="text-[14px] font-black text-white leading-none">Room {log.roomNumber}</p>
+                            <p className="text-[14px] font-black text-white leading-none">{log.roomNumber}</p>
                             <p className="text-[9px] text-slate-600 font-black uppercase mt-1 tracking-dash">Room</p>
                           </div>
                        </div>

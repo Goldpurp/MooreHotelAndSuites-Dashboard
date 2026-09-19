@@ -1,3 +1,4 @@
+import { SHOW_ROOM_SIZES } from "../config/roomPresentation";
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Room, RoomStatus, UserRole } from '../types';
@@ -63,14 +64,14 @@ const Rooms: React.FC = () => {
     const query = searchQuery.toLowerCase().trim();
     return (rooms || [])
       .filter(room => {
-        const searchableString = `room ${room.roomNumber} ${room.name} ${room.category}`.toLowerCase();
+        const searchableString = `${room.name} ${room.category}`.toLowerCase();
         const matchesSearch = !query || searchableString.includes(query);
         // Robust case-insensitive comparison for categories
         const matchesCategory = categoryFilter === 'All' || 
           room.category?.toLowerCase() === categoryFilter.toLowerCase();
         return matchesSearch && matchesCategory;
       })
-      .sort((a, b) => (b.roomNumber || '').localeCompare(a.roomNumber || ''));
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [rooms, searchQuery, categoryFilter]);
 
   const totalPages = Math.ceil(filteredRooms.length / PAGE_SIZE);
@@ -183,8 +184,8 @@ const Rooms: React.FC = () => {
                           <div className="flex items-center gap-4">
                             <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=100'} className="w-12 h-10 rounded-lg object-cover ring-1 ring-white/5 shadow-lg shrink-0" alt=""/>
                             <div className="min-w-0">
-                               <p className="adaptive-text-sm font-black text-white leading-none mb-1.5 uppercase truncate">Room {room.roomNumber}</p>
-                               <div className="flex items-center gap-2"><p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest truncate">{room.name}</p>{room.isOnline && <Globe size={10} className="text-emerald-500" />}</div>
+                               <p className="adaptive-text-sm font-black text-white leading-none mb-1.5 uppercase truncate">{room.name}</p>
+                               <div className="flex items-center gap-2"><p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest truncate">{room.isOnline ? "Published" : "Offline"}</p>{room.isOnline && <Globe size={10} className="text-emerald-500" />}</div>
                             </div>
                           </div>
                         </td>
@@ -223,9 +224,9 @@ const Rooms: React.FC = () => {
                     </div>
                     <div className="p-4 flex justify-between items-start flex-1 bg-slate-900/20">
                       <div className="min-w-0 pr-2">
-                         <p className="adaptive-text-base font-black text-white uppercase leading-none mb-1 group-hover:text-blue-400 truncate">Room {room.roomNumber}</p>
+                         <p className="adaptive-text-base font-black text-white uppercase leading-none mb-1 group-hover:text-blue-400 truncate">{room.name}</p>
                          <p className="text-[9px] text-slate-600 font-bold uppercase truncate">{room.category}</p>
-                         <div className="flex items-center gap-1.5 mt-3 text-slate-700"><Square size={8} /><span className="text-[8px] font-black uppercase tracking-widest">{room.size}</span></div>
+                         {SHOW_ROOM_SIZES && room.size && <div className="flex items-center gap-1.5 mt-3 text-slate-700"><Square size={8} /><span className="text-[8px] font-black uppercase tracking-widest">{room.size}</span></div>}
                       </div>
                       <div className="text-right shrink-0">
                         <p className="adaptive-text-base font-black text-white">₦{(room.pricePerNight/1000).toFixed(0)}k</p>

@@ -31,7 +31,7 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
       await onConfirm(booking.id, reason);
       sileo.success({
         title: 'Booking Cancelled',
-        description: `Booking ${booking.bookingCode} for ${booking.guestFirstName} ${booking.guestLastName} has been cancelled. Room ${room.roomNumber} is now available.`
+        description: `Booking ${booking.bookingCode} for ${booking.guestFirstName} ${booking.guestLastName} has been cancelled. ${room.name} is now available.`
       });
       onClose();
     } catch (err: any) {
@@ -90,7 +90,7 @@ const VoidBookingModal: React.FC<VoidBookingModalProps> = ({ isOpen, onClose, on
               <div className="flex items-start gap-3 p-2">
                 <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-400 leading-relaxed font-bold uppercase tracking-tight">
-                  This will cancel <span className="text-white font-black">booking {booking.bookingCode}</span> and make Room {room.roomNumber} available again.
+                  This will cancel <span className="text-white font-black">booking {booking.bookingCode}</span> and make {room.name} available again.
                 </p>
               </div>
 
