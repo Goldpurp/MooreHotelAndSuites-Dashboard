@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, RefreshCw, ShieldCheck } from "lucide-react";
+import { CheckCircle2, RefreshCw, ShieldCheck, ChevronLeft, ChevronRight, X, Eye } from "lucide-react";
 import { api } from "../lib/api";
 import { sileo } from "sileo";
 
@@ -49,6 +49,7 @@ const PrivacyRequests: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const pageSize = 50;
 
@@ -117,19 +118,48 @@ const PrivacyRequests: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
-      <header className="flex items-end justify-between gap-4">
-        <div><p className="adaptive-text-xs font-black uppercase tracking-widest text-brand-400">Data protection</p><h1 className="adaptive-text-2xl font-black uppercase italic text-white">Privacy requests</h1></div>
-        <button type="button" onClick={() => void load()} disabled={loading || saving !== null} aria-label="Refresh privacy requests" className="p-3 rounded-xl border border-white/10 bg-white/5 text-slate-400"><RefreshCw size={17} className={loading ? "animate-spin" : ""} /></button>
+    <div className="master-detail-workspace flex h-full min-h-0 flex-row gap-6 overflow-hidden">
+      <div className="split-main flex min-h-0 flex-col gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-1"><div className="flex items-center gap-2"><span className="w-8 h-[2px] bg-brand-500 rounded-full" /><p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">Data protection</p></div><h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Privacy requests</h1></div>
+        <button type="button" onClick={() => void load()} disabled={loading || saving !== null} aria-label="Refresh privacy requests" className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all"><RefreshCw size={17} className={loading ? "animate-spin" : ""} /></button>
       </header>
-      <div className="scroll-pane min-h-0 flex-1 space-y-4 overflow-auto pr-1">
-        {loading && <p role="status" className="p-6 text-slate-300">Loading privacy requests…</p>}
-        {error && <p role="alert" className="rounded-xl border border-rose-500/30 p-4 text-rose-300">{error} Use Refresh to try again.</p>}
-        {!loading && !error && requests.length === 0 && <div className="glass-card rounded-2xl border border-white/5 py-24 text-center text-slate-600 font-black uppercase tracking-widest">No privacy requests</div>}
-        {requests.map((request) => {
+      <div className="glass-card rounded-2xl min-h-0 flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
+        <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+          {loading && <p role="status" className="p-6 text-slate-300">Loading privacy requests…</p>}
+          {error && <p role="alert" className="m-4 rounded-xl border border-rose-500/30 p-4 text-rose-300">{error} Use Refresh to try again.</p>}
+          <table className="mobile-card-table w-full text-left min-w-[700px]">
+            <thead><tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-950/40">
+              <th className="responsive-table-padding">Request</th><th className="responsive-table-padding">Requested</th><th className="responsive-table-padding">Due</th><th className="responsive-table-padding">Status</th><th className="responsive-table-padding text-right">Actions</th>
+            </tr></thead>
+            <tbody className="divide-y divide-white/5">
+              {!loading && !error && requests.length === 0 && <tr><td colSpan={5} className="py-32 text-center text-slate-700 adaptive-text-sm font-black uppercase tracking-widest">No privacy requests</td></tr>}
+              {requests.map((request) => <tr key={request.id} onClick={() => setSelectedId(request.id)} className={`hover:bg-white/[0.02] transition-all group border-l-4 cursor-pointer ${selectedId === request.id ? 'bg-white/[0.04] border-brand-500' : 'border-transparent'}`}>
+                <td data-label="Request" className="responsive-table-padding"><button type="button" onClick={() => setSelectedId(request.id)} className="adaptive-text-sm font-black text-white uppercase hover:text-brand-400">{request.type}</button></td>
+                <td data-label="Requested" className="responsive-table-padding text-xs text-slate-400">{new Date(request.requestedAtUtc).toLocaleDateString('en-GB')}</td>
+                <td data-label="Due" className="responsive-table-padding text-xs text-slate-400">{new Date(request.dueAtUtc).toLocaleDateString('en-GB')}</td>
+                <td data-label="Status" className="responsive-table-padding"><span className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase border tracking-widest bg-brand-500/10 text-brand-400 border-brand-500/20">{request.status}</span></td>
+                <td data-label="Actions" className="responsive-table-padding text-right"><button type="button" aria-label={`View ${request.type} request`} onClick={() => setSelectedId(request.id)} className="p-2.5 rounded-xl border border-white/10 bg-white/5 text-slate-400 hover:text-white"><Eye size={16} /></button></td>
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+        <nav aria-label="Privacy request pages" className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
+          <div className="text-[9px] text-slate-700 font-black uppercase tracking-widest">Total requests • {totalCount}</div>
+          <div className="flex gap-2">
+            <button type="button" aria-label="Previous page" disabled={page === 1 || loading || saving !== null} onClick={() => { setSelectedId(null); setPage((current) => current - 1); }} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
+            <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{page} / {Math.max(1, Math.ceil(totalCount / pageSize))}</span></div>
+            <button type="button" aria-label="Next page" disabled={page * pageSize >= totalCount || loading || saving !== null || Boolean(error)} onClick={() => { setSelectedId(null); setPage((current) => current + 1); }} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
+          </div>
+        </nav>
+      </div>
+      </div>
+      {selectedId && <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
+        {requests.filter((request) => request.id === selectedId).map((request) => {
           const draft = drafts[request.id] || emptyDraft(request);
           const closed = request.status === "Completed" || request.status === "Rejected";
-          return <article key={request.id} className="glass-card rounded-2xl border border-white/5 p-5 sm:p-7">
+          return <article key={request.id} className="glass-card scroll-pane rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
+            <div className="flex justify-between items-start mb-8"><h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Request details</h3><button type="button" aria-label="Close request details" onClick={() => setSelectedId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18} /></button></div>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div><div className="flex items-center gap-2"><ShieldCheck size={17} className="text-brand-400" /><h2 className="font-black text-white">{request.type}</h2><span className="rounded-full border border-white/10 px-2 py-1 text-[9px] font-black uppercase text-slate-400">{request.status}</span></div><p className="mt-2 text-xs text-slate-500">Guest {request.guestId} · requested {new Date(request.requestedAtUtc).toLocaleString()} · due {new Date(request.dueAtUtc).toLocaleDateString()}</p>{request.details && <p className="mt-3 text-sm text-slate-300">{request.details}</p>}</div></div>
             {!closed && <div className="mt-6 grid gap-4 md:grid-cols-2">
               <label><span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Next status</span><select value={draft.status} onChange={(e) => updateDraft(request.id, { status: e.target.value as RequestStatus })} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white"><option value="InProgress">In progress</option><option value="Completed">Completed</option><option value="Rejected">Rejected</option></select></label>
@@ -142,12 +172,7 @@ const PrivacyRequests: React.FC = () => {
             {closed && request.resolutionNotes && <p className="mt-4 rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-slate-400">{request.resolutionNotes}</p>}
           </article>;
         })}
-      </div>
-      <nav aria-label="Privacy request pages" className="flex items-center justify-between gap-3 text-sm">
-        <button type="button" disabled={page === 1 || loading || saving !== null} onClick={() => setPage((current) => current - 1)} className="rounded-xl border border-white/10 px-4 py-3 disabled:opacity-40">Previous</button>
-        <span>Page {page} of {Math.max(1, Math.ceil(totalCount / pageSize))}</span>
-        <button type="button" disabled={page * pageSize >= totalCount || loading || saving !== null || Boolean(error)} onClick={() => setPage((current) => current + 1)} className="rounded-xl border border-white/10 px-4 py-3 disabled:opacity-40">Next</button>
-      </nav>
+      </div>}
     </div>
   );
 };
