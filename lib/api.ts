@@ -30,6 +30,10 @@ function joinApiUrl(endpoint: string): string {
 }
 
 function readMessage(payload: unknown, status: number): string {
+  if (status === 503 && payload && typeof payload === 'object' &&
+      (payload as Record<string, unknown>).code === 'image_upload_unavailable') {
+    return 'The photos could not be uploaded. Your form is still open. Please retry shortly; if this continues, contact support.';
+  }
   if (status >= 500) return 'The hotel service is temporarily unavailable. Please try again shortly.';
   if (status === 429) return 'Too many requests. Please wait a moment and try again.';
   if (!payload || typeof payload !== 'object') return `Request failed (${status}).`;
