@@ -110,8 +110,8 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
       const { id, createdAt, ...data } = editingRoom;
       setFormData({
         ...data,
-        images: data.images.map(getSafeRoomImageUrl).filter(Boolean),
-        isOnline: data.isOnline || false,
+        images: (data.images || []).map(getSafeRoomImageUrl).filter(Boolean),
+        isOnline: data.isOnline ?? false,
       });
       setPriceStr(data.pricePerNight.toString());
       setSizeNum(parseInt(data.size) || 0);
