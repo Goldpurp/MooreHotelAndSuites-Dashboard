@@ -161,6 +161,10 @@ const Guests: React.FC = () => {
 
   const totalPages = Math.ceil(filteredResidents.length / PAGE_SIZE);
 
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, Math.max(1, totalPages)));
+  }, [totalPages]);
+
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null);
   useEffect(() => {
     if (selectedGuestId) {

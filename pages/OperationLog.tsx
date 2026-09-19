@@ -93,6 +93,10 @@ const OperationLog: React.FC = () => {
   }, [visitHistory, bookings, rooms, localSearch, activeProtocol]);
 
   const totalPages = Math.ceil(filteredLogs.length / PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, Math.max(1, totalPages)));
+  }, [totalPages]);
   const paginatedLogs = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredLogs.slice(start, start + PAGE_SIZE);

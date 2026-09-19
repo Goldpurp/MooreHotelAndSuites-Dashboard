@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, RefreshCw, ShieldCheck } from "lucide-react";
 import { api } from "../lib/api";
 import { sileo } from "sileo";
@@ -47,21 +47,28 @@ const PrivacyRequests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
-  const load = async () => {
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 50;
+
+  const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await api.get<any>("/api/privacy/requests");
+      const response = await api.get<any>("/api/privacy/requests", { params: { page: String(page), pageSize: String(pageSize) } });
       const items = response.items || response.Items || [];
+      setTotalCount(response.totalCount ?? response.TotalCount ?? items.length);
       setRequests(items);
       setDrafts(Object.fromEntries(items.map((request: PrivacyRequest) => [request.id, emptyDraft(request)])));
     } catch (error) {
-      sileo.error({ title: "Privacy queue unavailable", description: error instanceof Error ? error.message : "The queue could not be loaded." });
+      setError(error instanceof Error ? error.message : "The queue could not be loaded.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [load]);
 
   const updateDraft = (id: string, changes: Partial<Draft>) =>
     setDrafts((current) => ({ ...current, [id]: { ...current[id], ...changes } }));
@@ -113,10 +120,12 @@ const PrivacyRequests: React.FC = () => {
     <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
       <header className="flex items-end justify-between gap-4">
         <div><p className="adaptive-text-xs font-black uppercase tracking-widest text-brand-400">Data protection</p><h1 className="adaptive-text-2xl font-black uppercase italic text-white">Privacy requests</h1></div>
-        <button type="button" onClick={() => void load()} disabled={loading} className="p-3 rounded-xl border border-white/10 bg-white/5 text-slate-400"><RefreshCw size={17} className={loading ? "animate-spin" : ""} /></button>
+        <button type="button" onClick={() => void load()} disabled={loading || saving !== null} aria-label="Refresh privacy requests" className="p-3 rounded-xl border border-white/10 bg-white/5 text-slate-400"><RefreshCw size={17} className={loading ? "animate-spin" : ""} /></button>
       </header>
       <div className="scroll-pane min-h-0 flex-1 space-y-4 overflow-auto pr-1">
-        {!loading && requests.length === 0 && <div className="glass-card rounded-2xl border border-white/5 py-24 text-center text-slate-600 font-black uppercase tracking-widest">No privacy requests</div>}
+        {loading && <p role="status" className="p-6 text-slate-300">Loading privacy requests…</p>}
+        {error && <p role="alert" className="rounded-xl border border-rose-500/30 p-4 text-rose-300">{error} Use Refresh to try again.</p>}
+        {!loading && !error && requests.length === 0 && <div className="glass-card rounded-2xl border border-white/5 py-24 text-center text-slate-600 font-black uppercase tracking-widest">No privacy requests</div>}
         {requests.map((request) => {
           const draft = drafts[request.id] || emptyDraft(request);
           const closed = request.status === "Completed" || request.status === "Rejected";
@@ -128,12 +137,17 @@ const PrivacyRequests: React.FC = () => {
               {draft.status === "Completed" && <><label><span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Identity evidence reference</span><input value={draft.identityVerificationReference} onChange={(e) => updateDraft(request.id, { identityVerificationReference: e.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /></label><label><span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Fulfillment evidence reference</span><input value={draft.fulfillmentEvidenceReference} onChange={(e) => updateDraft(request.id, { fulfillmentEvidenceReference: e.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /></label></>}
               {draft.status === "Completed" && request.type === "Rectification" && <div className="grid grid-cols-2 gap-3 md:col-span-2"><input placeholder="Correct first name" value={draft.firstName} onChange={(e) => updateDraft(request.id, { firstName: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input placeholder="Correct last name" value={draft.lastName} onChange={(e) => updateDraft(request.id, { lastName: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input placeholder="Correct email" value={draft.email} onChange={(e) => updateDraft(request.id, { email: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input placeholder="Correct phone" value={draft.phone} onChange={(e) => updateDraft(request.id, { phone: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /></div>}
               {draft.status === "Completed" && ["Erasure", "Restriction", "Objection"].includes(request.type) && <label className="flex items-center gap-3 text-sm text-slate-300 md:col-span-2"><input type="checkbox" checked={draft.confirmAction} onChange={(e) => updateDraft(request.id, { confirmAction: e.target.checked })} className="h-4 w-4 accent-blue-600" />I confirm the requested action has been completed.</label>}
-              <button type="button" onClick={() => void save(request)} disabled={saving === request.id} className="rounded-xl bg-brand-600 px-5 py-3 text-xs font-black uppercase tracking-wider text-white md:col-span-2"><CheckCircle2 size={15} className="mr-2 inline" />{saving === request.id ? "Saving" : "Update request"}</button>
+              <button type="button" onClick={() => void save(request)} disabled={saving !== null || loading || Boolean(error)} className="rounded-xl bg-brand-600 px-5 py-3 text-xs font-black uppercase tracking-wider text-white md:col-span-2"><CheckCircle2 size={15} className="mr-2 inline" />{saving === request.id ? "Saving" : "Update request"}</button>
             </div>}
             {closed && request.resolutionNotes && <p className="mt-4 rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-slate-400">{request.resolutionNotes}</p>}
           </article>;
         })}
       </div>
+      <nav aria-label="Privacy request pages" className="flex items-center justify-between gap-3 text-sm">
+        <button type="button" disabled={page === 1 || loading || saving !== null} onClick={() => setPage((current) => current - 1)} className="rounded-xl border border-white/10 px-4 py-3 disabled:opacity-40">Previous</button>
+        <span>Page {page} of {Math.max(1, Math.ceil(totalCount / pageSize))}</span>
+        <button type="button" disabled={page * pageSize >= totalCount || loading || saving !== null || Boolean(error)} onClick={() => setPage((current) => current + 1)} className="rounded-xl border border-white/10 px-4 py-3 disabled:opacity-40">Next</button>
+      </nav>
     </div>
   );
 };
