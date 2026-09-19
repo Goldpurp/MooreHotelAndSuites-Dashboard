@@ -75,6 +75,10 @@ const Rooms: React.FC = () => {
   }, [rooms, searchQuery, categoryFilter]);
 
   const totalPages = Math.ceil(filteredRooms.length / PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, Math.max(1, totalPages)));
+  }, [totalPages]);
   const paginatedRooms = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredRooms.slice(start, start + PAGE_SIZE);

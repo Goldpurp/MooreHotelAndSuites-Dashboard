@@ -139,6 +139,7 @@ const VALID_TABS = new Set([
   "clients",
   "settings",
   "settlements",
+  "privacy",
 ]);
 
 function readInitialTab(): string {

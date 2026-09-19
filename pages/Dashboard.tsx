@@ -114,6 +114,10 @@ const Dashboard: React.FC = () => {
 
   const totalQueuePages = Math.ceil(sortedActionableBookings.length / QUEUE_PAGE_SIZE);
 
+  useEffect(() => {
+    setQueuePage((page) => Math.min(page, Math.max(1, totalQueuePages)));
+  }, [totalQueuePages]);
+
   const revenueTrendData = useMemo(() => {
     if (analytics?.revenueTrend && analytics.revenueTrend.length > 0) return analytics.revenueTrend;
     const now = new Date();
@@ -176,8 +180,8 @@ const Dashboard: React.FC = () => {
     const currADR = periodBookings.length > 0 ? Math.round(periodRev / periodBookings.length) : 0;
     
     return {
-      revenue: { value: analytics?.totalRevenue ?? periodRev, growth: analytics?.revenueGrowth ?? (timeFilter === "Week" ? 12.5 : 0) },
-      occupancy: { value: analytics?.occupancyRate ?? currOcc, growth: analytics?.occupancyGrowth ?? 2.1 },
+      revenue: { value: analytics?.totalRevenue ?? periodRev, growth: analytics?.revenueGrowth ?? null },
+      occupancy: { value: analytics?.occupancyRate ?? currOcc, growth: analytics?.occupancyGrowth ?? null },
       activeGuests: { value: analytics?.totalActiveGuests ?? analytics?.activeGuests ?? activeResidentsCount, growth: 0 },
       adr: { value: analytics?.averageDailyRate ?? currADR, growth: 0 },
     };
@@ -214,8 +218,8 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Revenue" value={`₦${stats.revenue.value.toLocaleString()}`} growth={stats.revenue.growth} icon={DollarSign} color="bg-blue-500/10 text-blue-400" />
         <StatCard label="Occupancy" value={`${stats.occupancy.value}%`} growth={stats.occupancy.growth} icon={Bed} color="bg-emerald-500/10 text-emerald-400" />
-        <StatCard label="Guests" value={stats.activeGuests.value} growth={0} icon={UserCheck} color="bg-amber-500/10 text-amber-400" />
-        <StatCard label="Avg Rate" value={`₦${stats.adr.value.toLocaleString()}`} growth={0} icon={Activity} color="bg-indigo-500/10 text-indigo-400" />
+        <StatCard label="Guests" value={stats.activeGuests.value} growth={null} icon={UserCheck} color="bg-amber-500/10 text-amber-400" />
+        <StatCard label="Avg Rate" value={`₦${stats.adr.value.toLocaleString()}`} growth={null} icon={Activity} color="bg-indigo-500/10 text-indigo-400" />
       </div>
 
       <div className="grid grid-cols-12 gap-6">

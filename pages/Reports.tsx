@@ -150,6 +150,10 @@ const Reports: React.FC = () => {
   const totalAuditPages = Math.ceil((auditLogs?.length || 0) / AUDIT_PAGE_SIZE);
 
   useEffect(() => {
+    setAuditPage((page) => Math.min(page, Math.max(1, totalAuditPages)));
+  }, [totalAuditPages]);
+
+  useEffect(() => {
     if (!selectedAuditLogId) return;
     const resultIndex = auditLogs.findIndex((log) => log.id === selectedAuditLogId);
     if (resultIndex < 0) return;
@@ -293,7 +297,7 @@ const Reports: React.FC = () => {
             <p className="text-[8px] text-slate-700 font-black uppercase">Change History</p>
             <div className="flex gap-1.5">
               <button onClick={() => setAuditPage(p => Math.max(1, p - 1))} disabled={auditPage === 1} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronLeft size={12} /></button>
-              <button onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))} disabled={auditPage === totalAuditPages} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronRight size={12} /></button>
+              <button onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))} disabled={auditPage >= totalAuditPages} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronRight size={12} /></button>
             </div>
           </div>
         </div>

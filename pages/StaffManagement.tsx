@@ -55,6 +55,10 @@ const StaffManagement: React.FC = () => {
   const totalPages = Math.ceil(filteredStaff.length / PAGE_SIZE);
 
   useEffect(() => {
+    setCurrentPage((page) => Math.min(page, Math.max(1, totalPages)));
+  }, [totalPages]);
+
+  useEffect(() => {
     if (!selectedProfileId) return;
     const resultIndex = filteredStaff.findIndex((profile) => profile.id === selectedProfileId);
     if (resultIndex < 0) return;

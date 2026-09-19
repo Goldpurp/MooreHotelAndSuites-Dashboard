@@ -92,6 +92,10 @@ const Settlements: React.FC = () => {
   }, [processedData, searchQuery]);
 
   const totalPages = Math.ceil(filteredHistory.length / PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, Math.max(1, totalPages)));
+  }, [totalPages]);
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredHistory.slice(start, start + PAGE_SIZE);

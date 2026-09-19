@@ -197,6 +197,10 @@ const Bookings: React.FC = () => {
   const totalPages = Math.ceil(filteredBookings.length / PAGE_SIZE);
 
   useEffect(() => {
+    setCurrentPage((page) => Math.min(page, Math.max(1, totalPages)));
+  }, [totalPages]);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [filter, lookupId]);
 
