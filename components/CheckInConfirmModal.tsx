@@ -61,12 +61,12 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
       await onConfirm(booking.id);
       sileo.success({
         title: 'Guest Checked In',
-        description: `Room ${room.roomNumber} is now assigned and ready for the guest.`
+        description: `${room.name} is now assigned and ready for the guest.`
       });
       onClose();
     } catch (err: any) {
       let title = 'Check-in Unsuccessful';
-      let description = err.message || `The guest could not be checked into Room ${room.roomNumber}. Please verify the guest and room details.`;
+      let description = err.message || `The guest could not be checked into ${room.name}. Please verify the guest and room details.`;
 
       if (err.message === "Access Denied: This booking expires in 30min.") {
         title = "Urgent Check-in Required";
@@ -234,7 +234,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                   <div className="bg-white/5 p-6 rounded-2xl border border-white/5 space-y-4 shadow-inner">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Asset Unit</span>
-                      <span className="text-sm font-black text-white uppercase tracking-tighter">Room {room.roomNumber}</span>
+                      <span className="text-sm font-black text-white uppercase tracking-tighter">{room.name}</span>
                     </div>
                     <div className="flex justify-between items-center pt-4 border-t border-white/5">
                       <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Scheduled Arrival</span>

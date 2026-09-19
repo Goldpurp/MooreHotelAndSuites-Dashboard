@@ -358,7 +358,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       guestId: String(v.guestId || v.GuestId || ""),
       guestName: v.guestName || v.GuestName || "Guest",
       roomId: String(v.roomId || v.RoomId || ""),
-      roomNumber: String(v.roomNumber || v.RoomNumber || "---"),
+      roomNumber: String(v.roomName || v.RoomName || "Room not assigned"),
       bookingCode: String(v.bookingCode || v.BookingCode || "SYS-TRCE"),
       action: canonicalAction,
       timestamp: v.timestamp || v.Timestamp || new Date().toISOString(),

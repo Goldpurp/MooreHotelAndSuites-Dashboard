@@ -323,7 +323,7 @@ const Dashboard: React.FC = () => {
                         </p>
                       </td>
                       <td data-label="Room" className="responsive-table-padding col-priority-low">
-                        <p className="adaptive-text-sm font-black text-slate-300 leading-none">Room {room?.roomNumber || "..."}</p>
+                        <p className="adaptive-text-sm font-black text-slate-300 leading-none">{room?.name || "..."}</p>
                         <p className="text-[8px] text-slate-600 font-bold uppercase mt-1">{room?.category}</p>
                       </td>
                       <td data-label="Status" className="responsive-table-padding">

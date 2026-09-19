@@ -179,7 +179,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     }
 
     if (selectedRoom && formData.adultCount + formData.childCount > selectedRoom.capacity) {
-      setError(`Room ${selectedRoom.roomNumber} allows up to ${selectedRoom.capacity} guests.`);
+      setError(`${selectedRoom.name} allows up to ${selectedRoom.capacity} guests.`);
       return;
     }
 
@@ -289,7 +289,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                        <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest block mb-2">Room</label>
                        <div className="flex items-center gap-3">
                           <Bed size={18} className="text-brand-400" />
-                          <p className="text-xl font-black text-slate-300 uppercase">Room {selectedRoom?.roomNumber}</p>
+                          <p className="text-xl font-black text-slate-300 uppercase">{selectedRoom?.name}</p>
                        </div>
                     </div>
                  </div>
@@ -477,7 +477,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
                         {availableRooms.map(room => (
                           <button type="button" key={room.id} onClick={() => { setFormData({...formData, roomId: room.id}); setValidationFields(prev => prev.filter(f => f !== 'roomId')); }} className={`p-4 sm:p-5 rounded-2xl border text-center transition-all relative overflow-hidden group/room ${formData.roomId === room.id ? 'bg-brand-600 border-brand-500 text-white shadow-xl scale-105' : 'bg-white/5 border-white/5 text-slate-600 hover:border-white/20 hover:bg-white/[0.07]'} ${validationFields.includes('roomId') && formData.roomId !== room.id ? 'border-rose-500/20' : ''}`}>
                              {room.isOnline && <div className="absolute top-2 right-2"><Globe size={10} className={`${formData.roomId === room.id ? 'text-white' : 'text-emerald-500'} animate-pulse`} /></div>}
-                             <p className="text-[12px] sm:text-[14px] font-black leading-tight uppercase tracking-tighter">Room {room.roomNumber}</p>
+                             <p className="text-[12px] sm:text-[14px] font-black leading-tight uppercase tracking-tighter">{room.name}</p>
                              <p className="text-[8px] font-bold uppercase mt-1 opacity-60">₦{(room.pricePerNight/1000).toFixed(0)}k / night</p>
                           </button>
                         ))}

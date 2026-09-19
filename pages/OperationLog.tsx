@@ -19,7 +19,7 @@ import {
 const getActivityDescription = (record: VisitRecord) => {
   const guest = getPrivateGuestName(record.guestName);
   const room = record.roomNumber && record.roomNumber !== '---'
-    ? `Room ${record.roomNumber}`
+    ? record.roomNumber
     : 'the assigned room';
 
   switch (String(record.action)) {
@@ -69,7 +69,7 @@ const OperationLog: React.FC = () => {
           guestId: b.guestId || '',
           guestName: `${b.guestFirstName} ${b.guestLastName}`,
           roomId: b.roomId,
-          roomNumber: room?.roomNumber || '---',
+          roomNumber: room?.name || '---',
           bookingCode: b.bookingCode,
           action: 'NoShow', // Custom action for display
           timestamp: b.checkIn,
@@ -217,7 +217,7 @@ const OperationLog: React.FC = () => {
                          <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/5 rounded-xl border border-white/5 text-slate-700 shrink-0"><Bed size={16} /></div>
                             <div>
-                               <p className="adaptive-text-sm font-black text-white leading-none mb-1.5">Room {log.roomNumber || '---'}</p>
+                               <p className="adaptive-text-sm font-black text-white leading-none mb-1.5">{log.roomNumber || '---'}</p>
                                <p className="text-[8px] text-slate-700 font-bold uppercase tracking-widest">Room</p>
                             </div>
                          </div>
@@ -279,7 +279,7 @@ const OperationLog: React.FC = () => {
                     </div>
                     <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
                       <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><Bed size={14}/> Room</dt>
-                      <dd className="truncate text-sm font-black text-white">{inspectingRecord.roomNumber && inspectingRecord.roomNumber !== '---' ? `Room ${inspectingRecord.roomNumber}` : 'Not assigned'}</dd>
+                      <dd className="truncate text-sm font-black text-white">{inspectingRecord.roomNumber && inspectingRecord.roomNumber !== '---' ? inspectingRecord.roomNumber : 'Not assigned'}</dd>
                     </div>
                     <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
                       <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><ShieldCheck size={14}/> Handled by</dt>

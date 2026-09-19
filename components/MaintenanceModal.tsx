@@ -25,13 +25,13 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
       await onConfirm(room.id);
       sileo.success({
         title: isEnteringMaintenance ? 'Unit Placed Offline' : 'Unit Restored to Inventory',
-        description: `Room ${room.roomNumber} has undergone a status transition. ${isEnteringMaintenance ? 'Maintenance protocols are now active for this unit.' : 'The unit has been verified and returned to authorized status.'}`
+        description: `${room.name} has undergone a status transition. ${isEnteringMaintenance ? 'Maintenance protocols are now active for this unit.' : 'The unit has been verified and returned to authorized status.'}`
       });
       onClose();
     } catch (error: any) {
       sileo.error({
         title: 'Maintenance Protocol Fault',
-        description: error.message || "The property security node could not synchronize the maintenance status for Unit ${room.roomNumber}. Hardware lockout may be active."
+        description: error.message || "The property security node could not synchronize the maintenance status for Unit ${room.name}. Hardware lockout may be active."
       });
     } finally {
       setIsSubmitting(false);
@@ -56,7 +56,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
                     {isEnteringMaintenance ? 'Decommission Room' : 'Restore Asset'}
                   </h2>
                   <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${isEnteringMaintenance ? 'text-amber-400' : 'text-emerald-400'}`}>
-                    Hardware Protocol: {room.roomNumber}
+                    Hardware Protocol: {room.name}
                   </p>
                 </div>
               </div>
@@ -72,8 +72,8 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
                 </h3>
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
                   {isEnteringMaintenance 
-                    ? `Revoking Room ${room.roomNumber} availability will block all future automated asset allocations for this room.`
-                    : `Confirm Room ${room.roomNumber} inspection completion. The asset will be restored to the live booking ledger.`
+                    ? `Revoking ${room.name} availability will block all future automated asset allocations for this room.`
+                    : `Confirm ${room.name} inspection completion. The asset will be restored to the live booking ledger.`
                   }
                 </p>
               </div>
@@ -81,7 +81,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
               <div className="bg-white/5 p-6 rounded-[1.5rem] border border-white/5 space-y-4 shadow-inner">
                  <div className="flex justify-between items-center">
                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Asset Unit</span>
-                    <span className="text-sm font-black text-white uppercase tracking-tighter">Room {room.roomNumber}</span>
+                    <span className="text-sm font-black text-white uppercase tracking-tighter">{room.name}</span>
                  </div>
                  <div className="flex justify-between items-center pt-4 border-t border-white/5">
                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Target State</span>
