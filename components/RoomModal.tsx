@@ -94,7 +94,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
     description: '',
     amenities: [],
     images: [],
-    isOnline: false
+    isOnline: true
   });
 
   const [priceStr, setPriceStr] = useState('0');
@@ -119,7 +119,7 @@ const RoomModal: React.FC<RoomModalProps> = ({ isOpen, onClose, onSave, editingR
       setFormData({
         roomNumber: '', name: '', category: 'Standard', floor: PropertyFloor.GroundFloor,
         status: RoomStatus.Available, pricePerNight: 0, capacity: 2, size: '',
-        description: '', amenities: [], images: [], isOnline: false
+        description: '', amenities: [], images: [], isOnline: true
       });
       setPriceStr('0');
       setSizeNum(0);
