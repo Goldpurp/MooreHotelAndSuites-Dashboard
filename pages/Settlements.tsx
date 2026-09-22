@@ -125,11 +125,12 @@ const Settlements: React.FC = () => {
 
   const isManualTransferConfirmation = activeTab !== 'refunds' &&
     selectedBooking?.paymentMethod === PaymentMethod.DirectTransfer;
+  const isManualTransferConfirmed = confirmationText.trim().toUpperCase() === 'ACCEPT';
 
   const executeAction = async () => {
     if (!selectedBooking) return;
 
-    if (isManualTransferConfirmation && confirmationText !== 'ACCEPT') {
+    if (isManualTransferConfirmation && !isManualTransferConfirmed) {
       setValidationError(true);
       sileo.error({
         title: 'Confirmation Required',
@@ -395,13 +396,13 @@ const Settlements: React.FC = () => {
                       <input
                         id="manual-payment-confirmation"
                         value={confirmationText}
-                        onChange={(e) => { setConfirmationText(e.target.value); setValidationError(false); }}
+                        onChange={(e) => { setConfirmationText(e.target.value.toUpperCase()); setValidationError(false); }}
                         placeholder="ACCEPT"
                         autoComplete="off"
                         autoCapitalize="characters"
                         spellCheck={false}
                         aria-invalid={validationError}
-                        className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : confirmationText === 'ACCEPT' ? 'border-emerald-500/40' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all font-black tracking-[0.18em] uppercase focus:border-brand-500/50`}
+                        className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : isManualTransferConfirmed ? 'border-emerald-500/40' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all font-black tracking-[0.18em] uppercase focus:border-brand-500/50`}
                       />
                     </div>
                   )}
@@ -439,7 +440,7 @@ const Settlements: React.FC = () => {
                       <button type="button" data-modal-cancel onClick={closeConfirmation} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Cancel</button>
                       <button 
                         onClick={executeAction} 
-                        disabled={isManualTransferConfirmation && confirmationText !== 'ACCEPT'}
+                        disabled={isManualTransferConfirmation && !isManualTransferConfirmed}
                         className={`py-4 rounded-2xl font-black adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg italic transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:active:scale-100 ${activeTab === 'refunds' ? 'bg-rose-600 hover:bg-rose-700 text-white' : selectedBooking?.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}
                       >
                         {selectedBooking?.paymentMethod === PaymentMethod.Monnify && activeTab !== 'refunds' ? 'Verify' : 'Confirm'}
