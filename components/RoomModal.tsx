@@ -54,6 +54,7 @@ export const AMENITIES_DATA = [
 
 const TRUSTED_ROOM_IMAGE_HOSTS = new Set([
   'res.cloudinary.com',
+  'pub-0a18e5708a2f44f581a2df7877771d4e.r2.dev',
   'images.unsplash.com',
 ]);
 const SAFE_INLINE_ROOM_IMAGE = /^data:image\/(?:jpeg|png|webp|avif);base64,[a-z0-9+/]+={0,2}$/i;
