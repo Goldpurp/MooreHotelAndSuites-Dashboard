@@ -11,7 +11,7 @@ services:
         value: >-
           default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none';
           form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
-          img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com;
+          img-src 'self' data: blob: https://res.cloudinary.com https://pub-0a18e5708a2f44f581a2df7877771d4e.r2.dev https://images.unsplash.com;
           connect-src 'self' https://api.moorehotelandsuites.com; upgrade-insecure-requests
       - path: /*
         name: Referrer-Policy
