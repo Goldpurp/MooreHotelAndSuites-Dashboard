@@ -315,6 +315,7 @@ const Auth: React.FC = () => {
                       <input
                         type="email"
                         required
+                        autoComplete="username"
                         placeholder="name@moorehotels.com"
                         value={formData.email}
                         onChange={(e) =>
