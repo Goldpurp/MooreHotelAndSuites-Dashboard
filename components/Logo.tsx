@@ -19,7 +19,7 @@ const Logo: React.FC<LogoProps> = ({ className = '', size = 'md' }) => {
   return (
     <div className={`shrink-0 ${containerSizes[size]} bg-[#31458E] flex items-center justify-center shadow-xl shadow-blue-500/20 border border-white/10 ring-1 ring-white/5 ${className}`}>
       <img
-        src="https://res.cloudinary.com/dxryndnhl/image/upload/v1777386017/slazzer-preview-w1yad_jizukz.png"
+        src="https://media.moorehotelandsuites.com/slazzer-preview-w1yad_jizukz-large.webp"
         alt="Moore Hotels & Suites"
       />
     </div>
