@@ -9,7 +9,7 @@ import { sileo } from 'sileo';
 import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 const Settlements: React.FC = () => {
-  const { bookings, guests, confirmTransfer, verifyMonnify, completeRefund, refreshData, currentUser, selectedPaymentBookingId, setSelectedPaymentBookingId } = useHotel();
+  const { bookings, guests, confirmTransfer, completeRefund, refreshData, currentUser, selectedPaymentBookingId, setSelectedPaymentBookingId } = useHotel();
   
   /** 
    * CHANGE: Added 'refunds' tab to the Settlements workflow 
@@ -28,7 +28,7 @@ const Settlements: React.FC = () => {
    */
   const [refundRef, setRefundRef] = useState('');
   const [refundAmount, setRefundAmount] = useState('');
-  const [refundChannel, setRefundChannel] = useState<'BankTransfer' | 'Cash' | 'Monnify'>('BankTransfer');
+  const [refundChannel, setRefundChannel] = useState<'BankTransfer' | 'Cash'>('BankTransfer');
   const [refundNotes, setRefundNotes] = useState('');
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -129,6 +129,7 @@ const Settlements: React.FC = () => {
 
   const executeAction = async () => {
     if (!selectedBooking) return;
+    if (activeTab !== 'refunds' && selectedBooking.paymentMethod === PaymentMethod.Monnify) return;
 
     if (isManualTransferConfirmation && !isManualTransferConfirmed) {
       setValidationError(true);
@@ -156,9 +157,7 @@ const Settlements: React.FC = () => {
       if (activeTab === 'refunds') {
         const evidenceType = refundChannel === 'Cash'
           ? 'CashVoucher'
-          : refundChannel === 'Monnify'
-            ? 'ProviderReceipt'
-            : 'BankStatement';
+          : 'BankStatement';
         await completeRefund(selectedBooking.id, {
           transactionReference: actionReference,
           amount: parsedRefundAmount,
@@ -169,12 +168,6 @@ const Settlements: React.FC = () => {
         sileo.success({
           title: 'Refund Processed',
           description: `The refund for ${resolveGuestName(selectedBooking)} has been finalized.`
-        });
-      } else if (selectedBooking.paymentMethod === PaymentMethod.Monnify) {
-        await verifyMonnify(selectedBooking.bookingCode);
-        sileo.success({
-          title: 'Payment Verified',
-          description: `Monnify transaction for ${resolveGuestName(selectedBooking)} is now confirmed.`
         });
       } else {
         await confirmTransfer(selectedBooking.bookingCode, confirmationText);
@@ -318,8 +311,10 @@ const Settlements: React.FC = () => {
                       <td data-label="Actions" className="responsive-table-padding text-right">
                          {(isPaid || isRefunded) ? (
                            <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Completed</span></div>
+                         ) : !isRefundPending && folio.paymentMethod === PaymentMethod.Monnify ? (
+                           <span className="text-xs text-slate-400">Automatic payments unavailable</span>
                          ) : (
-                           <button onClick={() => { setSelectedBooking(folio); setConfirmationText(''); setValidationError(false); setIsConfirmModalOpen(true); if (isRefundPending) { setRefundAmount(String(folio.refundApprovedAmount ?? folio.refundAmount ?? folio.amount)); setRefundChannel(folio.paymentMethod === PaymentMethod.Monnify ? 'Monnify' : 'BankTransfer'); } }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : folio.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
+                           <button onClick={() => { setSelectedBooking(folio); setConfirmationText(''); setValidationError(false); setIsConfirmModalOpen(true); if (isRefundPending) { setRefundAmount(String(folio.refundApprovedAmount ?? folio.refundAmount ?? folio.amount)); setRefundChannel('BankTransfer'); } }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
                              {isRefundPending ? <RotateCcw size={12} className="inline mr-1.5" /> : folio.paymentMethod === PaymentMethod.Monnify ? <ShieldCheck size={12} className="inline mr-1.5" /> : <ShieldCheck size={12} className="inline mr-1.5" />}
                              {isRefundPending ? 'Refund' : folio.paymentMethod === PaymentMethod.Monnify ? 'Verify' : 'Confirm'}
                            </button>
@@ -421,7 +416,7 @@ const Settlements: React.FC = () => {
                        />
                        <div className="grid grid-cols-2 gap-3">
                          <label className="space-y-2"><span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Amount (₦)</span><input type="number" min="0.01" step="0.01" value={refundAmount} onChange={(e) => { setRefundAmount(e.target.value); setValidationError(false); }} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40" /></label>
-                         <label className="space-y-2"><span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Channel</span><select value={refundChannel} onChange={(e) => setRefundChannel(e.target.value as 'BankTransfer' | 'Cash' | 'Monnify')} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40"><option value="BankTransfer">Bank transfer</option><option value="Cash">Cash</option><option value="Monnify">Monnify</option></select></label>
+                         <label className="space-y-2"><span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Channel</span><select value={refundChannel} onChange={(e) => setRefundChannel(e.target.value as 'BankTransfer' | 'Cash')} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40"><option value="BankTransfer">Bank transfer</option><option value="Cash">Cash</option></select></label>
                        </div>
                        <label className="space-y-2 block"><span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Evidence notes (optional)</span><textarea maxLength={500} value={refundNotes} onChange={(e) => setRefundNotes(e.target.value)} className="w-full min-h-20 resize-none bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40" placeholder="Bank statement, provider receipt, or cash voucher details" /></label>
                     </div>

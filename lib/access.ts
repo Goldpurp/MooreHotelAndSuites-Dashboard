@@ -24,8 +24,13 @@ export const canReadFolios = (user: AppUser | null) =>
 
 export const canReadOperations = (user: AppUser | null) => canManageReservations(user);
 
+export const canManageHousekeeping = (user: AppUser | null) =>
+  isPrivileged(user) || (user?.role === UserRole.Staff && department(user) === 'housekeeping');
+
 export const canOpenTab = (user: AppUser | null, tab: string) => {
   switch (tab) {
+    case "housekeeping":
+      return canManageHousekeeping(user);
     case "dashboard":
     case "reports":
     case "staff":
@@ -49,4 +54,4 @@ export const canOpenTab = (user: AppUser | null, tab: string) => {
 };
 
 export const firstAllowedTab = (user: AppUser | null) =>
-  ["dashboard", "bookings", "rooms", "guests", "settlements", "settings"].find((tab) => canOpenTab(user, tab)) || "settings";
+  ["dashboard", "bookings", "rooms", "guests", "settlements", "housekeeping", "settings"].find((tab) => canOpenTab(user, tab)) || "settings";

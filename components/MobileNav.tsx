@@ -48,6 +48,7 @@ const MobileNav: React.FC = () => {
     { id: 'settlements', label: 'Payments', icon: CheckCircle2 },
   ].filter((item) => canOpenTab(currentUser, item.id));
   const secondary = [
+    { id: 'housekeeping', label: 'Housekeeping', icon: ClipboardList, visible: true },
     { id: 'guests', label: 'Guests', icon: Users, visible: true },
     { id: 'reports', label: 'Reports', icon: FileBarChart, visible: privileged },
     { id: 'operation_log', label: 'Activity', icon: ClipboardList, visible: privileged },

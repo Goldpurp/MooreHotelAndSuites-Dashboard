@@ -129,6 +129,7 @@ interface HotelContextType {
 const HotelContext = createContext<HotelContextType | undefined>(undefined);
 
 const VALID_TABS = new Set([
+  "housekeeping",
   "dashboard",
   "bookings",
   "rooms",
