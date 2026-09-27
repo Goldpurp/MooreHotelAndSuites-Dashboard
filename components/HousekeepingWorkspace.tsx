@@ -103,7 +103,9 @@ export function HousekeepingPage() {
         title: inspectionPassed === true ? `Release room ${task.roomNumber}?` : `Update room ${task.roomNumber}?`,
         message: task.type === 'Inspection'
           ? inspectionPassed ? 'Confirm the room has passed inspection. The server will check for open maintenance before making it available.' : 'The room will remain unavailable and corrective cleaning will be required.'
-          : 'Confirm cleaning is finished. The room will remain unavailable until inspection passes.',
+          : task.type === 'StayoverService'
+            ? 'Confirm stayover service is finished. Room availability will not change and no release inspection will be created.'
+            : 'Confirm cleaning is finished. The room will remain unavailable until inspection passes.',
         confirmLabel: inspectionPassed === true ? 'Inspection passed' : 'Confirm',
       });
       if (!accepted) return;
@@ -120,7 +122,7 @@ export function HousekeepingPage() {
     } finally { setBusy(null); }
   }
   return <section className="space-y-5 pb-24">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold">Housekeeping</h1><p className="mt-2 text-slate-400">Start the task, mark cleaning done, then inspect and release. Guest and payment details are not shown here.</p></div><button onClick={refresh} disabled={Boolean(busy)} className="min-h-11 rounded-xl border border-white/20 px-4">Refresh</button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold">Housekeeping</h1><p className="mt-2 text-slate-400">Checkout: clean, inspect, then release. Stayover service does not change availability. Guest and payment details are not shown here.</p></div><button onClick={refresh} disabled={Boolean(busy)} className="min-h-11 rounded-xl border border-white/20 px-4">Refresh</button></div>
     {error && <p role="alert" className="rounded-xl bg-rose-500/10 p-4 text-rose-300">{error}</p>}
     {actionError && <p role="alert" className="text-rose-300">{actionError}</p>}
     {notice && <p role="status" className="text-emerald-300">{notice}</p>}
