@@ -11,7 +11,7 @@ export const useHotel = () => React.useContext(Context);
 const api = `
 let tasks = [{id:'sample-cleaning',roomId:'sample-room',roomNumber:'TEST 101',type:'CheckoutCleaning',status:'Pending',createdAtUtc:new Date(Date.now()-3*3600000).toISOString()}];
 export const api = {
-  get: async () => structuredClone(tasks),
+  get: async () => structuredClone(tasks).map(task => ({...task,type:task.type[0].toLowerCase()+task.type.slice(1),status:task.status[0].toLowerCase()+task.status.slice(1)})),
   put: async (path, request) => {
     const task=tasks.find(item=>path.endsWith(item.id));
     if(!task) throw new Error('Unknown fixture task');

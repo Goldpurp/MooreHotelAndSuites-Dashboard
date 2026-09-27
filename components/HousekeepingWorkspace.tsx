@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { canManageHousekeeping, isPrivileged } from '../lib/access';
-import { activeTask, HousekeepingTask, overdueCleaning } from '../lib/housekeeping';
+import { activeTask, HousekeepingTask, overdueCleaning, parseHousekeepingTasks } from '../lib/housekeeping';
 import { useHotel } from '../store/HotelContext';
 import { useAccessibleModal } from '../hooks/useAccessibleModal';
 import { useConfirmation } from './ConfirmationProvider';
@@ -29,7 +29,7 @@ export function HousekeepingProvider({ children }: { children: React.ReactNode }
       if (pending || document.visibilityState === 'hidden') return;
       pending = true;
       try {
-        const result = await api.get<HousekeepingTask[]>('/api/housekeeping/tasks', { silent: true });
+        const result = parseHousekeepingTasks(await api.get<unknown>('/api/housekeeping/tasks', { silent: true }));
         if (!disposed) { setTasks(result); setError(''); }
       } catch {
         if (!disposed) setError('Housekeeping could not be refreshed. Actions are paused until the connection recovers.');

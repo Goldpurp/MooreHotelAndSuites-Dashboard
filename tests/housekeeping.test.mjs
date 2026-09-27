@@ -34,6 +34,17 @@ test('housekeeping staff land on cleaning without access to guest or payment scr
   assert.equal(access.canOpenTab({ role: 'Staff', department: 'Finance' }, 'housekeeping'), false);
   assert.equal(access.canOpenTab(null, 'housekeeping'), false);
 });
+test('API camelCase enums are normalized before reminders and task actions; malformed data fails closed', async () => {
+  const { parseHousekeepingTasks, overdueCleaning, activeTask } = await moduleAt('lib/housekeeping.ts');
+  const wire = { id: 'task', roomId: 'room', roomNumber: '101', type: 'checkoutCleaning', status: 'inProgress', createdAtUtc: '2026-09-27T10:00:00Z' };
+  const tasks = parseHousekeepingTasks([wire]);
+  assert.equal(tasks[0].type, 'CheckoutCleaning');
+  assert.equal(tasks[0].status, 'InProgress');
+  assert.equal(overdueCleaning(tasks, Date.parse('2026-09-27T12:00:00Z')).length, 1);
+  for (const status of ['completed', 'cancelled']) assert.equal(activeTask(parseHousekeepingTasks([{ ...wire, status }])[0]), false);
+  assert.equal(parseHousekeepingTasks([{ ...wire, type: 'inspection' }])[0].type, 'Inspection');
+  for (const invalid of [null, {}, [null], [{ ...wire, status: 'unknown' }], [{ ...wire, type: 0 }], [{ ...wire, createdAtUtc: 'bad' }]]) assert.throws(() => parseHousekeepingTasks(invalid));
+});
 test('automatic payment actions stay unavailable without removing historical records', async () => {
   const source = await read('pages/Settlements.tsx');
   assert.doesNotMatch(source, /await verifyMonnify/);
