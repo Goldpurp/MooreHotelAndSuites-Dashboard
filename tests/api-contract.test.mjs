@@ -7,8 +7,9 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 test("staff booking supplies occupancy and policy evidence", async () => {
   const modal = await read("components/BookingModal.tsx");
 
-  assert.match(modal, /AdultCount: formData\.adultCount/);
-  assert.match(modal, /ChildCount: formData\.childCount/);
+  assert.match(modal, /AdultCount: adultCount/);
+  assert.match(modal, /ChildCount: childCount/);
+  assert.match(modal, /parseGuestCounts\(formData.adultCount, formData.childCount\)/);
   assert.match(modal, /AcceptPrivacyPolicy: true/);
   assert.match(modal, /AcceptBookingTerms: true/);
   assert.match(modal, /privacy\/policies\/current/);
