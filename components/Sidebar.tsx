@@ -44,6 +44,7 @@ const Sidebar: React.FC = () => {
     { id: "bookings", label: "Bookings", icon: CalendarDays },
     { id: "settlements", label: "Payments", icon: CheckCircle2 },
     { id: "rooms", label: "Rooms", icon: Bed },
+    { id: "housekeeping", label: "Housekeeping", icon: ClipboardList },
     { id: "guests", label: "Guests", icon: Users },
   ].filter((item) => canOpenTab(currentUser, item.id));
 

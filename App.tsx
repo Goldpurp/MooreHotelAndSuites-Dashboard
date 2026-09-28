@@ -8,6 +8,7 @@ import { HotelProvider, useHotel } from "./store/HotelContext";
 import { installNotificationSoundUnlock } from "./lib/notificationSound";
 import { canOpenTab, firstAllowedTab } from "./lib/access";
 import { useStaffRealtime } from "./hooks/useStaffRealtime";
+import { HousekeepingProvider, HousekeepingPage, HousekeepingReminder } from "./components/HousekeepingWorkspace";
 
 // Lazy loading pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -159,6 +160,8 @@ const AppContent: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case "housekeeping":
+        return <HousekeepingPage />;
       case "dashboard":
         return <Dashboard />;
       case "bookings":
@@ -202,6 +205,7 @@ const AppContent: React.FC = () => {
       <Toaster />
       <Sidebar />
       <MobileNav />
+      <HousekeepingReminder />
 
       <div
         className={`h-full min-h-0 flex-1 flex flex-col min-w-0 transition-[margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
@@ -245,7 +249,9 @@ const App: React.FC = () => {
   return (
     <HotelProvider>
       <ConfirmationProvider>
+        <HousekeepingProvider>
         <AppContent />
+        </HousekeepingProvider>
       </ConfirmationProvider>
     </HotelProvider>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { parseGuestCounts } from '../utils/guestCounts';
 import { X, Calendar, Zap, FileCheck, Check, AlertCircle, Loader2, User, Bed, ShieldCheck, Globe, Clock, ChevronRight, Receipt, Wallet } from 'lucide-react';
 import { useHotel } from '../store/HotelContext';
 import { PaymentMethod, BookingInitResponse, PrivacyPolicy } from '../types';
@@ -46,8 +47,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     guestPhone: '',
     checkIn: isWalkIn ? today : tomorrow,
     checkOut: isWalkIn ? tomorrow : dayAfter,
-    adultCount: 1,
-    childCount: 0,
+    adultCount: '1',
+    childCount: '0',
     paymentMethod: PaymentMethod.DirectTransfer, 
     notes: ''
   });
@@ -59,6 +60,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   const modalRef = useAccessibleModal(isOpen, onClose, !isSubmitting);
 
   const selectedRoom = useMemo(() => rooms.find(r => r.id === formData.roomId), [rooms, formData.roomId]);
+  const { adultCount, childCount, validGuestCounts } = parseGuestCounts(formData.adultCount, formData.childCount);
 
   const nights = useMemo(() => {
     try {
@@ -122,8 +124,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
         ...prefilled,
         checkIn: isWalkIn ? today : tomorrow,
         checkOut: isWalkIn ? tomorrow : dayAfter,
-        adultCount: 1,
-        childCount: 0,
+        adultCount: '1',
+        childCount: '0',
         paymentMethod: PaymentMethod.DirectTransfer,
         notes: ''
       });
@@ -173,12 +175,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
     if (!formData.checkOut) missing.push('checkOut');
     if (!formData.roomId) missing.push('roomId');
 
-    if (formData.adultCount < 1 || formData.adultCount > 20 || formData.childCount < 0 || formData.childCount > 20) {
+    if (!validGuestCounts) {
       setError('Enter a valid number of adults and children.');
       return;
     }
 
-    if (selectedRoom && formData.adultCount + formData.childCount > selectedRoom.capacity) {
+    if (selectedRoom && adultCount + childCount > selectedRoom.capacity) {
       setError(`${selectedRoom.name} allows up to ${selectedRoom.capacity} guests.`);
       return;
     }
@@ -210,6 +212,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
   };
 
   const handleFinalSubmit = async () => {
+    if (!validGuestCounts || !selectedRoom || adultCount + childCount > selectedRoom.capacity) {
+      setError('Enter valid whole-number guest counts within the room capacity.');
+      setStep('details');
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
     try {
@@ -222,8 +229,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
         GuestPhone: formData.guestPhone,
         CheckIn: formData.checkIn,
         CheckOut: formData.checkOut,
-        AdultCount: formData.adultCount,
-        ChildCount: formData.childCount,
+        AdultCount: adultCount,
+        ChildCount: childCount,
         PaymentMethod: formData.paymentMethod,
         Notes: formData.notes,
         AcceptPrivacyPolicy: true,
@@ -423,12 +430,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, isWalkIn =
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-2">
-                      <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Adults</label>
-                      <input type="number" min={1} max={20} value={formData.adultCount} onChange={e => setFormData({...formData, adultCount: Math.max(1, Number(e.target.value) || 1)})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
+                      <label htmlFor="booking-adults" className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Adults</label>
+                      <input id="booking-adults" type="number" inputMode="numeric" step={1} required min={1} max={20} value={formData.adultCount} onChange={e => setFormData({...formData, adultCount: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Children</label>
-                      <input type="number" min={0} max={20} value={formData.childCount} onChange={e => setFormData({...formData, childCount: Math.max(0, Number(e.target.value) || 0)})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
+                      <label htmlFor="booking-children" className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Children</label>
+                      <input id="booking-children" type="number" inputMode="numeric" step={1} required min={0} max={20} value={formData.childCount} onChange={e => setFormData({...formData, childCount: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-sm text-white outline-none focus:bg-white/10 transition-all font-bold" />
                     </div>
                   </div>
 
