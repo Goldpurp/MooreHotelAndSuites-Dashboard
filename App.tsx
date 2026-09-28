@@ -9,6 +9,7 @@ import { installNotificationSoundUnlock } from "./lib/notificationSound";
 import { canOpenTab, firstAllowedTab } from "./lib/access";
 import { useStaffRealtime } from "./hooks/useStaffRealtime";
 import { HousekeepingProvider, HousekeepingPage, HousekeepingReminder } from "./components/HousekeepingWorkspace";
+import PaymentReviewQueue from "./components/PaymentReviewQueue";
 
 // Lazy loading pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -206,6 +207,7 @@ const AppContent: React.FC = () => {
       <Sidebar />
       <MobileNav />
       <HousekeepingReminder />
+      <PaymentReviewQueue />
 
       <div
         className={`h-full min-h-0 flex-1 flex flex-col min-w-0 transition-[margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${

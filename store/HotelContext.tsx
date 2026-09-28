@@ -271,6 +271,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!val) return PaymentStatus.Unpaid;
     const lower = val.toLowerCase().replace(/[\s_-]/g, "");
     if (lower === "paid") return PaymentStatus.Paid;
+    if (lower === "paymentreported") return PaymentStatus.PaymentReported;
     if (lower === "unpaid") return PaymentStatus.Unpaid;
     if (lower === "awaitingverification")
       return PaymentStatus.AwaitingVerification;
