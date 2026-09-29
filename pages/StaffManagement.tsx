@@ -11,10 +11,27 @@ import PermissionWrapper from '../components/PermissionWrapper';
 import CreateUserModal from '../components/CreateUserModal';
 import StaffSuspensionModal from '../components/StaffSuspensionModal';
 import { StaffUser, UserRole } from '../types';
+import { api } from '../lib/api';
 
 const StaffManagement: React.FC = () => {
   const { staff, toggleStaffStatus, refreshData, currentUser, selectedProfileId, setSelectedProfileId } = useHotel();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
+  const [setupPending, setSetupPending] = useState(false);
+  const canEditStaff = (user: StaffUser) => user.role !== UserRole.Admin &&
+    (currentUser?.role === UserRole.Admin ||
+      (currentUser?.role === UserRole.Manager && user.role === UserRole.Staff));
+  const resendSetup = async (user: StaffUser) => {
+    if (setupPending || !canEditStaff(user)) return;
+    if (!window.confirm(`Send a password setup link to ${user.email}? Check the address before continuing.`)) return;
+    setSetupPending(true);
+    try {
+      await api.post(`/api/admin/management/employees/${user.id}/resend-setup`, {});
+      sileo.success({ title: 'Setup email queued', description: `Requested for ${user.email}. Delivery is not yet confirmed; check Brevo logs if it does not arrive.` });
+    } catch (error: unknown) {
+      sileo.error({ title: 'Setup email not queued', description: error instanceof Error ? error.message : 'Please try again later.' });
+    } finally { setSetupPending(false); }
+  };
   const [isSuspensionOpen, setIsSuspensionOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState<StaffUser | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
@@ -112,7 +129,7 @@ const StaffManagement: React.FC = () => {
           <div className="flex items-center gap-2">
             <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
             <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
-              <button onClick={() => setIsModalOpen(true)} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg whitespace-nowrap"><UserPlus size={16} /> Add Staff</button>
+              <button onClick={() => { setEditingUser(null); setIsModalOpen(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg whitespace-nowrap"><UserPlus size={16} /> Add Staff</button>
             </PermissionWrapper>
           </div>
         </div>
@@ -230,6 +247,13 @@ const StaffManagement: React.FC = () => {
             </div>
 
             <div className="mt-10 pt-6 border-t border-white/10">
+              {canEditStaff(selectedStaff) && (
+                <div className="space-y-3 mb-4">
+                  <button disabled={setupPending} onClick={() => { setEditingUser(selectedStaff); setIsModalOpen(true); }} className="w-full py-3 rounded-xl bg-brand-600 text-white font-bold disabled:opacity-50">Edit staff</button>
+                  <button disabled={setupPending || String(selectedStaff.status).toLowerCase() !== 'active'} onClick={() => resendSetup(selectedStaff)} className="w-full py-3 rounded-xl border border-white/20 text-white font-bold disabled:opacity-50">{setupPending ? 'Queueing email…' : 'Send setup link'}</button>
+                  <p className="text-xs text-slate-400">Correct and save the email address before sending a new setup link. Queued does not mean delivered.</p>
+                </div>
+              )}
               <PermissionWrapper allowedRoles={[UserRole.Admin]}>
                 {selectedStaff.role !== UserRole.Admin ? (
                   <button onClick={() => handleToggleAccessRequest(selectedStaff)} className={`w-full py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl ${String(selectedStaff.status).toLowerCase() === 'active' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}`}>
@@ -242,7 +266,7 @@ const StaffManagement: React.FC = () => {
         </div>
       )}
 
-      <CreateUserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <CreateUserModal isOpen={isModalOpen} editingUser={editingUser} onClose={() => { setIsModalOpen(false); setEditingUser(null); }} />
       <StaffSuspensionModal isOpen={isSuspensionOpen} onClose={() => setIsSuspensionOpen(false)} onConfirm={toggleStaffStatus} user={userToToggle} />
     </div>
   );

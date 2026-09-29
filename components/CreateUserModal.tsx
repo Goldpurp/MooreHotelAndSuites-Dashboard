@@ -61,13 +61,13 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
         await updateStaff(editingUser.id, updatePayload as any);
         sileo.success({
           title: 'Update Successful',
-          description: `The credentials and profile for ${formData.name} have been synchronized.`
+          description: `Profile saved for ${formData.name}. Existing sessions and old setup links are invalidated. Use Send setup link to email a fresh link.`
         });
       } else {
         await addStaff(formData);
         sileo.success({
           title: 'Staff Onboarded',
-          description: `${formData.name} has been added to the system directory successfully.`
+          description: `${formData.name} has been added. Setup email queued; delivery is not yet confirmed.`
         });
       }
       onClose();
