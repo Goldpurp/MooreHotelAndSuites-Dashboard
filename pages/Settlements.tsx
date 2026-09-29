@@ -305,12 +305,14 @@ const Settlements: React.FC = () => {
                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
                          }`}>
                             {isPaid ? <CheckCircle size={10}/> : isRefunded ? <RotateCcw size={10}/> : isRefundPending ? <ShieldAlert size={10}/> : <Clock size={10} className="animate-pulse"/>}
-                            {isPaid ? 'Paid' : isRefunded ? 'Refunded' : isRefundPending ? 'Refund' : 'Awaiting'}
+                            {isPaid ? 'Paid' : isRefunded ? 'Refunded' : isRefundPending ? 'Refund' : folio.paymentStatus === PaymentStatus.PaymentReported ? 'Payment reported' : 'Awaiting'}
                          </span>
                       </td>
                       <td data-label="Actions" className="responsive-table-padding text-right">
                          {(isPaid || isRefunded) ? (
                            <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Completed</span></div>
+                         ) : folio.paymentStatus === PaymentStatus.PaymentReported ? (
+                           <span className="text-xs text-amber-300">Use Bank transfer review</span>
                          ) : !isRefundPending && folio.paymentMethod === PaymentMethod.Monnify ? (
                            <span className="text-xs text-slate-400">Automatic payments unavailable</span>
                          ) : (

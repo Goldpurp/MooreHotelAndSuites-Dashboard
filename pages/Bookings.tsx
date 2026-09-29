@@ -32,6 +32,8 @@ const getPaymentStatusLabel = (status?: string, uppercase = false) => {
   const label =
     normalized === "paid"
       ? "Paid"
+      : normalized === "paymentreported"
+        ? "Payment reported—review required"
       : normalized === "awaitingverification"
         ? "Awaiting verification"
         : normalized === "refundpending"
