@@ -23,11 +23,18 @@ test('payment review data fails closed when amounts, timestamps or hold flags ar
 
 test('review UI requires explicit bank evidence and does not use the legacy confirmation shortcut', async () => {
   const ui = await read('components/PaymentReviewQueue.tsx');
+  const app = await read('App.tsx');
+  const settlements = await read('pages/Settlements.tsx');
   assert.match(ui, /review-transfer/);
   assert.match(ui, /confirmationText: confirmation/);
   assert.match(ui, /bankReference, amount: Number\(amount\)/);
   assert.match(ui, /pattern="VERIFY"/);
   assert.match(ui, /No money is sent here/);
   assert.doesNotMatch(ui, /confirm-transfer|localStorage/);
+  assert.match(app, /requestedBookingCode=\{paymentReviewRequest\?\.bookingCode\}/);
+  assert.match(settlements, /onReviewTransfer\(folio.bookingCode\)/);
+  assert.match(settlements, /Review transfer/);
+  assert.match(ui, /right-3/);
+  assert.doesNotMatch(ui, /bottom-4 left-4/);
   assert.match(await read('store/HotelContext.tsx'), /lower === "paymentreported"/);
 });

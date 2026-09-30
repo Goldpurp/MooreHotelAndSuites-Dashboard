@@ -7,8 +7,13 @@ import { Search, CheckCircle, Clock,
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useAccessibleModal } from '../hooks/useAccessibleModal';
+import { canReviewPayments } from '../lib/paymentReview';
 
-const Settlements: React.FC = () => {
+type SettlementsProps = {
+  onReviewTransfer: (bookingCode: string) => void;
+};
+
+const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
   const { bookings, guests, confirmTransfer, completeRefund, refreshData, currentUser, selectedPaymentBookingId, setSelectedPaymentBookingId } = useHotel();
   
   /** 
@@ -33,6 +38,12 @@ const Settlements: React.FC = () => {
   
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;
+  const canReviewTransfers = canReviewPayments(currentUser?.role);
+  const paymentTaskCount = bookings.filter(
+    (booking) =>
+      [PaymentStatus.AwaitingVerification, PaymentStatus.PaymentReported].includes(booking.paymentStatus) &&
+      booking.status !== BookingStatus.Cancelled,
+  ).length;
 
   const [verificationState, setVerificationState] = useState<'idle' | 'committing' | 'success'>('idle');
   const [validationError, setValidationError] = useState(false);
@@ -222,7 +233,7 @@ const Settlements: React.FC = () => {
              <div className="bg-slate-900 border border-amber-500/20 rounded-xl px-4 py-2 flex items-center gap-3">
                <span className="text-[9px] text-slate-500 font-black uppercase">Tasks</span>
               <span className="text-sm font-black text-amber-500 leading-none">
-                {bookings.filter(b => b.paymentStatus === PaymentStatus.AwaitingVerification && b.status !== BookingStatus.Cancelled).length}
+                {paymentTaskCount}
               </span>
            </div>
         </div>
@@ -312,7 +323,17 @@ const Settlements: React.FC = () => {
                          {(isPaid || isRefunded) ? (
                            <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Completed</span></div>
                          ) : folio.paymentStatus === PaymentStatus.PaymentReported ? (
-                           <span className="text-xs text-amber-300">Use Bank transfer review</span>
+                           canReviewTransfers ? (
+                             <button
+                               type="button"
+                               onClick={() => onReviewTransfer(folio.bookingCode)}
+                               className="ml-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 text-xs font-black uppercase tracking-wider text-amber-200 transition-colors hover:bg-amber-400/20 hover:text-white"
+                             >
+                               <ShieldCheck size={14} /> Review transfer
+                             </button>
+                           ) : (
+                             <span className="text-xs text-slate-400">Manager review required</span>
+                           )
                          ) : !isRefundPending && folio.paymentMethod === PaymentMethod.Monnify ? (
                            <span className="text-xs text-slate-400">Automatic payments unavailable</span>
                          ) : (

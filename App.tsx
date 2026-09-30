@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useCallback, useEffect } from "react";
+import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import MobileNav from "./components/MobileNav";
@@ -37,6 +37,16 @@ const AppContent: React.FC = () => {
     refreshData,
     logout,
   } = useHotel();
+  const [paymentReviewRequest, setPaymentReviewRequest] = useState<{
+    bookingCode: string;
+    requestId: number;
+  } | null>(null);
+  const openPaymentReview = useCallback((bookingCode: string) => {
+    setPaymentReviewRequest((current) => ({
+      bookingCode,
+      requestId: (current?.requestId ?? 0) + 1,
+    }));
+  }, []);
 
   const refreshFromRealtime = useCallback(() => {
     void refreshData({ silent: true });
@@ -183,7 +193,7 @@ const AppContent: React.FC = () => {
       case "settings":
         return <Settings />;
       case "settlements":
-        return <Settlements />;
+        return <Settlements onReviewTransfer={openPaymentReview} />;
       case "privacy":
         return <PrivacyRequests />;
       default:
@@ -208,7 +218,10 @@ const AppContent: React.FC = () => {
       <Sidebar />
       <MobileNav />
       <HousekeepingReminder />
-      <PaymentReviewQueue />
+      <PaymentReviewQueue
+        requestedBookingCode={paymentReviewRequest?.bookingCode}
+        requestId={paymentReviewRequest?.requestId}
+      />
 
       <div
         className={`h-full min-h-0 flex-1 flex flex-col min-w-0 transition-[margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${

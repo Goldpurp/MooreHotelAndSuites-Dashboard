@@ -4,7 +4,12 @@ import { api } from '../lib/api';
 import { useAccessibleModal } from '../hooks/useAccessibleModal';
 import { canReviewPayments, parsePaymentReviews, PaymentReviewItem } from '../lib/paymentReview';
 
-export default function PaymentReviewQueue() {
+type PaymentReviewQueueProps = {
+  requestedBookingCode?: string;
+  requestId?: number;
+};
+
+export default function PaymentReviewQueue({ requestedBookingCode, requestId }: PaymentReviewQueueProps) {
   const { currentUser, isAuthenticated, refreshData } = useHotel();
   const allowed = isAuthenticated && canReviewPayments(currentUser?.role);
   const [items, setItems] = useState<PaymentReviewItem[]>([]);
@@ -48,6 +53,18 @@ export default function PaymentReviewQueue() {
     setOpen(false); setCode(''); setDecision(''); setBankReference(''); setAmount(''); setReason(''); setConfirmation(''); setMessage('');
   }, [currentUser?.id]);
 
+  useEffect(() => {
+    if (!allowed || !requestedBookingCode) return;
+    setCode(requestedBookingCode.trim().toUpperCase());
+    setDecision('');
+    setBankReference('');
+    setAmount('');
+    setReason('');
+    setConfirmation('');
+    setMessage('');
+    setOpen(true);
+  }, [allowed, requestedBookingCode, requestId]);
+
   if (!allowed) return null;
   const overdue = items.filter(item => item.overdue).length;
   const selected = items.find(item => item.bookingCode === code.trim().toUpperCase());
@@ -74,10 +91,15 @@ export default function PaymentReviewQueue() {
   };
 
   return <>
-    <button type="button" onClick={() => setOpen(true)} className={`fixed bottom-4 left-4 z-40 rounded-xl border px-4 py-3 text-sm font-bold shadow-xl ${overdue || queueError ? 'border-amber-400 bg-amber-950 text-amber-100' : 'border-slate-600 bg-slate-900 text-white'}`}>
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      aria-label={`Open bank transfer reviews. ${items.length} waiting.`}
+      className={`fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-3 z-[140] rounded-xl border px-4 py-3 text-sm font-bold shadow-xl md:bottom-4 md:right-4 ${overdue || queueError ? 'border-amber-400 bg-amber-950 text-amber-100' : 'border-slate-600 bg-slate-900 text-white'}`}
+    >
       {queueError ? 'Payment review unavailable' : `Payment reviews (${items.length})${overdue ? ` · ${overdue} overdue` : ''}`}
     </button>
-    {open && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 sm:p-6">
+    {open && <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/80 p-3 sm:p-6">
       <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="payment-review-title" className="max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-950 p-5 text-slate-100 sm:p-8">
         <div className="flex items-center justify-between gap-4"><h2 id="payment-review-title" className="text-xl font-bold">Bank transfer review</h2><button type="button" disabled={busy} onClick={() => setOpen(false)} className="rounded border border-white/20 px-3 py-2">Close</button></div>
         <p className="mt-3 text-sm text-slate-300">A guest report is not proof of payment. Check the hotel’s bank statement before recording a credit. Reports older than one hour need urgent review; held rooms are not automatically cancelled.</p>
