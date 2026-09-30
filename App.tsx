@@ -24,6 +24,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Settlements = lazy(() => import("./pages/Settlements"));
 const PrivacyRequests = lazy(() => import("./pages/PrivacyRequests"));
 const Auth = lazy(() => import("./pages/Auth"));
+const StaffSetupPassword = lazy(() => import("./pages/StaffSetupPassword"));
 
 const AppContent: React.FC = () => {
   const {
@@ -248,6 +249,14 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  if (window.location.pathname.replace(/\/+$/, "") === "/setup-password") {
+    return (
+      <Suspense fallback={<div className="grid min-h-[100dvh] place-items-center bg-slate-950 text-slate-400">Opening secure setup...</div>}>
+        <StaffSetupPassword />
+      </Suspense>
+    );
+  }
+
   return (
     <HotelProvider>
       <ConfirmationProvider>

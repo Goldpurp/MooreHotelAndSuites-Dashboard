@@ -24,6 +24,10 @@ function isLoopback(hostname) {
   return ['localhost', '127.0.0.1', '::1', '[::1]'].includes(hostname);
 }
 
+function readinessUrl(baseUrl) {
+  return new URL('/health/ready', baseUrl).toString();
+}
+
 if (!Object.hasOwn(definitions, profile)) {
   console.error('Usage: node scripts/check-environment.mjs <local|development|cloud|production> [--config-only]');
   process.exitCode = 2;
@@ -54,7 +58,7 @@ if (!Object.hasOwn(definitions, profile)) {
         try {
           const target = new URL(proxyTarget);
           if (!isLoopback(target.hostname)) errors.push(`${profile} API target must be loopback-only`);
-          healthUrl = `${target.toString().replace(/\/$/, '')}/api/health`;
+          healthUrl = readinessUrl(target);
         } catch {
           errors.push('API_PROXY_TARGET is not a valid URL');
         }
@@ -65,7 +69,7 @@ if (!Object.hasOwn(definitions, profile)) {
         if (target.protocol !== 'https:' || isLoopback(target.hostname)) errors.push('direct API URLs must use non-local HTTPS');
         if (profile === 'cloud' && target.hostname === 'api.moorehotelandsuites.com') errors.push('cloud Development cannot target the Production API');
         if (proxyTarget) errors.push('direct profiles cannot define API_PROXY_TARGET');
-        healthUrl = `${target.toString().replace(/\/$/, '')}/health`;
+        healthUrl = readinessUrl(target);
       } catch {
         errors.push('VITE_API_BASE_URL is not a valid absolute URL');
       }
@@ -86,7 +90,7 @@ if (!Object.hasOwn(definitions, profile)) {
           redirect: 'error',
         });
         const payload = await response.json().catch(() => null);
-        if (!response.ok || String(payload?.status).toLowerCase() !== 'healthy') throw new Error(`health endpoint returned HTTP ${response.status}`);
+        if (!response.ok || String(payload?.status).toLowerCase() !== 'ready') throw new Error(`readiness endpoint returned HTTP ${response.status}`);
         if (String(payload?.database).toLowerCase() !== 'connected') throw new Error(`database is ${payload?.database || 'unknown'}`);
         const responseEnvironment = response.headers.get('X-Moore-API-Environment') || payload?.environment;
         if (String(responseEnvironment).toLowerCase() !== definition.apiEnvironment) throw new Error(`expected ${definition.apiEnvironment} but reached ${responseEnvironment}`);
