@@ -21,6 +21,23 @@ test('payment review data fails closed when amounts, timestamps or hold flags ar
   }
 });
 
+test('replacement room choices require complete, unique, server-provided room data', () => {
+  const value = {
+    bookingCode: 'MHS123456',
+    requiredRooms: 1,
+    roomTypeId: '1d98c229-7e79-43fd-b6ec-7ae67518867b',
+    roomTypeName: 'Deluxe',
+    rooms: [{ roomId: '8ee13a35-57f6-4ee9-b3ec-c18fe011b64e', roomNumber: 'D-01', roomName: 'Deluxe One' }],
+  };
+  assert.equal(exports.parsePaymentReviewRoomOptions(value).rooms[0].roomNumber, 'D-01');
+  for (const bad of [
+    null,
+    { ...value, requiredRooms: 0 },
+    { ...value, rooms: [{ ...value.rooms[0], roomName: '' }] },
+    { ...value, rooms: [value.rooms[0], value.rooms[0]] },
+  ]) assert.throws(() => exports.parsePaymentReviewRoomOptions(bad));
+});
+
 test('review UI requires explicit bank evidence and does not use the legacy confirmation shortcut', async () => {
   const ui = await read('components/PaymentReviewQueue.tsx');
   const app = await read('App.tsx');
@@ -28,6 +45,10 @@ test('review UI requires explicit bank evidence and does not use the legacy conf
   assert.match(ui, /review-transfer/);
   assert.match(ui, /confirmationText: confirmation/);
   assert.match(ui, /bankReference, amount: Number\(amount\)/);
+  assert.match(ui, /replacementRoomIds/);
+  assert.match(ui, /review-transfer\/rooms/);
+  assert.match(ui, /Only clean, online rooms in the originally paid room type are shown/);
+  assert.match(ui, /Availability is checked again when you save/);
   assert.match(ui, /pattern="VERIFY"/);
   assert.match(ui, /No money is sent here/);
   assert.doesNotMatch(ui, /confirm-transfer|localStorage/);
