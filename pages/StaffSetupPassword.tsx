@@ -68,7 +68,9 @@ const StaffSetupPassword: React.FC = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    window.history.replaceState(null, "", "/setup-password");
+    // Remove the single-use secret without changing to a server path that may
+    // 404 when the static host is refreshed directly.
+    window.history.replaceState(null, "", "/#route=setup-password");
   }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {

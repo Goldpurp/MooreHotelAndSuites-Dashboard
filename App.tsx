@@ -28,6 +28,11 @@ const PrivacyRequests = lazy(() => import("./pages/PrivacyRequests"));
 const Auth = lazy(() => import("./pages/Auth"));
 const StaffSetupPassword = lazy(() => import("./pages/StaffSetupPassword"));
 
+const isStaffSetupRoute = () => {
+  if (window.location.pathname.replace(/\/+$/, "") === "/setup-password") return true;
+  return new URLSearchParams(window.location.hash.slice(1)).get("route") === "setup-password";
+};
+
 const AppContent: React.FC = () => {
   const {
     isAuthenticated,
@@ -275,7 +280,7 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  if (window.location.pathname.replace(/\/+$/, "") === "/setup-password") {
+  if (isStaffSetupRoute()) {
     return (
       <Suspense fallback={<div className="grid min-h-[100dvh] place-items-center bg-slate-950 text-slate-400">Opening secure setup...</div>}>
         <StaffSetupPassword />

@@ -19,6 +19,10 @@ const getPaymentTransactionId = (booking: Booking | null | undefined) => {
   return reference;
 };
 
+const getBookingOrTransactionId = (booking: Booking | null | undefined) => {
+  return getPaymentTransactionId(booking) || booking?.bookingCode?.trim() || '';
+};
+
 const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
   const { bookings, guests, confirmTransfer, completeRefund, refreshData, currentUser, selectedPaymentBookingId, setSelectedPaymentBookingId } = useHotel();
   
@@ -166,7 +170,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
       setValidationError(true);
       sileo.error({
         title: 'Input Required',
-        description: 'Provide a valid transaction reference and refund amount.'
+        description: 'Provide a valid refund transaction ID and refund amount.'
       });
       return;
     }
@@ -405,22 +409,23 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                   </p>
                   {selectedBooking && (
                     <div className="mb-6 rounded-2xl border border-white/5 bg-white/[0.035] px-4 py-3 text-left">
-                      <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Booking Reference</p>
-                      <p className="mt-1 break-all text-[11px] font-black uppercase tracking-wide text-white">
-                        {selectedBooking.bookingCode}
-                      </p>
                       {activeTab === 'refunds' && (
-                        <div className="mt-3 border-t border-white/5 pt-3">
-                          <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Original payment transaction ID</p>
-                          {getPaymentTransactionId(selectedBooking) ? (
-                            <button type="button" onClick={() => handleCopy(getPaymentTransactionId(selectedBooking))} className="group mt-1 flex min-h-9 w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/20 px-3 text-left text-brand-300 transition-colors hover:border-brand-500/30" aria-label={`Copy original payment transaction ID ${getPaymentTransactionId(selectedBooking)}`}>
-                              <span className="truncate font-mono text-[11px] font-bold select-all">{getPaymentTransactionId(selectedBooking)}</span>
-                              <Copy size={14} className="shrink-0" />
-                            </button>
-                          ) : (
-                            <p className="mt-1 text-[10px] font-semibold leading-relaxed text-amber-300">Not recorded. Verify the original credit in the bank statement before processing this refund.</p>
-                          )}
+                        <div>
+                          <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Booking / Transaction ID</p>
+                          <button type="button" onClick={() => handleCopy(getBookingOrTransactionId(selectedBooking))} className="group mt-1 flex min-h-9 w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/20 px-3 text-left text-brand-300 transition-colors hover:border-brand-500/30" aria-label={`Copy booking or transaction ID ${getBookingOrTransactionId(selectedBooking)}`}>
+                            <span className="truncate font-mono text-[11px] font-bold select-all">{getBookingOrTransactionId(selectedBooking)}</span>
+                            <Copy size={14} className="shrink-0" />
+                          </button>
+                          <p className="mt-2 text-[9px] font-semibold leading-relaxed text-slate-500">
+                            {selectedBooking.transactionReference?.trim() ? 'Verified payment transaction ID' : 'Booking reference used because no payment transaction ID was recorded'}
+                          </p>
                         </div>
+                      )}
+                      {activeTab !== 'refunds' && (
+                        <>
+                          <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Booking Reference</p>
+                          <p className="mt-1 break-all text-[11px] font-black uppercase tracking-wide text-white">{selectedBooking.bookingCode}</p>
+                        </>
                       )}
                     </div>
                   )}
@@ -455,13 +460,14 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                   {verificationState === 'idle' && activeTab === 'refunds' && (
                     <div className="space-y-3 mb-8 text-left">
                        <div className="flex justify-between items-center px-1">
-                          <label className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center gap-2"><Hash size={12}/> Refund Ref</label>
+                          <label htmlFor="refund-transaction-id" className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center gap-2"><Hash size={12}/> Refund Transaction ID</label>
                           {validationError && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
                        </div>
                        <input 
+                         id="refund-transaction-id"
                          value={refundRef}
                          onChange={(e) => { setRefundRef(e.target.value); setValidationError(false); }}
-                         placeholder="REF-XXXXXX"
+                         placeholder="Enter the completed refund reference"
                          className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all italic font-bold focus:border-rose-500/40`}
                        />
                        <div className="grid grid-cols-2 gap-3">
