@@ -13,6 +13,12 @@ type SettlementsProps = {
   onReviewTransfer: (booking: Booking) => void;
 };
 
+const getPaymentTransactionId = (booking: Booking | null | undefined) => {
+  const reference = booking?.transactionReference?.trim() || '';
+  if (!reference || reference.toUpperCase() === booking?.bookingCode?.trim().toUpperCase()) return '';
+  return reference;
+};
+
 const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
   const { bookings, guests, confirmTransfer, completeRefund, refreshData, currentUser, selectedPaymentBookingId, setSelectedPaymentBookingId } = useHotel();
   
@@ -217,7 +223,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
     navigator.clipboard.writeText(text);
     sileo.success({
       title: 'Copied',
-      description: 'Reference copied.'
+      description: 'Payment transaction ID copied.'
     });
   };
 
@@ -264,7 +270,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
               <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/20">
                 <th className="responsive-table-padding">Date</th>
                 <th className="responsive-table-padding">Guest Name</th>
-                <th className="responsive-table-padding col-priority-med">Booking</th>
+                <th className="responsive-table-padding col-priority-med">Booking / Transaction ID</th>
                 <th className="responsive-table-padding text-right">Amount (₦)</th>
                 <th className="responsive-table-padding text-center">Status</th>
                 <th className="responsive-table-padding text-right">Actions</th>
@@ -278,6 +284,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                   const isPaid = folio.paymentStatus === PaymentStatus.Paid;
                   const isRefunded = folio.paymentStatus === PaymentStatus.Refunded;
                   const isRefundPending = folio.paymentStatus === PaymentStatus.RefundPending;
+                  const paymentTransactionId = getPaymentTransactionId(folio);
                   
                   return (
                     <tr key={folio.id} className="hover:bg-white/[0.02] transition-all border-l-4 border-transparent">
@@ -293,20 +300,24 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                           <p className="text-[8px] text-slate-600 font-black uppercase truncate">{folio.guestEmail || 'No Email'}</p>
                         </div>
                       </td>
-                      <td data-label="Booking" className="responsive-table-padding col-priority-med">
+                      <td data-label="Booking / Transaction ID" className="responsive-table-padding col-priority-med">
                         <p className="break-all text-xs font-black uppercase text-slate-300">{folio.bookingCode}</p>
-                        <div 
-                          onClick={() => handleCopy(folio.transactionReference || '')}
-                          className={`group flex items-center gap-2 mt-1 w-fit transition-all ${folio.transactionReference ? 'cursor-pointer hover:text-brand-400' : 'opacity-40'}`}
-                          title={folio.transactionReference ? "Click to copy reference" : "Reference Pending"}
+                        <p className="mt-2 text-[8px] font-black uppercase tracking-wider text-slate-600">Payment transaction ID</p>
+                        <button
+                          type="button"
+                          disabled={!paymentTransactionId}
+                          onClick={() => handleCopy(paymentTransactionId)}
+                          className={`group mt-1 flex min-h-7 w-fit max-w-full items-center gap-2 rounded-md text-left transition-colors ${paymentTransactionId ? 'cursor-pointer text-slate-500 hover:text-brand-400' : 'cursor-not-allowed text-amber-500/70'}`}
+                          title={paymentTransactionId ? "Copy payment transaction ID" : "Payment transaction ID was not recorded"}
+                          aria-label={paymentTransactionId ? `Copy payment transaction ID ${paymentTransactionId}` : 'Payment transaction ID not recorded'}
                         >
-                          <p className="text-[10px] text-slate-500 font-mono truncate italic select-all">
-                            {folio.transactionReference || 'REF PENDING'}
-                          </p>
-                          {folio.transactionReference && (
-                            <Copy size={10} className="text-slate-700 group-hover:text-brand-500 opacity-0 group-hover:opacity-100 transition-all" />
+                          <span className="truncate font-mono text-[10px] italic select-all">
+                            {paymentTransactionId || 'NOT RECORDED'}
+                          </span>
+                          {paymentTransactionId && (
+                            <Copy size={12} className="shrink-0 text-slate-600 transition-colors group-hover:text-brand-500" />
                           )}
-                        </div>
+                        </button>
                       </td>
                       <td data-label="Amount" className="responsive-table-padding text-right">
                          <p className={`adaptive-text-sm font-black italic ${isPaid ? 'text-white' : isRefunded || isRefundPending ? 'text-rose-400' : 'text-emerald-400'}`}>₦{folio.amount.toLocaleString()}</p>
@@ -398,6 +409,19 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                       <p className="mt-1 break-all text-[11px] font-black uppercase tracking-wide text-white">
                         {selectedBooking.bookingCode}
                       </p>
+                      {activeTab === 'refunds' && (
+                        <div className="mt-3 border-t border-white/5 pt-3">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Original payment transaction ID</p>
+                          {getPaymentTransactionId(selectedBooking) ? (
+                            <button type="button" onClick={() => handleCopy(getPaymentTransactionId(selectedBooking))} className="group mt-1 flex min-h-9 w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/20 px-3 text-left text-brand-300 transition-colors hover:border-brand-500/30" aria-label={`Copy original payment transaction ID ${getPaymentTransactionId(selectedBooking)}`}>
+                              <span className="truncate font-mono text-[11px] font-bold select-all">{getPaymentTransactionId(selectedBooking)}</span>
+                              <Copy size={14} className="shrink-0" />
+                            </button>
+                          ) : (
+                            <p className="mt-1 text-[10px] font-semibold leading-relaxed text-amber-300">Not recorded. Verify the original credit in the bank statement before processing this refund.</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
