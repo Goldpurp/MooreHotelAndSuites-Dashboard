@@ -127,9 +127,14 @@ export default function PaymentReviewQueue({
 
   const overdue = items.filter(item => item.overdue).length;
   const evidenceRequired = decision === 'Confirm' || decision === 'Refund';
+  const normalizedBankReference = bankReference.trim().toUpperCase();
+  const bankReferenceIsBookingCode = Boolean(
+    review && normalizedBankReference === review.bookingCode.trim().toUpperCase(),
+  );
   const evidenceValid = !evidenceRequired || (
     statementChecked &&
-    bankReference.trim().length >= 6 &&
+    normalizedBankReference.length >= 6 &&
+    !bankReferenceIsBookingCode &&
     Number.isFinite(Number(amount)) &&
     Number(amount) > 0
   );
@@ -278,8 +283,9 @@ export default function PaymentReviewQueue({
             {decision ? (
               <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
                 {evidenceRequired ? <>
-                  <label className="block text-xs font-bold text-slate-300">Bank statement reference
-                    <input required minLength={6} maxLength={120} value={bankReference} onChange={event => setBankReference(event.target.value)} autoComplete="off" className="mt-2 block w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-amber-400/50" />
+                  <label className="block text-xs font-bold text-slate-300">Bank transaction ID
+                    <input required minLength={6} maxLength={120} value={bankReference} onChange={event => setBankReference(event.target.value)} autoComplete="off" aria-invalid={bankReferenceIsBookingCode} placeholder="Enter the unique ID from the bank statement" className={`mt-2 block w-full rounded-xl border bg-black/30 px-4 py-3 text-sm text-white outline-none ${bankReferenceIsBookingCode ? 'border-rose-500/60' : 'border-white/10 focus:border-amber-400/50'}`} />
+                    <span className={`mt-2 block text-[10px] font-semibold leading-relaxed ${bankReferenceIsBookingCode ? 'text-rose-300' : 'text-slate-500'}`}>{bankReferenceIsBookingCode ? 'The booking reference is not a bank transaction ID.' : 'Use the unique transfer or credit reference shown on the hotel bank statement.'}</span>
                   </label>
                   <label className="block text-xs font-bold text-slate-300">Exact amount received (NGN)
                     <input required type="number" inputMode="decimal" min="0.01" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} className="mt-2 block w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-amber-400/50" />
