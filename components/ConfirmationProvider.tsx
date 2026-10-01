@@ -1,5 +1,6 @@
-import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 import { AlertTriangle, ShieldCheck, X } from 'lucide-react';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 export interface ConfirmationOptions {
   title: string;
@@ -25,7 +26,14 @@ export function useConfirmation() {
 
 export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [pending, setPending] = useState<PendingConfirmation | null>(null);
-  const safeButtonRef = useRef<HTMLButtonElement>(null);
+
+  const settle = useCallback((accepted: boolean) => {
+    setPending((current) => {
+      current?.resolve(accepted);
+      return null;
+    });
+  }, []);
+  const modalRef = useAccessibleModal(Boolean(pending), () => settle(false));
 
   const confirm = useCallback((options: ConfirmationOptions) => {
     return new Promise<boolean>((resolve) => {
@@ -33,14 +41,6 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         current?.resolve(false);
         return { ...options, resolve };
       });
-      window.setTimeout(() => safeButtonRef.current?.focus(), 0);
-    });
-  }, []);
-
-  const settle = useCallback((accepted: boolean) => {
-    setPending((current) => {
-      current?.resolve(accepted);
-      return null;
     });
   }, []);
 
@@ -63,14 +63,13 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }}
         >
           <section
+            ref={modalRef}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="confirmation-title"
             aria-describedby="confirmation-message"
+            tabIndex={-1}
             className="my-auto w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-5 shadow-2xl sm:p-8"
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') settle(false);
-            }}
           >
             <div className="flex items-start justify-between gap-4">
               <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${toneClasses}`}>
@@ -95,8 +94,8 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
             <div className="mt-8 flex flex-col-reverse gap-3 min-[380px]:grid min-[380px]:grid-cols-2">
               <button
-                ref={safeButtonRef}
                 type="button"
+                data-modal-cancel
                 onClick={() => settle(false)}
                 className="min-h-12 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold text-slate-200 transition hover:bg-white/10"
               >

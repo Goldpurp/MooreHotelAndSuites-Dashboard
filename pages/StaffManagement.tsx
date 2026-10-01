@@ -12,9 +12,11 @@ import CreateUserModal from '../components/CreateUserModal';
 import StaffSuspensionModal from '../components/StaffSuspensionModal';
 import { StaffUser, UserRole } from '../types';
 import { api } from '../lib/api';
+import { useConfirmation } from '../components/ConfirmationProvider';
 
 const StaffManagement: React.FC = () => {
   const { staff, toggleStaffStatus, refreshData, currentUser, selectedProfileId, setSelectedProfileId } = useHotel();
+  const confirm = useConfirmation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<StaffUser | null>(null);
   const [setupPending, setSetupPending] = useState(false);
@@ -23,7 +25,14 @@ const StaffManagement: React.FC = () => {
       (currentUser?.role === UserRole.Manager && user.role === UserRole.Staff));
   const resendSetup = async (user: StaffUser) => {
     if (setupPending || !canEditStaff(user)) return;
-    if (!window.confirm(`Send a password setup link to ${user.email}? Check the address before continuing.`)) return;
+    const accepted = await confirm({
+      title: 'Send password setup link?',
+      message: `A new single-use password setup link will be sent to ${user.email}. Check the address before continuing.`,
+      confirmLabel: 'Send setup link',
+      cancelLabel: 'Cancel',
+      tone: 'secure',
+    });
+    if (!accepted) return;
     setSetupPending(true);
     try {
       await api.post(`/api/admin/management/employees/${user.id}/resend-setup`, {});

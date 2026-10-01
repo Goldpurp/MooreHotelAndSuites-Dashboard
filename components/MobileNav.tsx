@@ -18,11 +18,13 @@ import {
 import { useHotel } from '../store/HotelContext';
 import { useConfirmation } from './ConfirmationProvider';
 import { canOpenTab, isPrivileged } from '../lib/access';
+import { useAccessibleModal } from '../hooks/useAccessibleModal';
 
 const MobileNav: React.FC = () => {
   const { activeTab, setActiveTab, logout, currentUser } = useHotel();
   const confirm = useConfirmation();
   const [moreOpen, setMoreOpen] = useState(false);
+  const moreSheetRef = useAccessibleModal(moreOpen, () => setMoreOpen(false));
 
   const navigate = (tab: string) => {
     setActiveTab(tab);
@@ -30,6 +32,7 @@ const MobileNav: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    setMoreOpen(false);
     const accepted = await confirm({
       title: 'Log out of Moore Hotels?',
       message: 'You will need to enter your staff credentials again to access hotel operations.',
@@ -62,16 +65,18 @@ const MobileNav: React.FC = () => {
     <>
       {moreOpen && (
         <div className="mobile-nav-backdrop fixed inset-0 z-[145] bg-slate-950/70 backdrop-blur-sm md:hidden" onClick={() => setMoreOpen(false)}>
-          <section
+          <div
+            ref={moreSheetRef}
             className="mobile-nav-sheet absolute inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] rounded-3xl border border-white/10 bg-slate-900 p-4 shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-label="More navigation"
+            tabIndex={-1}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between px-1">
               <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">More</p>
-              <button type="button" onClick={() => setMoreOpen(false)} aria-label="Close more navigation" className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-white">
+              <button type="button" data-modal-close onClick={() => setMoreOpen(false)} aria-label="Close more navigation" className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-white">
                 <X size={20} />
               </button>
             </div>
@@ -94,7 +99,7 @@ const MobileNav: React.FC = () => {
             <button type="button" onClick={handleLogout} className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-rose-500/10 text-xs font-extrabold uppercase tracking-wider text-rose-400">
               <LogOut size={18} /> Log out
             </button>
-          </section>
+          </div>
         </div>
       )}
 
