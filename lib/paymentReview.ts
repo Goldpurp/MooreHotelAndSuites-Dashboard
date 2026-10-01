@@ -1,6 +1,22 @@
+import type { Booking } from '../types';
+
 export type PaymentReviewItem = {
   bookingCode: string; guestName: string; bookingStatus: string; amount: number;
   currency: string; reportedAtUtc: string; overdue: boolean; roomHeld: boolean;
+};
+
+export type PaymentReviewEvidence = {
+  bankReference: string;
+  amount: number;
+  reason: string;
+};
+
+export type PaymentReviewRebooking = {
+  requestId: number;
+  booking: Booking;
+  review: PaymentReviewItem;
+  evidence: PaymentReviewEvidence;
+  roomOptions: PaymentReviewRoomOptions;
 };
 
 export type PaymentReviewRoomOption = {

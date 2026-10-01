@@ -10,7 +10,7 @@ import { useAccessibleModal } from '../hooks/useAccessibleModal';
 import { canReviewPayments } from '../lib/paymentReview';
 
 type SettlementsProps = {
-  onReviewTransfer: (bookingCode: string) => void;
+  onReviewTransfer: (booking: Booking) => void;
 };
 
 const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
@@ -41,8 +41,8 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
   const canReviewTransfers = canReviewPayments(currentUser?.role);
   const paymentTaskCount = bookings.filter(
     (booking) =>
-      [PaymentStatus.AwaitingVerification, PaymentStatus.PaymentReported].includes(booking.paymentStatus) &&
-      booking.status !== BookingStatus.Cancelled,
+      booking.paymentStatus === PaymentStatus.PaymentReported ||
+      (booking.paymentStatus === PaymentStatus.AwaitingVerification && booking.status !== BookingStatus.Cancelled),
   ).length;
 
   const [verificationState, setVerificationState] = useState<'idle' | 'committing' | 'success'>('idle');
@@ -66,7 +66,10 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
     return (bookings || [])
       .filter(b => {
         // Exclude cancelled bookings from standard ledger if not refund-related
-        if (b.status === BookingStatus.Cancelled && b.paymentStatus !== PaymentStatus.RefundPending && b.paymentStatus !== PaymentStatus.Refunded) return false;
+        if (b.status === BookingStatus.Cancelled &&
+            b.paymentStatus !== PaymentStatus.PaymentReported &&
+            b.paymentStatus !== PaymentStatus.RefundPending &&
+            b.paymentStatus !== PaymentStatus.Refunded) return false;
         
         const pStatus = b.paymentStatus;
         
@@ -326,7 +329,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                            canReviewTransfers ? (
                              <button
                                type="button"
-                               onClick={() => onReviewTransfer(folio.bookingCode)}
+                               onClick={() => onReviewTransfer(folio)}
                                className="ml-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 text-xs font-black uppercase tracking-wider text-amber-200 transition-colors hover:bg-amber-400/20 hover:text-white"
                              >
                                <ShieldCheck size={14} /> Review transfer

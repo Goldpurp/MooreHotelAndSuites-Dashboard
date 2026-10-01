@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("staff booking supplies occupancy and policy evidence", async () => {
+test("staff booking supplies occupancy, policy evidence, and a current server quote", async () => {
   const modal = await read("components/BookingModal.tsx");
 
   assert.match(modal, /AdultCount: adultCount/);
@@ -13,6 +13,11 @@ test("staff booking supplies occupancy and policy evidence", async () => {
   assert.match(modal, /AcceptPrivacyPolicy: true/);
   assert.match(modal, /AcceptBookingTerms: true/);
   assert.match(modal, /privacy\/policies\/current/);
+  assert.match(modal, /api\/pricing\/quotes/);
+  assert.match(modal, /QuoteId: pricingQuote\.quoteId/);
+  assert.match(modal, /QuoteToken: pricingQuote\.quoteToken/);
+  assert.match(modal, /pricingQuote\?\.totalAmount/);
+  assert.match(modal, /pricing quote expired/i);
 });
 
 test("cancellation and refund accounting use JSON request bodies", async () => {
