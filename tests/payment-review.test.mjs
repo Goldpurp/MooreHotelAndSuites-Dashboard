@@ -66,9 +66,10 @@ test('selected transfer review uses the standard dialog and hands released rooms
   assert.match(settlements, /Review transfer/);
   assert.match(settlements, /b\.paymentStatus !== PaymentStatus\.PaymentReported/);
   assert.match(settlements, /Payment transaction ID/);
-  assert.match(settlements, /Original payment transaction ID/);
-  assert.match(settlements, /reference\.toUpperCase\(\) === booking\?\.bookingCode/);
-  assert.match(settlements, /Copy payment transaction ID/);
+  assert.match(settlements, /Booking \/ Transaction ID/);
+  assert.match(settlements, /getPaymentTransactionId\(booking\) \|\| booking\?\.bookingCode/);
+  assert.match(settlements, /Copy booking or transaction ID/);
+  assert.match(settlements, /Refund Transaction ID/);
   assert.match(ui, /right-3/);
   assert.doesNotMatch(ui, /bottom-4 left-4/);
   assert.match(await read('store/HotelContext.tsx'), /lower === "paymentreported"/);
