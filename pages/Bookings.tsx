@@ -26,6 +26,7 @@ import { sileo } from "sileo";
 import BookingModal from "../components/BookingModal";
 import VoidBookingModal from "../components/VoidBookingModal";
 import CheckInConfirmModal from "../components/CheckInConfirmModal";
+import type { PaymentReviewRebooking } from "../lib/paymentReview";
 
 const getPaymentStatusLabel = (status?: string, uppercase = false) => {
   const normalized = (status || "").replace(/[\s_-]/g, "").toLowerCase();
@@ -33,7 +34,7 @@ const getPaymentStatusLabel = (status?: string, uppercase = false) => {
     normalized === "paid"
       ? "Paid"
       : normalized === "paymentreported"
-        ? "Payment reported—review required"
+        ? "Payment reported, review required"
       : normalized === "awaitingverification"
         ? "Awaiting verification"
         : normalized === "refundpending"
@@ -45,7 +46,15 @@ const getPaymentStatusLabel = (status?: string, uppercase = false) => {
   return uppercase ? label.toUpperCase() : label;
 };
 
-const Bookings: React.FC = () => {
+type BookingsProps = {
+  paymentReviewRebooking?: PaymentReviewRebooking | null;
+  onPaymentReviewRebookingClosed?: () => void;
+};
+
+const Bookings: React.FC<BookingsProps> = ({
+  paymentReviewRebooking = null,
+  onPaymentReviewRebookingClosed,
+}) => {
   const hotel = useHotel();
   const {
     bookings,
@@ -70,6 +79,24 @@ const Bookings: React.FC = () => {
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [bookingToVoid, setBookingToVoid] = useState<Booking | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (!paymentReviewRebooking) return;
+    const booking = paymentReviewRebooking.booking;
+    setPreFillData({
+      guestFirstName: booking.guestFirstName,
+      guestLastName: booking.guestLastName,
+      guestEmail: booking.guestEmail,
+      guestPhone: booking.guestPhone,
+    });
+    setIsWalkIn(true);
+    setIsBookingModalOpen(true);
+  }, [paymentReviewRebooking?.requestId]);
+
+  const closeBookingModal = () => {
+    setIsBookingModalOpen(false);
+    if (paymentReviewRebooking) onPaymentReviewRebookingClosed?.();
+  };
 
 
   const [isCheckInConfirmOpen, setIsCheckInConfirmOpen] = useState(false);
@@ -453,7 +480,7 @@ const Bookings: React.FC = () => {
                                 day: "2-digit",
                                 month: "short",
                               })}{" "}
-                              —{" "}
+                              to{" "}
                               {new Date(b.checkOut).toLocaleDateString(
                                 "en-GB",
                                 { day: "2-digit", month: "short" },
@@ -748,9 +775,10 @@ const Bookings: React.FC = () => {
 
       <BookingModal
         isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
+        onClose={closeBookingModal}
         isWalkIn={isWalkIn}
         initialData={preFillData}
+        paymentReviewRebooking={paymentReviewRebooking}
       />
       <VoidBookingModal
         isOpen={isVoidModalOpen}

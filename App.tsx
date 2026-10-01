@@ -10,6 +10,8 @@ import { canOpenTab, firstAllowedTab } from "./lib/access";
 import { useStaffRealtime } from "./hooks/useStaffRealtime";
 import { HousekeepingProvider, HousekeepingPage, HousekeepingReminder } from "./components/HousekeepingWorkspace";
 import PaymentReviewQueue from "./components/PaymentReviewQueue";
+import type { Booking } from "./types";
+import type { PaymentReviewRebooking } from "./lib/paymentReview";
 
 // Lazy loading pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -38,15 +40,21 @@ const AppContent: React.FC = () => {
     logout,
   } = useHotel();
   const [paymentReviewRequest, setPaymentReviewRequest] = useState<{
-    bookingCode: string;
+    booking: Booking;
     requestId: number;
   } | null>(null);
-  const openPaymentReview = useCallback((bookingCode: string) => {
+  const [paymentReviewRebooking, setPaymentReviewRebooking] = useState<PaymentReviewRebooking | null>(null);
+  const openPaymentReview = useCallback((booking: Booking) => {
     setPaymentReviewRequest((current) => ({
-      bookingCode,
+      booking,
       requestId: (current?.requestId ?? 0) + 1,
     }));
   }, []);
+  const choosePaymentReviewReplacement = useCallback((context: PaymentReviewRebooking) => {
+    setPaymentReviewRebooking(context);
+    setPaymentReviewRequest(null);
+    setActiveTab("bookings");
+  }, [setActiveTab]);
 
   const refreshFromRealtime = useCallback(() => {
     void refreshData({ silent: true });
@@ -177,7 +185,10 @@ const AppContent: React.FC = () => {
       case "dashboard":
         return <Dashboard />;
       case "bookings":
-        return <Bookings />;
+        return <Bookings
+          paymentReviewRebooking={paymentReviewRebooking}
+          onPaymentReviewRebookingClosed={() => setPaymentReviewRebooking(null)}
+        />;
       case "rooms":
         return <Rooms />;
       case "guests":
@@ -219,8 +230,10 @@ const AppContent: React.FC = () => {
       <MobileNav />
       <HousekeepingReminder />
       <PaymentReviewQueue
-        requestedBookingCode={paymentReviewRequest?.bookingCode}
+        requestedBooking={paymentReviewRequest?.booking}
         requestId={paymentReviewRequest?.requestId}
+        onChooseReplacement={choosePaymentReviewReplacement}
+        onOpenSettlements={() => setActiveTab("settlements")}
       />
 
       <div

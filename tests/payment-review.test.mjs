@@ -38,23 +38,32 @@ test('replacement room choices require complete, unique, server-provided room da
   ]) assert.throws(() => exports.parsePaymentReviewRoomOptions(bad));
 });
 
-test('review UI requires explicit bank evidence and does not use the legacy confirmation shortcut', async () => {
+test('selected transfer review uses the standard dialog and hands released rooms to Bookings', async () => {
   const ui = await read('components/PaymentReviewQueue.tsx');
   const app = await read('App.tsx');
+  const bookings = await read('pages/Bookings.tsx');
+  const bookingModal = await read('components/BookingModal.tsx');
   const settlements = await read('pages/Settlements.tsx');
   assert.match(ui, /review-transfer/);
-  assert.match(ui, /confirmationText: confirmation/);
-  assert.match(ui, /bankReference, amount: Number\(amount\)/);
-  assert.match(ui, /replacementRoomIds/);
+  assert.match(ui, /confirmationText: 'VERIFY'/);
+  assert.match(ui, /bankReference: bankReference\.trim\(\)/);
+  assert.match(ui, /statementChecked/);
   assert.match(ui, /review-transfer\/rooms/);
-  assert.match(ui, /Only clean, online rooms in the originally paid room type are shown/);
-  assert.match(ui, /Availability is checked again when you save/);
-  assert.match(ui, /pattern="VERIFY"/);
-  assert.match(ui, /No money is sent here/);
+  assert.doesNotMatch(ui, /Refresh queue|Booking reference<input|items\.map\(item/);
+  assert.match(ui, /onChooseReplacement/);
+  assert.match(ui, /onOpenSettlements/);
+  assert.match(bookings, /paymentReviewRebooking=\{paymentReviewRebooking\}/);
+  assert.match(bookingModal, /Only clean, online rooms in the originally paid category are shown/);
+  assert.match(bookingModal, /Availability is locked and checked again when you confirm/);
+  assert.match(bookingModal, /replacementRoomIds/);
+  assert.match(bookingModal, /Updated confirmation queued for delivery/);
+  assert.match(ui, /It does not send money automatically/);
   assert.doesNotMatch(ui, /confirm-transfer|localStorage/);
-  assert.match(app, /requestedBookingCode=\{paymentReviewRequest\?\.bookingCode\}/);
-  assert.match(settlements, /onReviewTransfer\(folio.bookingCode\)/);
+  assert.match(app, /requestedBooking=\{paymentReviewRequest\?\.booking\}/);
+  assert.match(app, /setActiveTab\("bookings"\)/);
+  assert.match(settlements, /onReviewTransfer\(folio\)/);
   assert.match(settlements, /Review transfer/);
+  assert.match(settlements, /b\.paymentStatus !== PaymentStatus\.PaymentReported/);
   assert.match(ui, /right-3/);
   assert.doesNotMatch(ui, /bottom-4 left-4/);
   assert.match(await read('store/HotelContext.tsx'), /lower === "paymentreported"/);
