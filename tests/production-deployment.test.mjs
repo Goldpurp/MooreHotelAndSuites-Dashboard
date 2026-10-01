@@ -43,3 +43,11 @@ test("Render definition includes SPA routing and dashboard security policy", asy
   assert.match(blueprint, /name: Strict-Transport-Security/);
   assert.match(blueprint, /type: rewrite[\s\S]*source: \/\*[\s\S]*destination: \/index\.html/);
 });
+
+test("environment checks use the anonymous database readiness endpoint", async () => {
+  const checker = await readFile("scripts/check-environment.mjs", "utf8");
+
+  assert.match(checker, /\/health\/ready/);
+  assert.match(checker, /payload\?\.status\)\.toLowerCase\(\) !== 'ready'/);
+  assert.doesNotMatch(checker, /\/api\/health/);
+});

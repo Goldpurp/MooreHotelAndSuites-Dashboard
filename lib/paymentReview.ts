@@ -3,6 +3,20 @@ export type PaymentReviewItem = {
   currency: string; reportedAtUtc: string; overdue: boolean; roomHeld: boolean;
 };
 
+export type PaymentReviewRoomOption = {
+  roomId: string;
+  roomNumber: string;
+  roomName: string;
+};
+
+export type PaymentReviewRoomOptions = {
+  bookingCode: string;
+  requiredRooms: number;
+  roomTypeId: string;
+  roomTypeName: string;
+  rooms: PaymentReviewRoomOption[];
+};
+
 export function canReviewPayments(role: unknown) {
   return typeof role === 'string' && ['admin', 'manager'].includes(role.toLowerCase());
 }
@@ -19,4 +33,31 @@ export function parsePaymentReviews(value: unknown): PaymentReviewItem[] {
     }
     return item as PaymentReviewItem;
   });
+}
+
+export function parsePaymentReviewRoomOptions(value: unknown): PaymentReviewRoomOptions {
+  if (!value || typeof value !== 'object') throw new Error('Invalid replacement room response');
+  const item = value as Record<string, unknown>;
+  if (typeof item.bookingCode !== 'string' || !item.bookingCode.trim() ||
+      typeof item.requiredRooms !== 'number' || !Number.isInteger(item.requiredRooms) ||
+      item.requiredRooms < 1 || item.requiredRooms > 10 ||
+      typeof item.roomTypeId !== 'string' || !item.roomTypeId.trim() ||
+      typeof item.roomTypeName !== 'string' || !item.roomTypeName.trim() ||
+      !Array.isArray(item.rooms)) {
+    throw new Error('Invalid replacement room response');
+  }
+  const rooms = item.rooms.map(room => {
+    if (!room || typeof room !== 'object') throw new Error('Invalid replacement room response');
+    const option = room as Record<string, unknown>;
+    if (typeof option.roomId !== 'string' || !option.roomId.trim() ||
+        typeof option.roomNumber !== 'string' || !option.roomNumber.trim() ||
+        typeof option.roomName !== 'string' || !option.roomName.trim()) {
+      throw new Error('Invalid replacement room response');
+    }
+    return option as PaymentReviewRoomOption;
+  });
+  if (new Set(rooms.map(room => room.roomId)).size !== rooms.length) {
+    throw new Error('Invalid replacement room response');
+  }
+  return { ...item, rooms } as PaymentReviewRoomOptions;
 }
