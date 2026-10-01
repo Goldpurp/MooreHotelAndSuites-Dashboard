@@ -31,7 +31,11 @@ test('staff setup password fields expose independent accessible visibility contr
 });
 
 test('setup recovery confirms saved recipient and distinguishes queueing from delivery', () => {
-  assert.match(page, /window.confirm\(`Send a password setup link to \$\{user.email\}/);
+  assert.match(page, /const confirm = useConfirmation\(\)/);
+  assert.match(page, /title: 'Send password setup link\?'/);
+  assert.match(page, /message: `A new single-use password setup link will be sent to \$\{user.email\}/);
+  assert.match(page, /confirmLabel: 'Send setup link'/);
+  assert.doesNotMatch(page, /window\.confirm/);
   assert.match(page, /employees\/\$\{user.id\}\/resend-setup/);
   assert.match(page, /currentUser\?\.role === UserRole.Manager && user.role === UserRole.Staff/);
   assert.match(page, /setupPending \|\| String\(selectedStaff.status\).toLowerCase\(\) !== 'active'/);
