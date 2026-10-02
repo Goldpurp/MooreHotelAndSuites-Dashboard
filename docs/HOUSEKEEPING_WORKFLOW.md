@@ -5,6 +5,7 @@
 - An open CheckoutCleaning task becomes overdue two hours after its server-generated creation timestamp (created during guest checkout).
 - While an authorized user's dashboard is open, polling checks tasks every 30 seconds and on focus/reconnection. The reminder has a 30-minute in-memory snooze; reloading or signing in again resets that snooze. This is not an email or background push notification.
 - The reminder opens the Housekeeping screen. Cleaning completion requires confirmation and leaves a room awaiting inspection.
+- The work queue uses the required room name as its primary identifier because room numbers are optional for this hotel. Each room has its own Start cleaning or Finish cleaning action; inspections are shown in a separate management section.
 - Stayover service is different: completion records the service without changing availability or creating a release inspection. Deploy the API occupancy safeguard before exposing this dashboard workflow in production.
 - The dashboard exposes inspection/release to management. Existing server permissions and transition validation remain authoritative; this change does not introduce a new backend inspection permission.
 - Failed fetches pause actions and suppress potentially stale reminders. Completed/cancelled tasks do not trigger reminders.

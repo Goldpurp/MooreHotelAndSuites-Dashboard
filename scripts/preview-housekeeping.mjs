@@ -9,7 +9,7 @@ export const Context = React.createContext(null);
 export const useHotel = () => React.useContext(Context);
 `;
 const api = `
-let tasks = [{id:'sample-cleaning',roomId:'sample-room',roomNumber:'TEST 101',type:'CheckoutCleaning',status:'Pending',createdAtUtc:new Date(Date.now()-3*3600000).toISOString()}];
+let tasks = [{id:'sample-cleaning',roomId:'sample-room',roomName:'ADAMASINGBA',roomNumber:'',type:'CheckoutCleaning',status:'Pending',createdAtUtc:new Date(Date.now()-3*3600000).toISOString()}];
 export const api = {
   get: async () => structuredClone(tasks).map(task => ({...task,type:task.type[0].toLowerCase()+task.type.slice(1),status:task.status[0].toLowerCase()+task.status.slice(1)})),
   put: async (path, request) => {
@@ -17,8 +17,8 @@ export const api = {
     if(!task) throw new Error('Unknown fixture task');
     task.status=request.status;
     if(request.status==='InProgress') task.assignedToUserId='fixture-user';
-    if(request.status==='Completed' && task.type!=='Inspection') tasks.push({id:'sample-inspection',roomId:task.roomId,roomNumber:task.roomNumber,type:'Inspection',status:'Pending',createdAtUtc:new Date().toISOString()});
-    if(request.status==='Completed' && task.type==='Inspection' && !request.inspectionPassed) tasks.push({id:'sample-correction',roomId:task.roomId,roomNumber:task.roomNumber,type:'CheckoutCleaning',status:'Pending',createdAtUtc:new Date().toISOString()});
+    if(request.status==='Completed' && task.type!=='Inspection') tasks.push({id:'sample-inspection',roomId:task.roomId,roomName:task.roomName,roomNumber:task.roomNumber,type:'Inspection',status:'Pending',createdAtUtc:new Date().toISOString()});
+    if(request.status==='Completed' && task.type==='Inspection' && !request.inspectionPassed) tasks.push({id:'sample-correction',roomId:task.roomId,roomName:task.roomName,roomNumber:task.roomNumber,type:'CheckoutCleaning',status:'Pending',createdAtUtc:new Date().toISOString()});
     return structuredClone(task);
   }
 };`;

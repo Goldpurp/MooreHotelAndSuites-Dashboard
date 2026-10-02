@@ -1,7 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { canManageHousekeeping, isPrivileged } from '../lib/access';
-import { activeTask, HousekeepingTask, overdueCleaning, parseHousekeepingTasks } from '../lib/housekeeping';
+import {
+  activeTask,
+  housekeepingRoomLabel,
+  HousekeepingTask,
+  isCleaningTask,
+  overdueCleaning,
+  parseHousekeepingTasks,
+} from '../lib/housekeeping';
 import { useHotel } from '../store/HotelContext';
 import { useAccessibleModal } from '../hooks/useAccessibleModal';
 import { useConfirmation } from './ConfirmationProvider';
@@ -73,7 +80,7 @@ export function HousekeepingReminder() {
     <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="cleaning-reminder-title" aria-describedby="cleaning-reminder-description" tabIndex={-1} className="w-full max-w-lg rounded-2xl border border-amber-400/30 bg-slate-900 p-6 shadow-xl">
       <h2 id="cleaning-reminder-title" className="text-xl font-bold">Rooms still awaiting cleaning</h2>
       <p id="cleaning-reminder-description" className="mt-3 text-slate-300">At least two hours have passed since checkout. These rooms are still unavailable because cleaning has not been recorded as complete. If already clean, update Housekeeping, then inspect before release.</p>
-      <ul className="my-4 max-h-48 overflow-y-auto space-y-2">{due.map(task => <li key={task.id}>Room {task.roomNumber} — {Math.floor((now - Date.parse(task.createdAtUtc)) / 60_000)} minutes waiting</li>)}</ul>
+      <ul className="my-4 max-h-48 space-y-2 overflow-y-auto">{due.map(task => <li key={task.id}>{housekeepingRoomLabel(task)} — {Math.floor((now - Date.parse(task.createdAtUtc)) / 60_000)} minutes waiting</li>)}</ul>
       <div className="flex flex-wrap gap-3">
         <button className="min-h-11 rounded-xl bg-brand-600 px-4 font-bold" onClick={() => { dismiss(); setActiveTab('housekeeping'); }}>Review housekeeping</button>
         <button data-modal-cancel className="min-h-11 rounded-xl border border-white/20 px-4" onClick={dismiss}>Remind me in 30 minutes</button>
@@ -96,11 +103,14 @@ export function HousekeepingPage() {
   const [notice, setNotice] = useState('');
   const management = isPrivileged(currentUser);
   const active = tasks.filter(activeTask);
+  const cleaning = active.filter(isCleaningTask);
+  const inspections = active.filter(task => task.type === 'Inspection');
   async function update(task: HousekeepingTask, status: HousekeepingTask['status'], inspectionPassed?: boolean) {
     if (busy) return;
     if (status === 'Completed') {
+      const roomLabel = housekeepingRoomLabel(task);
       const accepted = await confirm({
-        title: inspectionPassed === true ? `Release room ${task.roomNumber}?` : `Update room ${task.roomNumber}?`,
+        title: inspectionPassed === true ? `Release ${roomLabel}?` : `Update ${roomLabel}?`,
         message: task.type === 'Inspection'
           ? inspectionPassed ? 'Confirm the room has passed inspection. The server will check for open maintenance before making it available.' : 'The room will remain unavailable and corrective cleaning will be required.'
           : task.type === 'StayoverService'
@@ -113,7 +123,11 @@ export function HousekeepingPage() {
     setBusy(task.id); setActionError(''); setNotice('');
     try {
       await api.put(`/api/housekeeping/tasks/${task.id}`, { status, inspectionPassed });
-      setNotice(status === 'Completed' ? 'Saved. The room status has been updated by the server.' : 'Task started.');
+      const roomLabel = housekeepingRoomLabel(task);
+      const workLabel = task.type === 'Inspection' ? 'inspection' : task.type === 'StayoverService' ? 'service' : 'cleaning';
+      setNotice(status === 'Completed'
+        ? `${roomLabel} was updated successfully.`
+        : `${roomLabel} ${workLabel} has started and is assigned to you.`);
       refresh();
       void refreshData({ silent: true }).catch(() => {});
     } catch (err) {
@@ -122,26 +136,49 @@ export function HousekeepingPage() {
     } finally { setBusy(null); }
   }
   return <section className="space-y-5 pb-24">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold">Housekeeping</h1><p className="mt-2 text-slate-400">Checkout: clean, inspect, then release. Stayover service does not change availability. Guest and payment details are not shown here.</p></div><button onClick={refresh} disabled={Boolean(busy)} className="min-h-11 rounded-xl border border-white/20 px-4">Refresh</button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold">Housekeeping</h1><p className="mt-2 text-slate-400">Work room by room: start cleaning, finish cleaning, then send the room for inspection. Guest and payment details are not shown here.</p></div><button onClick={refresh} disabled={Boolean(busy)} className="min-h-11 rounded-xl border border-white/20 px-4 disabled:opacity-50">Refresh</button></div>
     {error && <p role="alert" className="rounded-xl bg-rose-500/10 p-4 text-rose-300">{error}</p>}
     {actionError && <p role="alert" className="text-rose-300">{actionError}</p>}
     {notice && <p role="status" className="text-emerald-300">{notice}</p>}
     {loading ? <p role="status">Loading housekeeping…</p> : !error && active.length === 0 ? <p className="rounded-xl border border-white/10 p-6">No outstanding housekeeping tasks.</p> : null}
-    <div className="grid gap-4 lg:grid-cols-2">{active.map(task => {
+    {!loading && !error && cleaning.length > 0 && <div className="space-y-3">
+      <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
+        <div><h2 className="text-lg font-bold text-white">Rooms needing cleaning</h2><p className="mt-1 text-sm text-slate-400">Each room has its own cleaning task and action.</p></div>
+        <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-sm font-bold text-amber-300">{cleaning.length}</span>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">{cleaning.map(task => {
       const owned = management || !task.assignedToUserId || task.assignedToUserId === currentUser?.id;
-      const allowed = owned && (task.type !== 'Inspection' || management);
+      const allowed = owned;
       const overdue = overdueCleaning([task], Date.now()).length > 0;
       const disabled = Boolean(busy) || Boolean(error) || loading;
       return <article key={task.id} className={`rounded-2xl border p-5 ${overdue ? 'border-amber-400/40 bg-amber-400/5' : 'border-white/10 bg-slate-900'}`}>
-        <h2 className="text-xl font-bold">Room {task.roomNumber}</h2><p className="mt-1 text-slate-300">{labels[task.type]} · {task.status === 'InProgress' ? 'In progress' : task.status}</p>
+        <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Room</p><h3 className="mt-1 text-xl font-bold text-white">{housekeepingRoomLabel(task)}</h3></div><span className={`rounded-full border px-3 py-1 text-xs font-bold ${task.status === 'InProgress' ? 'border-blue-400/20 bg-blue-400/10 text-blue-300' : 'border-amber-400/20 bg-amber-400/10 text-amber-300'}`}>{task.status === 'InProgress' ? 'Cleaning in progress' : 'Needs cleaning'}</span></div>
+        <p className="mt-3 text-sm text-slate-400">{labels[task.type]}</p>
         {overdue && <p className="mt-2 text-amber-300">Over two hours since checkout — cleaning still outstanding.</p>}
-        {!allowed ? <p className="mt-4 text-slate-400">{task.type === 'Inspection' && !management ? 'Awaiting manager inspection.' : 'Assigned to another team member.'}</p> : <div className="mt-4 flex flex-wrap gap-3">
-          {task.status !== 'InProgress' ? <button disabled={disabled} onClick={() => update(task, 'InProgress')} className="min-h-12 rounded-xl bg-brand-600 px-5 font-bold disabled:opacity-50">{task.type === 'Inspection' ? 'Start inspection' : 'Start cleaning'}</button> : task.type === 'Inspection' ? <>
-            <button disabled={disabled} onClick={() => update(task, 'Completed', true)} className="min-h-12 rounded-xl bg-emerald-700 px-5 font-bold disabled:opacity-50">Passed — release room</button>
-            <button disabled={disabled} onClick={() => update(task, 'Completed', false)} className="min-h-12 rounded-xl border border-rose-400/40 px-5 text-rose-300 disabled:opacity-50">Needs cleaning again</button>
-          </> : <button disabled={disabled} onClick={() => update(task, 'Completed')} className="min-h-12 rounded-xl bg-emerald-700 px-5 font-bold disabled:opacity-50">Cleaning done</button>}
+        {!allowed ? <p className="mt-4 text-slate-400">Assigned to another team member.</p> : <div className="mt-5">
+          {task.status !== 'InProgress' ? <button disabled={disabled} onClick={() => update(task, 'InProgress')} aria-label={`Start cleaning ${housekeepingRoomLabel(task)}`} className="min-h-12 w-full rounded-xl bg-brand-600 px-5 font-bold text-white disabled:opacity-50 sm:w-auto">Start cleaning</button> : <button disabled={disabled} onClick={() => update(task, 'Completed')} aria-label={`Finish cleaning ${housekeepingRoomLabel(task)}`} className="min-h-12 w-full rounded-xl bg-emerald-700 px-5 font-bold text-white disabled:opacity-50 sm:w-auto">Finish cleaning</button>}
         </div>}
       </article>;
-    })}</div>
+    })}</div></div>}
+    {!loading && !error && inspections.length > 0 && <div className="space-y-3">
+      <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-3">
+        <div><h2 className="text-lg font-bold text-white">Awaiting inspection</h2><p className="mt-1 text-sm text-slate-400">Management confirms whether each cleaned room can return to service.</p></div>
+        <span className="rounded-full border border-blue-400/20 bg-blue-400/10 px-3 py-1 text-sm font-bold text-blue-300">{inspections.length}</span>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">{inspections.map(task => {
+        const owned = management || !task.assignedToUserId || task.assignedToUserId === currentUser?.id;
+        const allowed = management && owned;
+        const disabled = Boolean(busy) || Boolean(error) || loading;
+        return <article key={task.id} className="rounded-2xl border border-white/10 bg-slate-900 p-5">
+          <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Room</p><h3 className="mt-1 text-xl font-bold text-white">{housekeepingRoomLabel(task)}</h3></div><span className="rounded-full border border-blue-400/20 bg-blue-400/10 px-3 py-1 text-xs font-bold text-blue-300">{task.status === 'InProgress' ? 'Inspection in progress' : 'Awaiting inspection'}</span></div>
+          {!allowed ? <p className="mt-4 text-slate-400">{!management ? 'Awaiting manager inspection.' : 'Assigned to another team member.'}</p> : <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            {task.status !== 'InProgress' ? <button disabled={disabled} onClick={() => update(task, 'InProgress')} className="min-h-12 rounded-xl bg-brand-600 px-5 font-bold text-white disabled:opacity-50">Start inspection</button> : <>
+              <button disabled={disabled} onClick={() => update(task, 'Completed', true)} className="min-h-12 rounded-xl bg-emerald-700 px-5 font-bold text-white disabled:opacity-50">Passed — release room</button>
+              <button disabled={disabled} onClick={() => update(task, 'Completed', false)} className="min-h-12 rounded-xl border border-rose-400/40 px-5 text-rose-300 disabled:opacity-50">Needs cleaning again</button>
+            </>}
+          </div>}
+        </article>;
+      })}</div>
+    </div>}
   </section>;
 }
