@@ -338,7 +338,7 @@ const TopBar: React.FC = () => {
         {/* Critical Overdue Alerts */}
         {criticalTasksCount > 0 && (
           <button 
-            onClick={() => setActiveTab('guests')}
+            aria-label="Review overdue guests" onClick={() => setActiveTab('guests')}
             className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 transition-all animate-pulse shadow-lg shadow-rose-950/20"
           >
             <ShieldAlert size={16} />
@@ -347,7 +347,7 @@ const TopBar: React.FC = () => {
         )}
 
         <div className="relative" ref={notificationRef}>
-          <button onClick={() => setShowNotifications(!showNotifications)} className={`p-2.5 rounded-xl border transition-all duration-300 relative shadow-sm ${showNotifications ? 'bg-brand-600 text-white border-brand-500 shadow-xl' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
+          <button aria-label="Notifications" aria-expanded={showNotifications} onClick={() => setShowNotifications(!showNotifications)} className={`p-2.5 rounded-xl border transition-all duration-300 relative shadow-sm ${showNotifications ? 'bg-brand-600 text-white border-brand-500 shadow-xl' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
             <Bell size={18} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-slate-950">

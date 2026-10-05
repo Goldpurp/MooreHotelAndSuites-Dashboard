@@ -57,3 +57,10 @@ test('automatic payment actions stay unavailable without removing historical rec
   assert.doesNotMatch(source, /<option value="Monnify"/);
   assert.match(source, /Automatic payments unavailable/);
 });
+
+test('general cleaning from the room editor is actionable and overdue after two hours', async () => {
+ const {parseHousekeepingTasks,overdueCleaning,isCleaningTask}=await moduleAt('lib/housekeeping.ts');
+ const [task]=parseHousekeepingTasks([{id:'manual',roomId:'room',type:'generalCleaning',status:'pending',createdAtUtc:'2026-10-05T10:00:00Z'}]);
+ assert.equal(isCleaningTask(task),true);
+ assert.equal(overdueCleaning([task],Date.parse('2026-10-05T12:00:00Z')).length,1);
+});

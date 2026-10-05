@@ -4,14 +4,14 @@ export interface HousekeepingTask {
   roomName: string;
   roomNumber: string;
   bookingId?: string | null;
-  type: 'CheckoutCleaning' | 'StayoverService' | 'Inspection' | 'MaintenanceRecovery' | 'RoomMoveCleaning';
+  type: 'CheckoutCleaning' | 'StayoverService' | 'Inspection' | 'MaintenanceRecovery' | 'RoomMoveCleaning' | 'GeneralCleaning';
   status: 'Pending' | 'Assigned' | 'InProgress' | 'Completed' | 'Cancelled';
   assignedToUserId?: string | null;
   createdAtUtc: string;
 }
 
 export const CLEANING_REMINDER_MS = 2 * 60 * 60 * 1000;
-const taskTypes: HousekeepingTask['type'][] = ['CheckoutCleaning', 'StayoverService', 'Inspection', 'MaintenanceRecovery', 'RoomMoveCleaning'];
+const taskTypes: HousekeepingTask['type'][] = ['CheckoutCleaning', 'StayoverService', 'Inspection', 'MaintenanceRecovery', 'RoomMoveCleaning', 'GeneralCleaning'];
 const taskStatuses: HousekeepingTask['status'][] = ['Pending', 'Assigned', 'InProgress', 'Completed', 'Cancelled'];
 
 /** Normalize the API's camelCase enum strings; reject unknown states fail-closed. */
@@ -47,7 +47,7 @@ export const activeTask = (task: HousekeepingTask) =>
 export function overdueCleaning(tasks: HousekeepingTask[], now: number) {
   return tasks.filter(task => {
     const created = Date.parse(task.createdAtUtc);
-    return activeTask(task) && task.type === 'CheckoutCleaning' &&
+    return activeTask(task) && ['CheckoutCleaning', 'GeneralCleaning'].includes(task.type) &&
       Number.isFinite(created) && now - created >= CLEANING_REMINDER_MS;
   });
 }

@@ -42,7 +42,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
   };
 
   return (
-    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label={isActive ? 'Suspend staff access' : 'Restore staff access'} tabIndex={-1} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-300">
+    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label={isActive ? 'Suspend account access' : 'Restore account access'} tabIndex={-1} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-300">
       <div className={`glass-card w-full max-w-md rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 shadow-3xl ${
         isActive ? 'shadow-rose-950/20' : 'shadow-emerald-950/20'
       }`}>
@@ -59,11 +59,11 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                     {isActive ? 'Deactivate' : 'Activate'}
                   </h2>
                   <p className={`text-[8px] font-black uppercase tracking-[0.2em] mt-1.5 ${isActive ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    Staff access confirmation
+                    Account access confirmation
                   </p>
                 </div>
               </div>
-              <button type="button" data-modal-close aria-label="Close staff status confirmation" onClick={onClose} disabled={isSubmitting} className="p-2 md:p-2.5 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all active:scale-90">
+              <button type="button" data-modal-close aria-label="Close account status confirmation" onClick={onClose} disabled={isSubmitting} className="p-2 md:p-2.5 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all active:scale-90">
                 <X size={20} />
               </button>
             </div>
@@ -75,8 +75,8 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                 </h3>
                 <p className="text-[10px] md:text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
                   {isActive 
-                    ? `You are about to revoke all system privileges for ${user.name}. All active sessions will be invalidated.`
-                    : `You are restoring enterprise access for ${user.name}. Their credentials will be valid immediately.`
+                    ? `You are about to revoke account access for ${user.name}. All active sessions will be invalidated.`
+                    : `You are restoring account access for ${user.name}. Their credentials will be valid immediately.`
                   }
                 </p>
               </div>
@@ -93,7 +93,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                  <div className="pt-4 border-t border-white/5 flex justify-between items-center">
                     <span className="text-[9px] text-slate-600 font-black uppercase">Identity Status</span>
                     <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-emerald-400' : 'text-rose-400'}`}>
-                       {isActive ? 'Verified / Live' : 'Suspended / Locked'}
+                       {isActive ? 'Active' : 'Suspended / Locked'}
                     </span>
                  </div>
               </div>
@@ -119,7 +119,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                   </>
                 )}
               </button>
-              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all">Abort Protocol</button>
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all">Cancel</button>
             </div>
           </>
       </div>

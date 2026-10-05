@@ -3,19 +3,7 @@ import { CheckCircle2, RefreshCw, ShieldCheck, ChevronLeft, ChevronRight, X, Eye
 import { api } from "../lib/api";
 import { sileo } from "sileo";
 
-type RequestStatus = "Pending" | "InProgress" | "Completed" | "Rejected";
-type RequestType = "Access" | "Rectification" | "Erasure" | "Restriction" | "Portability" | "Objection";
-
-interface PrivacyRequest {
-  id: string;
-  guestId: string;
-  type: RequestType;
-  status: RequestStatus;
-  details?: string | null;
-  requestedAtUtc: string;
-  dueAtUtc: string;
-  resolutionNotes?: string | null;
-}
+import { normalizePrivacyRequest, privacyRequestClosed, PrivacyRequest, RequestStatus } from '../lib/privacyRequests';
 
 interface Draft {
   status: RequestStatus;
@@ -58,7 +46,7 @@ const PrivacyRequests: React.FC = () => {
     setError(null);
     try {
       const response = await api.get<any>("/api/privacy/requests", { params: { page: String(page), pageSize: String(pageSize) } });
-      const items = response.items || response.Items || [];
+      const items = (response.items || response.Items || []).map(normalizePrivacyRequest);
       setTotalCount(response.totalCount ?? response.TotalCount ?? items.length);
       setRequests(items);
       setDrafts(Object.fromEntries(items.map((request: PrivacyRequest) => [request.id, emptyDraft(request)])));
@@ -76,7 +64,7 @@ const PrivacyRequests: React.FC = () => {
 
   const save = async (request: PrivacyRequest) => {
     const draft = drafts[request.id];
-    if (!draft) return;
+    if (!draft || privacyRequestClosed(request.status) || saving || loading || error) return;
     if (["Completed", "Rejected"].includes(draft.status) && !draft.resolutionNotes.trim()) {
       sileo.error({ title: "Resolution notes required", description: "Add the outcome before closing this request." });
       return;
@@ -91,7 +79,7 @@ const PrivacyRequests: React.FC = () => {
     }
 
     const rectification = request.type === "Rectification"
-      ? Object.fromEntries(Object.entries({ firstName: draft.firstName, lastName: draft.lastName, email: draft.email, phone: draft.phone }).filter(([, value]) => value.trim()))
+      ? Object.fromEntries(Object.entries({ firstName: draft.firstName, lastName: draft.lastName, email: draft.email, phone: draft.phone }).filter(([, value]) => value.trim()).map(([key, value]) => [key, value.trim()]))
       : undefined;
     if (draft.status === "Completed" && request.type === "Rectification" && !Object.keys(rectification || {}).length) {
       sileo.error({ title: "Correction required", description: "Enter at least one corrected guest field." });
@@ -157,7 +145,7 @@ const PrivacyRequests: React.FC = () => {
       {selectedId && <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
         {requests.filter((request) => request.id === selectedId).map((request) => {
           const draft = drafts[request.id] || emptyDraft(request);
-          const closed = request.status === "Completed" || request.status === "Rejected";
+          const closed = privacyRequestClosed(request.status);
           return <article key={request.id} className="glass-card scroll-pane rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
             <div className="flex justify-between items-start mb-8"><h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Request details</h3><button type="button" aria-label="Close request details" onClick={() => setSelectedId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18} /></button></div>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div><div className="flex items-center gap-2"><ShieldCheck size={17} className="text-brand-400" /><h2 className="font-black text-white">{request.type}</h2><span className="rounded-full border border-white/10 px-2 py-1 text-[9px] font-black uppercase text-slate-400">{request.status}</span></div><p className="mt-2 text-xs text-slate-500">Guest {request.guestId} · requested {new Date(request.requestedAtUtc).toLocaleString()} · due {new Date(request.dueAtUtc).toLocaleDateString()}</p>{request.details && <p className="mt-3 text-sm text-slate-300">{request.details}</p>}</div></div>
@@ -165,7 +153,7 @@ const PrivacyRequests: React.FC = () => {
               <label><span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Next status</span><select value={draft.status} onChange={(e) => updateDraft(request.id, { status: e.target.value as RequestStatus })} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white"><option value="InProgress">In progress</option><option value="Completed">Completed</option><option value="Rejected">Rejected</option></select></label>
               <label><span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Resolution notes</span><input value={draft.resolutionNotes} onChange={(e) => updateDraft(request.id, { resolutionNotes: e.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /></label>
               {draft.status === "Completed" && <><label><span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Identity evidence reference</span><input value={draft.identityVerificationReference} onChange={(e) => updateDraft(request.id, { identityVerificationReference: e.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /></label><label><span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Fulfillment evidence reference</span><input value={draft.fulfillmentEvidenceReference} onChange={(e) => updateDraft(request.id, { fulfillmentEvidenceReference: e.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /></label></>}
-              {draft.status === "Completed" && request.type === "Rectification" && <div className="grid grid-cols-2 gap-3 md:col-span-2"><input placeholder="Correct first name" value={draft.firstName} onChange={(e) => updateDraft(request.id, { firstName: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input placeholder="Correct last name" value={draft.lastName} onChange={(e) => updateDraft(request.id, { lastName: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input placeholder="Correct email" value={draft.email} onChange={(e) => updateDraft(request.id, { email: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input placeholder="Correct phone" value={draft.phone} onChange={(e) => updateDraft(request.id, { phone: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /></div>}
+              {draft.status === "Completed" && request.type === "Rectification" && <div className="grid grid-cols-2 gap-3 md:col-span-2"><input aria-label="Correct first name" placeholder="Correct first name" value={draft.firstName} onChange={(e) => updateDraft(request.id, { firstName: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input aria-label="Correct last name" placeholder="Correct last name" value={draft.lastName} onChange={(e) => updateDraft(request.id, { lastName: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input aria-label="Correct email" placeholder="Correct email" value={draft.email} onChange={(e) => updateDraft(request.id, { email: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /><input aria-label="Correct phone" placeholder="Correct phone" value={draft.phone} onChange={(e) => updateDraft(request.id, { phone: e.target.value })} className="rounded-xl border border-white/10 bg-slate-950 p-3 text-sm text-white" /></div>}
               {draft.status === "Completed" && ["Erasure", "Restriction", "Objection"].includes(request.type) && <label className="flex items-center gap-3 text-sm text-slate-300 md:col-span-2"><input type="checkbox" checked={draft.confirmAction} onChange={(e) => updateDraft(request.id, { confirmAction: e.target.checked })} className="h-4 w-4 accent-blue-600" />I confirm the requested action has been completed.</label>}
               <button type="button" onClick={() => void save(request)} disabled={saving !== null || loading || Boolean(error)} className="rounded-xl bg-brand-600 px-5 py-3 text-xs font-black uppercase tracking-wider text-white md:col-span-2"><CheckCircle2 size={15} className="mr-2 inline" />{saving === request.id ? "Saving" : "Update request"}</button>
             </div>}

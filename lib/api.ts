@@ -164,7 +164,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
     if (response.status === 401) {
       const hadSession = Boolean(token);
-      if (hadSession) endSession('expired');
+      if (hadSession && readToken() === token) endSession('expired');
       throw new Error(hadSession ? 'Your session has expired. Please sign in again.' : readMessage(payload, 401));
     }
 
@@ -172,7 +172,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
       payload && typeof payload === 'object'
         ? String((payload as Record<string, unknown>).errorCode ?? '')
         : '';
-    if (response.status === 403 && ['ACCOUNT_SUSPENDED', 'SESSION_REVOKED'].includes(errorCode)) {
+    if (response.status === 403 && readToken() === token && ['ACCOUNT_SUSPENDED', 'SESSION_REVOKED'].includes(errorCode)) {
       endSession(errorCode === 'ACCOUNT_SUSPENDED' ? 'suspended' : 'expired');
     }
 

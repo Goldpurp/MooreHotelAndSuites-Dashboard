@@ -1,3 +1,4 @@
+import { paymentStatusLabel, roomStateCounts } from "../lib/displayStates";
 import React, { useMemo, useState, useEffect } from "react";
 import {
   DollarSign,
@@ -28,6 +29,7 @@ import {
 } from "recharts";
 import { RoomStatus } from "../types";
 import { api } from "../lib/api";
+import { useAnalytics } from "../hooks/useAnalytics";
 import { getBookingReferenceDisplay } from "../lib/displayPrivacy";
 import { isCheckoutOverdue } from "../lib/stayTime";
 
@@ -40,28 +42,14 @@ const Dashboard: React.FC = () => {
     refreshData,
   } = useHotel();
   const [timeFilter, setTimeFilter] = useState<"Day" | "Week" | "Month">("Week");
-  const [analytics, setAnalytics] = useState<any>(null);
+  const {analytics, error: analyticsError, loading: analyticsLoading} = useAnalytics(timeFilter.toLowerCase(), bookings);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [queuePage, setQueuePage] = useState(1);
   const QUEUE_PAGE_SIZE = 8;
 
-  const fetchDashboardData = async () => {
-    try {
-      const analyticsRes = await api.get("/api/analytics/overview", { params: { period: timeFilter.toLowerCase() } });
-      setAnalytics(analyticsRes);
-    } catch (e) {
-      setAnalytics(null);
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [timeFilter, bookings, rooms]);
-
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await refreshData();
-    await fetchDashboardData();
     sileo.success({
       title: 'Dashboard Updated',
       description: 'The dashboard charts and stats have been updated.'
@@ -118,82 +106,12 @@ const Dashboard: React.FC = () => {
     setQueuePage((page) => Math.min(page, Math.max(1, totalQueuePages)));
   }, [totalQueuePages]);
 
-  const revenueTrendData = useMemo(() => {
-    if (analytics?.revenueTrend && analytics.revenueTrend.length > 0) return analytics.revenueTrend;
-    const now = new Date();
-    const result = [];
-    const validBookings = (bookings || []).filter((b) => String(b.status).toLowerCase() !== 'cancelled');
+  const revenueTrendData = analytics?.revenueDynamics.map(point => ({date:point.date, revenue:point.value})) ?? [];
+  const money = (value: number | undefined) => value === undefined ? 'Unavailable' : `₦${value.toLocaleString()}`;
+  const kpis = analytics?.kpis;
 
-    if (timeFilter === "Day") {
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 4 * 60 * 60 * 1000);
-        const label = d.getHours() + ":00";
-        const startTime = new Date(d.getTime() - 4 * 60 * 60 * 1000).getTime();
-        const endTime = d.getTime();
-        const revenue = validBookings
-          .filter((b) => {
-            const bt = new Date(b.createdAt).getTime();
-            return bt >= startTime && bt <= endTime;
-          })
-          .reduce((sum, b) => sum + (b.amount || 0), 0);
-        result.push({ date: label, revenue });
-      }
-    } else if (timeFilter === "Week") {
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(); d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split("T")[0];
-        const label = d.toLocaleDateString("en-US", { weekday: "short" });
-        const revenue = validBookings
-          .filter((b) => (b.createdAt || "").split("T")[0] === dateStr)
-          .reduce((sum, b) => sum + (b.amount || 0), 0);
-        result.push({ date: label, revenue });
-      }
-    } else {
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(); d.setDate(d.getDate() - i * 5);
-        const label = d.getMonth() + 1 + "/" + d.getDate();
-        const startTime = new Date(d.getTime() - 5 * 24 * 60 * 60 * 1000).getTime();
-        const endTime = d.getTime();
-        const revenue = validBookings
-          .filter((b) => {
-            const bt = new Date(b.createdAt).getTime();
-            return bt >= startTime && bt <= endTime;
-          })
-          .reduce((sum, b) => sum + (b.amount || 0), 0);
-        result.push({ date: label, revenue });
-      }
-    }
-    return result;
-  }, [analytics, bookings, timeFilter]);
 
-  const stats = useMemo(() => {
-    const validBookings = (bookings || []).filter((b) => String(b.status).toLowerCase() !== 'cancelled');
-    const now = new Date();
-    const filterTime = timeFilter === "Day" ? 24 * 60 * 60 * 1000 : timeFilter === "Week" ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
-    const periodBookings = validBookings.filter((b) => now.getTime() - new Date(b.createdAt).getTime() <= filterTime);
-    const periodRev = periodBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
-    
-    const activeResidentsCount = (bookings || []).filter((b) => String(b.status).toLowerCase() === 'checkedin').length;
-    
-    const occupiedUnits = (rooms || []).filter((r) => String(r.status).toLowerCase() === 'occupied').length;
-    const currOcc = (rooms || []).length > 0 ? Math.round((occupiedUnits / rooms.length) * 100) : 0;
-    const currADR = periodBookings.length > 0 ? Math.round(periodRev / periodBookings.length) : 0;
-    
-    return {
-      revenue: { value: analytics?.totalRevenue ?? periodRev, growth: analytics?.revenueGrowth ?? null },
-      occupancy: { value: analytics?.occupancyRate ?? currOcc, growth: analytics?.occupancyGrowth ?? null },
-      activeGuests: { value: analytics?.totalActiveGuests ?? analytics?.activeGuests ?? activeResidentsCount, growth: 0 },
-      adr: { value: analytics?.averageDailyRate ?? currADR, growth: 0 },
-    };
-  }, [analytics, bookings, rooms, timeFilter]);
-
-  const roomStatusData = useMemo(() => [
-    { name: "Occupied", value: (rooms || []).filter((r) => String(r.status).toLowerCase() === 'occupied').length, color: "#3b82f6" },
-    { name: "Available", value: (rooms || []).filter((r) => String(r.status).toLowerCase() === 'available').length, color: "#10b981" },
-    { name: "Cleaning", value: (rooms || []).filter((r) => String(r.status).toLowerCase() === 'cleaning').length, color: "#f59e0b" },
-    { name: "Reserved", value: (rooms || []).filter((r) => String(r.status).toLowerCase() === 'reserved').length, color: "#6365f1f0" },
-    { name: "Maintenance", value: (rooms || []).filter((r) => String(r.status).toLowerCase() === 'maintenance').length, color: "#ef4444" },
-  ], [rooms]);
+  const roomStatusData = useMemo(() => roomStateCounts(rooms || []), [rooms]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
@@ -206,7 +124,7 @@ const Dashboard: React.FC = () => {
           <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? "animate-spin" : ""}`}><RefreshCw size={16} /></button>
+          <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? "animate-spin" : ""}`}><RefreshCw size={16} /></button>
           <div className="flex gap-1 p-1 bg-white/5 border border-white/5 rounded-xl shrink-0">
             {(["Day", "Week", "Month"] as const).map((t) => (
               <button key={t} onClick={() => setTimeFilter(t)} className={`px-4 py-1.5 rounded-lg adaptive-text-xs font-black uppercase tracking-widest transition-all ${timeFilter === t ? "bg-blue-600 text-white shadow-lg" : "text-slate-600 hover:text-slate-200"}`}>{t}</button>
@@ -215,16 +133,18 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {analyticsError ? <p role="alert" className="text-sm text-amber-300">{analyticsError}</p> : null}
+      <p className="text-xs text-slate-400">{analyticsLoading ? 'Loading accounting report…' : analytics ? `${analytics.fromDate} to ${analytics.toDate} · Hotel local dates · Net receipts = posted payments less refunds. Occupancy uses room nights.` : 'Accounting report unavailable.'}</p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Revenue" value={`₦${stats.revenue.value.toLocaleString()}`} growth={stats.revenue.growth} icon={DollarSign} color="bg-blue-500/10 text-blue-400" />
-        <StatCard label="Occupancy" value={`${stats.occupancy.value}%`} growth={stats.occupancy.growth} icon={Bed} color="bg-emerald-500/10 text-emerald-400" />
-        <StatCard label="Guests" value={stats.activeGuests.value} growth={null} icon={UserCheck} color="bg-amber-500/10 text-amber-400" />
-        <StatCard label="Avg Rate" value={`₦${stats.adr.value.toLocaleString()}`} growth={null} icon={Activity} color="bg-indigo-500/10 text-indigo-400" />
+        <StatCard label="Net receipts" value={money(kpis?.netRevenue)} growth={kpis?.revenueGrowthPercentage ?? null} icon={DollarSign} color="bg-blue-500/10 text-blue-400" />
+        <StatCard label="Occupancy" value={kpis ? `${kpis.occupancyRate}%` : 'Unavailable'} growth={kpis?.occupancyGrowthPercentage ?? null} icon={Bed} color="bg-emerald-500/10 text-emerald-400" />
+        <StatCard label="Guests" value={kpis?.activeGuests ?? 'Unavailable'} growth={null} icon={UserCheck} color="bg-amber-500/10 text-amber-400" />
+        <StatCard label="Average nightly rate" value={money(kpis?.avgNightlyRate)} growth={null} icon={Activity} color="bg-indigo-500/10 text-indigo-400" />
       </div>
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 xl:col-span-8 glass-card adaptive-p rounded-2xl border border-white/5 flex flex-col min-h-[350px]">
-          <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8 px-2">Revenue</h3>
+          <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8 px-2">Net receipts</h3>
           <div className="flex-1 w-full min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueTrendData}>
@@ -341,13 +261,13 @@ const Dashboard: React.FC = () => {
                              <span className={`w-1 h-1 rounded-full ${isOverdue ? 'bg-rose-500 animate-ping' : isCheckedIn ? "bg-emerald-400 animate-pulse" : "bg-current"}`}></span>
                             {isOverdue ? "OVERDUE" : isCheckedIn ? "Checked In" : booking.status}
                           </span>
-                          <span className={`text-[8px] font-bold uppercase tracking-widest px-1 ${isPaid ? 'text-emerald-500' : 'text-rose-500'}`}>{isPaid ? 'Paid' : 'Unpaid'}</span>
+                          <span className={`text-[8px] font-bold uppercase tracking-widest px-1 ${isPaid ? 'text-emerald-500' : 'text-rose-500'}`}>{paymentStatusLabel(booking.paymentStatus)}</span>
                         </div>
                       </td>
                       <td data-label="Payment" className="responsive-table-padding text-right">
                         <div className="flex flex-col items-end">
                            <p className={`adaptive-text-base font-black ${isPaid ? 'text-white' : 'text-rose-500'}`}>₦{booking.amount?.toLocaleString() || "0"}</p>
-                            <p className="text-[8px] text-slate-700 font-black uppercase mt-1">{isPaid ? 'Paid' : 'Unpaid'}</p>
+                            <p className="text-[8px] text-slate-700 font-black uppercase mt-1">{paymentStatusLabel(booking.paymentStatus)}</p>
                         </div>
                       </td>
                     </tr>
@@ -360,8 +280,8 @@ const Dashboard: React.FC = () => {
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
            <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Showing {paginatedQueue.length} of {sortedActionableBookings.length} entries</div>
            <div className="flex gap-2">
-              <button onClick={() => setQueuePage(p => Math.max(1, p - 1))} disabled={queuePage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
-              <button onClick={() => setQueuePage(p => Math.min(totalQueuePages, p + 1))} disabled={queuePage === totalQueuePages || totalQueuePages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
+              <button aria-label="Previous page" onClick={() => setQueuePage(p => Math.max(1, p - 1))} disabled={queuePage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
+              <button aria-label="Next page" onClick={() => setQueuePage(p => Math.min(totalQueuePages, p + 1))} disabled={queuePage === totalQueuePages || totalQueuePages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
            </div>
         </div>
       </div>

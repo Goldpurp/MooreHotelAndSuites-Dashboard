@@ -7,24 +7,20 @@ import { Search, CheckCircle, Clock,
 } from 'lucide-react';
 import { sileo } from 'sileo';
 import { useAccessibleModal } from '../hooks/useAccessibleModal';
-import { canReviewPayments } from '../lib/paymentReview';
+import { canReviewPayments, bankTransactionReference } from '../lib/paymentReview';
 
 type SettlementsProps = {
   onReviewTransfer: (booking: Booking) => void;
 };
 
-const getPaymentTransactionId = (booking: Booking | null | undefined) => {
-  const reference = booking?.transactionReference?.trim() || '';
-  if (!reference || reference.toUpperCase() === booking?.bookingCode?.trim().toUpperCase()) return '';
-  return reference;
-};
+const getPaymentTransactionId = bankTransactionReference;
 
 const getBookingOrTransactionId = (booking: Booking | null | undefined) => {
   return getPaymentTransactionId(booking) || booking?.bookingCode?.trim() || '';
 };
 
 const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
-  const { bookings, guests, confirmTransfer, completeRefund, refreshData, currentUser, selectedPaymentBookingId, setSelectedPaymentBookingId } = useHotel();
+  const { paymentBookings: bookings, guests, completeRefund, refreshData, currentUser, selectedPaymentBookingId, setSelectedPaymentBookingId } = useHotel();
   
   /** 
    * CHANGE: Added 'refunds' tab to the Settlements workflow 
@@ -35,7 +31,6 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-  const [confirmationText, setConfirmationText] = useState('');
   
   /** 
    * CHANGE: Added state for mandatory transaction reference 
@@ -63,7 +58,6 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
     setRefundAmount('');
     setRefundChannel('BankTransfer');
     setRefundNotes('');
-    setConfirmationText('');
     setValidationError(false);
   };
   const paymentModalRef = useAccessibleModal(
@@ -147,22 +141,9 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  const isManualTransferConfirmation = activeTab !== 'refunds' &&
-    selectedBooking?.paymentMethod === PaymentMethod.DirectTransfer;
-  const isManualTransferConfirmed = confirmationText.trim().toUpperCase() === 'ACCEPT';
-
   const executeAction = async () => {
-    if (!selectedBooking) return;
+    if (!selectedBooking || !canReviewTransfers || activeTab !== 'refunds') return;
     if (activeTab !== 'refunds' && selectedBooking.paymentMethod === PaymentMethod.Monnify) return;
-
-    if (isManualTransferConfirmation && !isManualTransferConfirmed) {
-      setValidationError(true);
-      sileo.error({
-        title: 'Confirmation Required',
-        description: 'Type "ACCEPT" exactly to confirm that the payment was manually verified.'
-      });
-      return;
-    }
 
     const actionReference = refundRef.trim();
     const parsedRefundAmount = Number(refundAmount);
@@ -193,12 +174,6 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
           title: 'Refund Processed',
           description: `The refund for ${resolveGuestName(selectedBooking)} has been finalized.`
         });
-      } else {
-        await confirmTransfer(selectedBooking.bookingCode, confirmationText);
-        sileo.success({
-          title: 'Booking Confirmed',
-          description: `The booking for ${resolveGuestName(selectedBooking)} is now officially confirmed.`
-        });
       }
       setVerificationState('success');
       setTimeout(() => {
@@ -208,8 +183,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
         setRefundAmount('');
         setRefundChannel('BankTransfer');
         setRefundNotes('');
-        setConfirmationText('');
-        setVerificationState('idle');
+            setVerificationState('idle');
       }, 1500);
     } 
     catch (err: any) { 
@@ -227,7 +201,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
     navigator.clipboard.writeText(text);
     sileo.success({
       title: 'Copied',
-      description: 'Payment transaction ID copied.'
+      description: 'Bank transaction reference copied.'
     });
   };
 
@@ -242,7 +216,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
           <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Payments</h1>
         </div>
         <div className="flex items-center gap-2">
-           <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
+           <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
              <div className="bg-slate-900 border border-amber-500/20 rounded-xl px-4 py-2 flex items-center gap-3">
                <span className="text-[9px] text-slate-500 font-black uppercase">Tasks</span>
               <span className="text-sm font-black text-amber-500 leading-none">
@@ -301,22 +275,22 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                       <td data-label="Guest" className="responsive-table-padding">
                         <div className="min-w-0">
                           <p className="adaptive-text-sm font-black text-slate-300 uppercase italic truncate leading-none mb-1">{resolveGuestName(folio)}</p>
-                          <p className="text-[8px] text-slate-600 font-black uppercase truncate">{folio.guestEmail || 'No Email'}</p>
+                          <p className="text-[8px] text-slate-600 font-black uppercase truncate">{folio.guestEmail || 'Contact details restricted'}</p>
                         </div>
                       </td>
                       <td data-label="Booking / Transaction ID" className="responsive-table-padding col-priority-med">
                         <p className="break-all text-xs font-black uppercase text-slate-300">{folio.bookingCode}</p>
-                        <p className="mt-2 text-[8px] font-black uppercase tracking-wider text-slate-600">Payment transaction ID</p>
+                        <p className="mt-2 text-[8px] font-black uppercase tracking-wider text-slate-600">Bank transaction reference</p>
                         <button
                           type="button"
                           disabled={!paymentTransactionId}
                           onClick={() => handleCopy(paymentTransactionId)}
                           className={`group mt-1 flex min-h-7 w-fit max-w-full items-center gap-2 rounded-md text-left transition-colors ${paymentTransactionId ? 'cursor-pointer text-slate-500 hover:text-brand-400' : 'cursor-not-allowed text-amber-500/70'}`}
-                          title={paymentTransactionId ? "Copy payment transaction ID" : "Payment transaction ID was not recorded"}
-                          aria-label={paymentTransactionId ? `Copy payment transaction ID ${paymentTransactionId}` : 'Payment transaction ID not recorded'}
+                          title={paymentTransactionId ? "Copy bank transaction reference" : "Bank transaction reference was not recorded"}
+                          aria-label={paymentTransactionId ? `Copy bank transaction reference ${paymentTransactionId}` : 'Bank transaction reference not recorded'}
                         >
                           <span className="truncate font-mono text-[10px] italic select-all">
-                            {paymentTransactionId || 'NOT RECORDED'}
+                            {paymentTransactionId || (folio.transactionReference?.toUpperCase().startsWith('MANUAL-') ? 'INTERNAL REFERENCE ONLY' : 'NOT RECORDED')}
                           </span>
                           {paymentTransactionId && (
                             <Copy size={12} className="shrink-0 text-slate-600 transition-colors group-hover:text-brand-500" />
@@ -340,7 +314,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                       <td data-label="Actions" className="responsive-table-padding text-right">
                          {(isPaid || isRefunded) ? (
                            <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Completed</span></div>
-                         ) : folio.paymentStatus === PaymentStatus.PaymentReported ? (
+                         ) : !isRefundPending && folio.paymentMethod !== PaymentMethod.Monnify ? (
                            canReviewTransfers ? (
                              <button
                                type="button"
@@ -354,8 +328,10 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                            )
                          ) : !isRefundPending && folio.paymentMethod === PaymentMethod.Monnify ? (
                            <span className="text-xs text-slate-400">Automatic payments unavailable</span>
+                         ) : !canReviewTransfers ? (
+                           <span className="text-xs text-slate-400">Manager review required</span>
                          ) : (
-                           <button onClick={() => { setSelectedBooking(folio); setConfirmationText(''); setValidationError(false); setIsConfirmModalOpen(true); if (isRefundPending) { setRefundAmount(String(folio.refundApprovedAmount ?? folio.refundAmount ?? folio.amount)); setRefundChannel('BankTransfer'); } }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
+                           <button onClick={() => { setSelectedBooking(folio); setValidationError(false); setIsConfirmModalOpen(true); if (isRefundPending) { setRefundAmount(String(folio.refundApprovedAmount ?? folio.refundAmount ?? folio.amount)); setRefundChannel('BankTransfer'); } }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
                              {isRefundPending ? <RotateCcw size={12} className="inline mr-1.5" /> : folio.paymentMethod === PaymentMethod.Monnify ? <ShieldCheck size={12} className="inline mr-1.5" /> : <ShieldCheck size={12} className="inline mr-1.5" />}
                              {isRefundPending ? 'Refund' : folio.paymentMethod === PaymentMethod.Monnify ? 'Verify' : 'Confirm'}
                            </button>
@@ -372,9 +348,9 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
            <div className="text-[9px] text-slate-600 font-black uppercase italic tracking-widest">All Records Sorted • {filteredHistory.length} Records</div>
            <div className="flex gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
+              <button aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
+              <button aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
            </div>
         </div>
       </div>
@@ -417,7 +393,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                             <Copy size={14} className="shrink-0" />
                           </button>
                           <p className="mt-2 text-[9px] font-semibold leading-relaxed text-slate-500">
-                            {selectedBooking.transactionReference?.trim() ? 'Verified payment transaction ID' : 'Booking reference used because no payment transaction ID was recorded'}
+                            {getPaymentTransactionId(selectedBooking) ? 'Recorded bank transaction reference' : 'Booking reference used because no bank transaction reference was recorded'}
                           </p>
                         </div>
                       )}
@@ -430,32 +406,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                     </div>
                   )}
 
-                  {verificationState === 'idle' && isManualTransferConfirmation && (
-                    <div className="space-y-3 mb-8 text-left">
-                      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-amber-300 leading-relaxed">
-                          Only continue after checking the receiving bank account and matching this booking's amount.
-                        </p>
-                      </div>
-                      <div className="flex justify-between items-center px-1">
-                        <label htmlFor="manual-payment-confirmation" className="text-[9px] text-slate-500 font-black uppercase tracking-widest">
-                          Type <span className="text-white">ACCEPT</span> to confirm
-                        </label>
-                        {validationError && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Does not match</p>}
-                      </div>
-                      <input
-                        id="manual-payment-confirmation"
-                        value={confirmationText}
-                        onChange={(e) => { setConfirmationText(e.target.value.toUpperCase()); setValidationError(false); }}
-                        placeholder="ACCEPT"
-                        autoComplete="off"
-                        autoCapitalize="characters"
-                        spellCheck={false}
-                        aria-invalid={validationError}
-                        className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : isManualTransferConfirmed ? 'border-emerald-500/40' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all font-black tracking-[0.18em] uppercase focus:border-brand-500/50`}
-                      />
-                    </div>
-                  )}
+
 
                   {verificationState === 'idle' && activeTab === 'refunds' && (
                     <div className="space-y-3 mb-8 text-left">
@@ -491,7 +442,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                       <button type="button" data-modal-cancel onClick={closeConfirmation} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Cancel</button>
                       <button 
                         onClick={executeAction} 
-                        disabled={isManualTransferConfirmation && !isManualTransferConfirmed}
+                        disabled={!canReviewTransfers}
                         className={`py-4 rounded-2xl font-black adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg italic transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:active:scale-100 ${activeTab === 'refunds' ? 'bg-rose-600 hover:bg-rose-700 text-white' : selectedBooking?.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}
                       >
                         {selectedBooking?.paymentMethod === PaymentMethod.Monnify && activeTab !== 'refunds' ? 'Verify' : 'Confirm'}

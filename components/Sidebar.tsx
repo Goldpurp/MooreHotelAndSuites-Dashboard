@@ -40,6 +40,17 @@ const Sidebar: React.FC = () => {
 
   const privileged = isPrivileged(currentUser);
   const menuItems = [
+    { id: "reservation_operations", label: "Reservations", icon: ClipboardList },
+    { id: "pricing", label: "Pricing", icon: ClipboardList },
+    { id: "addons", label: "Add-on services", icon: ClipboardList },
+    { id: "guest_crm", label: "Guest CRM", icon: ClipboardList },
+    { id: "client_accounts", label: "Client account care", icon: ClipboardList },
+    { id: "channels", label: "Channels", icon: ClipboardList },
+    { id: "retry_jobs", label: "Failed jobs", icon: ClipboardList },
+    { id: "inventory", label: "Inventory", icon: ClipboardList },
+    { id: "folios", label: "Guest folios", icon: ClipboardList },
+    { id: "maintenance", label: "Maintenance", icon: ClipboardList },
+    { id: "daily_operations", label: "Daily operations", icon: ClipboardList },
     { id: "dashboard", label: "Home", icon: LayoutDashboard },
     { id: "bookings", label: "Bookings", icon: CalendarDays },
     { id: "settlements", label: "Payments", icon: CheckCircle2 },
@@ -71,7 +82,7 @@ const Sidebar: React.FC = () => {
         )}
       </div>
 
-      <button
+      <button aria-label="Previous page"
         onClick={toggleSidebar}
         className="absolute -right-3.5 top-20 w-7 h-7 bg-brand-600 rounded-full border border-white/20 flex items-center justify-center text-white shadow-2xl hover:bg-brand-500 transition-all z-[60] active:scale-90 group"
       >

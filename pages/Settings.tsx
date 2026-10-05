@@ -200,11 +200,11 @@ const Settings: React.FC = () => {
 
         <div className="flex bg-black/40 p-1.5 rounded-xl border border-white/10 gap-1.5 shadow-2xl">
            {roles.map(r => (
-             <div 
+             <div
                key={r}
                className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${
-                 userRole === r 
-                   ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] ring-1 ring-blue-500/50' 
+                 userRole === r
+                   ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] ring-1 ring-blue-500/50'
                    : 'text-slate-600 opacity-40'
                }`}
              >
@@ -245,7 +245,7 @@ const Settings: React.FC = () => {
         <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8 mt-4 shadow-xl">
           <div className="space-y-8">
             <div className="flex items-center gap-6">
-              <div 
+              <div
                 onClick={isUploadingAvatar ? undefined : handleAvatarClick}
                 className="w-24 h-24 bg-slate-800 rounded-2xl flex items-center justify-center font-black text-3xl text-slate-400 border border-white/10 relative overflow-hidden group shadow-2xl cursor-pointer"
               >
@@ -254,12 +254,12 @@ const Settings: React.FC = () => {
                   {isUploadingAvatar ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
                   {isUploadingAvatar ? 'Uploading' : 'Change'}
                 </div>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleFileChange} 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
                 />
               </div>
               <div className="space-y-2">
@@ -285,10 +285,10 @@ const Settings: React.FC = () => {
                 </label>
                 <div className="relative">
                   <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
-                  <input 
-                    readOnly 
-                    value={currentUser?.email || ""} 
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-[13px] text-slate-500 cursor-not-allowed outline-none" 
+                  <input
+                    readOnly
+                    value={currentUser?.email || ""}
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-[13px] text-slate-500 cursor-not-allowed outline-none"
                   />
                 </div>
               </div>
@@ -302,10 +302,10 @@ const Settings: React.FC = () => {
                 </label>
                 <div className="relative">
                   <Shield size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
-                  <input 
-                    readOnly 
-                    value={(currentUser?.role || userRole).toUpperCase()} 
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-[13px] text-slate-500 cursor-not-allowed outline-none" 
+                  <input
+                    readOnly
+                    value={(currentUser?.role || userRole).toUpperCase()}
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-[13px] text-slate-500 cursor-not-allowed outline-none"
                   />
                 </div>
               </div>
@@ -434,15 +434,15 @@ const Settings: React.FC = () => {
                <div className="space-y-2">
                   <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Old Password</label>
                    <div className="relative">
-                    <input 
-                      type={showOldPassword ? "text" : "password"} 
+                    <input
+                      aria-label="Old Password" type={showOldPassword ? "text" : "password"}
                       required
                       value={securityForm.oldPassword}
                       onChange={(e) => setSecurityForm({...securityForm, oldPassword: e.target.value})}
                       placeholder="••••••••"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
                     />
-                    <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
+                    <button type="button" aria-label={showOldPassword ? "Hide old password" : "Show old password"} onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showOldPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                     </button>
                   </div>
@@ -450,8 +450,8 @@ const Settings: React.FC = () => {
                <div className="space-y-2">
                   <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">New Password</label>
                    <div className="relative">
-                    <input 
-                      type={showNewPassword ? "text" : "password"} 
+                    <input
+                      aria-label="New Password" type={showNewPassword ? "text" : "password"}
                       required
                       minLength={12}
                       autoComplete="new-password"
@@ -460,7 +460,7 @@ const Settings: React.FC = () => {
                       placeholder="••••••••"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
                     />
-                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
+                    <button type="button" aria-label={showNewPassword ? "Hide new password" : "Show new password"} onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showNewPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                     </button>
                   </div>
@@ -478,10 +478,10 @@ const Settings: React.FC = () => {
                       </div>
                       <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((s) => (
-                          <div 
+                          <div
                             key={s}
                             className={`h-full flex-1 transition-all duration-500 ${
-                              calculateStrength(securityForm.newPassword) >= s 
+                              calculateStrength(securityForm.newPassword) >= s
                                 ? (calculateStrength(securityForm.newPassword) <= 2 ? "bg-rose-500" :
                                    calculateStrength(securityForm.newPassword) <= 4 ? "bg-amber-500" : "bg-emerald-500")
                                 : "bg-transparent"
@@ -495,8 +495,8 @@ const Settings: React.FC = () => {
                <div className="space-y-2">
                   <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Confirm Password</label>
                    <div className="relative">
-                    <input 
-                      type={showConfirmPassword ? "text" : "password"} 
+                    <input
+                      aria-label="Confirm Password" type={showConfirmPassword ? "text" : "password"}
                       required
                       minLength={12}
                       autoComplete="new-password"
@@ -505,14 +505,14 @@ const Settings: React.FC = () => {
                       placeholder="••••••••"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
                     />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
+                    <button type="button" aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"} onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showConfirmPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
                     </button>
                   </div>
                </div>
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={isRotating}
               className="bg-white text-slate-950 font-black px-10 py-4 rounded-xl text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-slate-200 active:scale-95 shadow-2xl shadow-white/5 flex items-center justify-center gap-3"
@@ -521,7 +521,7 @@ const Settings: React.FC = () => {
               Update Password
             </button>
           </form>
-          
+
         </div>
       )}
     </div>

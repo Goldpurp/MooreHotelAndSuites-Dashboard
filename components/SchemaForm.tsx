@@ -1,0 +1,9 @@
+import React,{useState} from 'react';
+import {Field,inputClass,buttonClass} from './OperationalFields';
+import {initialFields,fieldPayload,FieldSpec} from '../lib/formFields';
+export type {FieldSpec} from '../lib/formFields';
+export default function SchemaForm({fields,initial,submitLabel='Save',busy,onSubmit,onChange}: {fields:FieldSpec[];initial?:Record<string,any>;submitLabel?:string;busy?:boolean;onSubmit:(values:Record<string,any>)=>Promise<void>;onChange?:()=>void}){
+ const [values,setValues]=useState(()=>initialFields(fields,initial));
+ const change=(name:string,value:unknown)=>{setValues(old=>({...old,[name]:value}));onChange?.();};
+ return <form onSubmit={event=>{event.preventDefault();void onSubmit(fieldPayload(fields,values));}}><fieldset disabled={busy} className="grid gap-3 sm:grid-cols-2">{fields.map(field=><Field key={field.name} label={field.label}>{field.choices?<select className={inputClass} required={field.required} value={values[field.name]} onChange={e=>change(field.name,e.target.value)}><option value="">Choose {field.label.toLowerCase()}</option>{field.choices.map(choice=><option key={choice.value} value={choice.value}>{choice.label}</option>)}</select>:field.type==='checkbox'?<input type="checkbox" checked={Boolean(values[field.name])} onChange={e=>change(field.name,e.target.checked)}/>:field.type==='textarea'?<textarea className={inputClass} required={field.required} minLength={field.minLength} maxLength={field.maxLength} value={values[field.name]} onChange={e=>change(field.name,e.target.value)}/>:<input className={inputClass} type={field.type==='list'?'text':field.type||'text'} required={field.required} min={field.min} max={field.max} step={field.step} minLength={field.minLength} maxLength={field.maxLength} value={values[field.name]} onChange={e=>change(field.name,e.target.value)}/>}</Field>)}<div className="sm:col-span-2"><button type="submit" className={buttonClass}>{submitLabel}</button></div></fieldset></form>;
+}

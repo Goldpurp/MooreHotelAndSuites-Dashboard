@@ -1,5 +1,8 @@
+import { useAccessibleModal } from "../hooks/useAccessibleModal";
 import React, { useState, useEffect, useMemo } from "react";
-import { useHotel } from "../store/HotelContext";
+import { useHotel, normalizeBooking } from "../store/HotelContext";
+import { api } from "../lib/api";
+import type { Page } from "../lib/pagination";
 import { Booking, Guest, Room } from "../types";
 import {
   Search,
@@ -66,7 +69,9 @@ const Bookings: React.FC<BookingsProps> = ({
     setSelectedBookingId,
     setActiveTab,
     setSelectedGuestId,
-    refreshData
+    refreshData,
+    bookingGuestRequest,
+    setBookingGuestRequest
   } = hotel;
 
   const [filter, setFilter] = useState<string>("All");
@@ -74,6 +79,16 @@ const Bookings: React.FC<BookingsProps> = ({
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [preFillData, setPreFillData] = useState<any>(null);
+
+  const detailsRef = useAccessibleModal(Boolean(selectedBooking), () => setSelectedBookingId(null));
+  useEffect(() => {
+    if (!bookingGuestRequest) return;
+    setPreFillData(bookingGuestRequest);
+    setIsWalkIn(false);
+    setSelectedBookingId(null);
+    setIsBookingModalOpen(true);
+    setBookingGuestRequest(null);
+  }, [bookingGuestRequest]);
 
   const [lookupId, setLookupId] = useState("");
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
@@ -107,15 +122,7 @@ const Bookings: React.FC<BookingsProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;
 
-  const getBookingStatus = (b: Booking) => {
-    if (b.status === "Reserved" || b.status === "Confirmed") {
-      const checkInDate = new Date(b.checkIn);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (checkInDate < today) return "NoShow";
-    }
-    return b.status;
-  };
+  const getBookingStatus = (b: Booking) => b.status;
 
   const getStatusConfig = (status: string) => {
     const s = status?.toLowerCase() || "";
@@ -197,41 +204,36 @@ const Bookings: React.FC<BookingsProps> = ({
     }
   };
 
-  const filteredBookings = useMemo(() => {
-    const q = lookupId.trim().toLowerCase();
-    return (bookings || [])
-      .filter((b) => {
-        const bEffectiveStatus = getBookingStatus(b)?.toLowerCase();
-        const matchesStatus =
-          filter === "All" || bEffectiveStatus === filter.toLowerCase();
-        const matchesSearch =
-          !q ||
-          (b.bookingCode || "").toLowerCase().includes(q) ||
-          `${b.guestFirstName || ""} ${b.guestLastName || ""}`
-            .toLowerCase()
-            .includes(q);
-        return matchesStatus && matchesSearch;
-      })
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-  }, [bookings, filter, lookupId]);
-
-  const paginatedBookings = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredBookings.slice(start, start + PAGE_SIZE);
-  }, [filteredBookings, currentPage]);
-
-  const totalPages = Math.ceil(filteredBookings.length / PAGE_SIZE);
+  const [paginatedBookings, setPageBookings] = useState<Booking[]>([]);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [pageError, setPageError] = useState('');
+  const [pageLoading, setPageLoading] = useState(true);
+  const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
 
   useEffect(() => {
-    setCurrentPage((page) => Math.min(page, Math.max(1, totalPages)));
-  }, [totalPages]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filter, lookupId]);
+    let disposed = false;
+    setPageLoading(true);
+    setPageError('');
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await api.get<Page<any>>('/api/bookings', { params: {
+          page: String(currentPage), pageSize: String(PAGE_SIZE),
+          ...(filter === 'All' ? {} : { status: filter }),
+          ...(lookupId.trim() ? { search: lookupId.trim() } : {}),
+        }});
+        if (disposed) return;
+        setPageBookings(result.items.map(normalizeBooking));
+        setTotalRecords(result.totalCount);
+        if (currentPage > Math.max(1, result.totalPages)) setCurrentPage(Math.max(1, result.totalPages));
+      } catch (error) {
+        if (!disposed) {
+          setPageBookings([]);
+          setPageError(error instanceof Error ? error.message : 'Bookings could not be loaded.');
+        }
+      } finally { if (!disposed) setPageLoading(false); }
+    }, 200);
+    return () => { disposed = true; window.clearTimeout(timer); };
+  }, [currentPage, filter, lookupId, bookings]);
 
   useEffect(() => {
     if (selectedBookingId) {
@@ -341,7 +343,7 @@ const Bookings: React.FC<BookingsProps> = ({
                 type="text"
                 placeholder="Search Guest/Booking..."
                 value={lookupId}
-                onChange={(e) => setLookupId(e.target.value)}
+                onChange={(e) => { setLookupId(e.target.value); setCurrentPage(1); }}
                 className="bg-slate-950 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-slate-200 outline-none focus:border-brand-500/40 w-48 lg:w-64"
               />
             </div>
@@ -383,7 +385,6 @@ const Bookings: React.FC<BookingsProps> = ({
                 "All",
                 "CheckedIn",
                 "Confirmed",
-                "Reserved",
                 "NoShow",
                 "Pending",
                 "CheckedOut",
@@ -391,7 +392,7 @@ const Bookings: React.FC<BookingsProps> = ({
               ].map((f) => (
                 <button
                   key={f}
-                  onClick={() => setFilter(f)}
+                  onClick={() => { setFilter(f); setCurrentPage(1); }}
                   className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f ? (f === "CheckedIn" ? "bg-emerald-600 text-white" : f === "Cancelled" ? "bg-rose-600 text-white" : "bg-brand-600 text-white shadow-lg") : "text-slate-600 hover:text-slate-300"}`}
                 >
                   {f === "CheckedIn"
@@ -406,7 +407,9 @@ const Bookings: React.FC<BookingsProps> = ({
             </div>
           </div>
 
-          <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+          {pageError && <p role="alert" className="px-6 py-3 text-rose-300">{pageError}</p>}
+          {pageLoading && <p role="status" className="px-6 py-3 text-slate-400">Loading bookings…</p>}
+          <div aria-busy={pageLoading} className="scroll-pane min-h-0 flex-1 overflow-auto">
             <table className="mobile-card-table w-full text-left min-w-[600px]">
               <thead className="sticky top-0 bg-slate-950/90 z-10 border-b border-white/10">
                 <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
@@ -533,7 +536,7 @@ const Bookings: React.FC<BookingsProps> = ({
                                     <Lock size={14} />
                                   )}
                                 </button>
-                                <button
+                                <button aria-label="Cancel booking"
                                   onClick={(e) => handleOpenVoidModal(e, b)}
                                   className="p-2.5 rounded-xl border border-white/5 bg-white/5 text-slate-600 hover:text-rose-500 transition-all"
                                 >
@@ -566,10 +569,10 @@ const Bookings: React.FC<BookingsProps> = ({
 
           <div className="px-8 py-4 border-t border-white/10 bg-slate-950/60 flex items-center justify-between">
             <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
-              {filteredBookings.length} Total Records
+              {totalRecords} Total Records
             </span>
             <div className="flex gap-2">
-              <button
+              <button aria-label="Previous page"
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
                 className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white disabled:opacity-10 transition-all bg-white/5"
@@ -581,7 +584,7 @@ const Bookings: React.FC<BookingsProps> = ({
                   {currentPage} / {totalPages || 1}
                 </span>
               </div>
-              <button
+              <button aria-label="Next page"
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                 }
@@ -604,6 +607,8 @@ const Bookings: React.FC<BookingsProps> = ({
             className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
           />
           <aside
+            ref={detailsRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="booking-details-title"

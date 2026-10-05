@@ -1,3 +1,5 @@
+import { auditDetails, auditActor } from '../lib/auditPresentation';
+import { isAdmin } from '../lib/access';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   FileDown, Printer, Building, CreditCard, Users, Activity, 
@@ -5,6 +7,7 @@ import {
   CalendarClock, Layers3
 } from 'lucide-react';
 import { sileo } from 'sileo';
+import { useAnalytics } from '../hooks/useAnalytics';
 import { useHotel } from '../store/HotelContext';
 import { BookingStatus, RoomStatus, AuditLog } from '../types';
 import { downloadPDF } from '../lib/utils';
@@ -41,14 +44,15 @@ const getAuditPresentation = (log: AuditLog) => {
   }
 
   return {
-    label: 'Updated',
+    label: auditDetails(log).action,
     classes: 'border-blue-500/20 bg-blue-500/10 text-blue-400',
     description: `Information in ${area.toLowerCase()} was updated.`,
   };
 };
 
 const Reports: React.FC = () => {
-  const { bookings, rooms, auditLogs, refreshData, selectedAuditLogId, setSelectedAuditLogId } = useHotel();
+  const { bookings, rooms, auditLogs, staff, currentUser, refreshData, selectedAuditLogId, setSelectedAuditLogId } = useHotel();
+  const {analytics, error: analyticsError, loading: analyticsLoading} = useAnalytics('month', bookings);
   const confirm = useConfirmation();
   const [reportTab, setReportTab] = useState<'analytics' | 'audit'>('analytics');
   const [inspectingLog, setInspectingLog] = useState<AuditLog | null>(null);
@@ -104,32 +108,8 @@ const Reports: React.FC = () => {
     window.print();
   };
 
-  const metrics = useMemo(() => {
-    const validBookings = (bookings || []).filter(b => b.status !== BookingStatus.Cancelled);
-    const totalRevenue = validBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
-    const occupiedRooms = (rooms || []).filter(r => r.status === RoomStatus.Occupied).length;
-    const occupancyRate = rooms.length > 0 ? Math.round((occupiedRooms / rooms.length) * 100) : 0;
-    const revPAR = rooms.length > 0 ? Math.round(totalRevenue / rooms.length) : 0;
-    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const newBookingsCount = (bookings || []).filter(b => new Date(b.createdAt) > thirtyDaysAgo).length;
-    return { totalRevenue, occupancyRate, revPAR, newBookingsCount };
-  }, [bookings, rooms]);
-
-  const revenueTrendsData = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentYear = new Date().getFullYear();
-    const monthlyMap = months.map(m => ({ month: m, revenue: 0, expenses: 0 }));
-    (bookings || []).forEach(b => {
-      if (b.status === BookingStatus.Cancelled) return;
-      const date = new Date(b.createdAt);
-      if (date.getFullYear() === currentYear) {
-        const monthIdx = date.getMonth();
-        monthlyMap[monthIdx].revenue += (b.amount || 0);
-        monthlyMap[monthIdx].expenses += ((b.amount || 0) * 0.35) + 2500;
-      }
-    });
-    return monthlyMap.slice(0, new Date().getMonth() + 1);
-  }, [bookings]);
+  const money = (value: number | undefined) => value === undefined ? 'Unavailable' : `₦${value.toLocaleString()}`;
+  const revenueTrendsData = analytics?.revenueDynamics.map(point => ({month:point.date, revenue:point.value})) ?? [];
 
   const occupancyByCategory = useMemo(() => {
     const categories = ['Standard', 'Deluxe', 'Executive', 'Presidential Suite'];
@@ -138,7 +118,7 @@ const Reports: React.FC = () => {
       const roomsOfCat = (rooms || []).filter(r => r.category?.toLowerCase() === cat.toLowerCase());
       const totalOfCat = roomsOfCat.length;
       const occupiedOfCat = roomsOfCat.filter(r => r.status === RoomStatus.Occupied).length;
-      return { name: cat, value: totalOfCat > 0 ? Math.round((occupiedOfCat / totalOfCat) * 100) : 0, count: totalOfCat, color: colors[idx] };
+      return { name: cat, value: totalOfCat > 0 ? Math.round((occupiedOfCat / totalOfCat) * 100) : 0, count: totalOfCat, occupied: occupiedOfCat, color: colors[idx] };
     }).filter(item => item.count > 0);
   }, [rooms]);
 
@@ -174,7 +154,7 @@ const Reports: React.FC = () => {
             <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Analytics</h1>
          </div>
          <div className="flex gap-2">
-            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}>
+            <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}>
               <RefreshCw size={18} />
             </button>
             <button onClick={handlePrint} className="bg-white/5 hover:bg-white/10 text-slate-400 p-2 lg:px-4 lg:py-2.5 rounded-lg adaptive-text-xs font-black uppercase border border-white/5 transition-all"><Printer size={14}/></button>
@@ -184,22 +164,23 @@ const Reports: React.FC = () => {
 
       <div className="flex gap-1 bg-black/40 p-1 rounded-xl w-fit border border-white/5">
         <button onClick={() => setReportTab('analytics')} className={`px-6 py-2 rounded-lg adaptive-text-xs font-black uppercase tracking-[0.1em] transition-all ${reportTab === 'analytics' ? 'bg-brand-600 text-white' : 'text-slate-600'}`}>Stats</button>
-        <button onClick={() => setReportTab('audit')} className={`px-6 py-2 rounded-lg adaptive-text-xs font-black uppercase tracking-[0.1em] transition-all ${reportTab === 'audit' ? 'bg-brand-600 text-white' : 'text-slate-600'}`}>History</button>
+        {isAdmin(currentUser) && (<button onClick={() => setReportTab('audit')} className={`px-6 py-2 rounded-lg adaptive-text-xs font-black uppercase tracking-[0.1em] transition-all ${reportTab === 'audit' ? 'bg-brand-600 text-white' : 'text-slate-600'}`}>History</button>)}
       </div>
 
       {reportTab === 'analytics' ? (
         <div className="space-y-6">
+          {analyticsError ? <p role="alert" className="text-sm text-amber-300">{analyticsError}</p> : null}
+          <p className="text-xs text-slate-400">{analyticsLoading ? 'Loading accounting report…' : analytics ? `${analytics.fromDate} to ${analytics.toDate} · Hotel local dates · Payments ${money(analytics.report.payments)} less refunds ${money(analytics.report.refunds)}. Expenses are not tracked.` : 'Accounting report unavailable.'}</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: 'Revenue', value: `₦${metrics.totalRevenue.toLocaleString()}`, growth: '+14%', color: 'text-emerald-400', icon: CreditCard },
-              { label: 'Occupancy', value: `${metrics.occupancyRate}%`, growth: '-2%', color: 'text-blue-400', icon: Building },
-              { label: 'RevPAR', value: `₦${metrics.revPAR.toLocaleString()}`, growth: '+5%', color: 'text-amber-400', icon: Activity },
-              { label: 'New Bookings', value: metrics.newBookingsCount, growth: '+12%', color: 'text-indigo-400', icon: Users }
+              { label: 'Net receipts', value: money(analytics?.kpis.netRevenue), color: 'text-emerald-400', icon: CreditCard },
+              { label: 'Room-night occupancy', value: analytics ? `${analytics.kpis.occupancyRate}%` : 'Unavailable', color: 'text-blue-400', icon: Building },
+              { label: 'RevPAR', value: money(analytics?.report.revPar), color: 'text-amber-400', icon: Activity },
+              { label: 'Average nightly rate', value: money(analytics?.report.adr), color: 'text-indigo-400', icon: Users }
             ].map(card => (
               <div key={card.label} className="glass-card p-4 rounded-xl border border-white/5 bg-slate-900/10 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-4">
                     <card.icon size={14} className={card.color} />
-                    <span className={`text-[8px] font-black ${card.growth.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>{card.growth}</span>
                   </div>
                   <div>
                     <span className="text-slate-600 text-[8px] font-black uppercase block mb-1">{card.label}</span>
@@ -211,7 +192,7 @@ const Reports: React.FC = () => {
 
           <div className="grid grid-cols-12 gap-4 lg:gap-6">
             <div className="col-span-12 xl:col-span-8 glass-card adaptive-p rounded-xl border border-white/5 bg-slate-900/20">
-                <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8">Revenue Trends</h3>
+                <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8">Net receipts by hotel date</h3>
                 <div className="h-64 lg:h-80 w-full">
                   <ReResponsiveContainer width="100%" height="100%">
                       <ReAreaChart data={revenueTrendsData}>
@@ -232,13 +213,13 @@ const Reports: React.FC = () => {
                 <div className="h-40 relative mb-6">
                   <ReResponsiveContainer width="100%" height="100%">
                       <RePieChart>
-                        <RePie data={occupancyByCategory} innerRadius={50} outerRadius={70} paddingAngle={8} dataKey="value" stroke="none">
+                        <RePie data={occupancyByCategory} innerRadius={50} outerRadius={70} paddingAngle={8} dataKey="occupied" stroke="none">
                             {occupancyByCategory.map((entry, index) => <ReCell key={`cell-${index}`} fill={entry.color} />)}
                         </RePie>
                       </RePieChart>
                   </ReResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="adaptive-text-2xl font-black text-white">{metrics.occupancyRate}%</span>
+                      <span className="adaptive-text-2xl font-black text-white">{rooms.length ? Math.round(rooms.filter(room => room.status === RoomStatus.Occupied).length / rooms.length * 100) : 0}%</span>
                       <span className="text-[7px] text-slate-600 font-black uppercase">Usage</span>
                   </div>
                 </div>
@@ -278,7 +259,7 @@ const Reports: React.FC = () => {
                         <p className="text-[7px] text-slate-700 font-bold uppercase truncate">{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </td>
-                    <td data-label="Handled By" className="responsive-table-padding"><p className="adaptive-text-sm font-black text-slate-300 uppercase truncate max-w-[140px]">{log.profileId ? 'Authorized staff' : 'Automated system'}</p></td>
+                    <td data-label="Handled By" className="responsive-table-padding"><p className="adaptive-text-sm font-black text-slate-300 uppercase truncate max-w-[140px]">{auditActor(log.profileId, staff)}</p></td>
                     <td data-label="Action" className="responsive-table-padding">
                       <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase border ${getAuditPresentation(log).classes}`}>{getAuditPresentation(log).label}</span>
                     </td>
@@ -296,8 +277,8 @@ const Reports: React.FC = () => {
           <div className="px-4 py-2 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
             <p className="text-[8px] text-slate-700 font-black uppercase">Change History</p>
             <div className="flex gap-1.5">
-              <button onClick={() => setAuditPage(p => Math.max(1, p - 1))} disabled={auditPage === 1} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronLeft size={12} /></button>
-              <button onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))} disabled={auditPage >= totalAuditPages} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronRight size={12} /></button>
+              <button aria-label="Previous page" onClick={() => setAuditPage(p => Math.max(1, p - 1))} disabled={auditPage === 1} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronLeft size={12} /></button>
+              <button aria-label="Next page" onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))} disabled={auditPage >= totalAuditPages} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronRight size={12} /></button>
             </div>
           </div>
         </div>
@@ -325,7 +306,7 @@ const Reports: React.FC = () => {
                  <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
                      <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><ShieldCheck size={14}/> Handled by</dt>
-                     <dd className="text-sm font-black text-white">{inspectingLog.profileId ? 'Authorized staff' : 'Automated system'}</dd>
+                     <dd className="text-sm font-black text-white">{auditActor(inspectingLog.profileId, staff)}</dd>
                    </div>
                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
                      <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><Layers3 size={14}/> Area</dt>
@@ -335,10 +316,24 @@ const Reports: React.FC = () => {
                      <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><CalendarClock size={14}/> Recorded</dt>
                      <dd className="text-sm font-black text-white">{formatPrivateDateTime(inspectingLog.createdAt)}</dd>
                    </div>
+                   <div className="rounded-2xl border border-white/5 p-4 sm:col-span-2">
+                     <dt className="text-xs text-slate-400">Record reference</dt>
+                     <dd className="break-all text-sm text-white">{auditDetails(inspectingLog).reference}</dd>
+                   </div>
                  </dl>
+                 <section aria-label="Recorded changes" className="space-y-3">
+                   <h4 className="text-sm font-bold">Recorded changes</h4>
+                   {auditDetails(inspectingLog).changes.length ? auditDetails(inspectingLog).changes.map(change => (
+                     <div key={change.field} className="rounded-xl border border-white/10 p-3">
+                       <p className="text-xs text-slate-400">{change.field}</p>
+                       <p className="break-words text-sm">Before: {change.before}</p>
+                       <p className="break-words text-sm">After: {change.after}</p>
+                     </div>
+                   )) : <p className="text-xs text-slate-400">No displayable field changes were recorded for this event.</p>}
+                 </section>
               </div>
               <div className="px-5 sm:px-7 py-4 bg-slate-950/60 border-t border-white/5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                 <p className="flex items-center gap-2 text-[9px] font-bold text-slate-600"><ShieldCheck size={14}/> Internal IDs and raw system data are hidden.</p>
+                 <p className="flex items-center gap-2 text-[9px] font-bold text-slate-600"><ShieldCheck size={14}/> Only approved audit fields are displayed.</p>
                  <button type="button" data-modal-close onClick={() => setInspectingLog(null)} className="px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95">Close</button>
               </div>
            </div>
