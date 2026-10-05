@@ -48,7 +48,7 @@ test('selected transfer review uses the standard dialog and hands released rooms
   assert.match(ui, /confirmationText: 'VERIFY'/);
   assert.match(ui, /bankReference: bankReference\.trim\(\)/);
   assert.match(ui, /statementChecked/);
-  assert.match(ui, /The booking reference is not a bank transaction ID/);
+  assert.match(ui, /Use the bank reference, not a booking or internal confirmation reference/);
   assert.match(ui, /review-transfer\/rooms/);
   assert.doesNotMatch(ui, /Refresh queue|Booking reference<input|items\.map\(item/);
   assert.match(ui, /onChooseReplacement/);
@@ -65,12 +65,20 @@ test('selected transfer review uses the standard dialog and hands released rooms
   assert.match(settlements, /onReviewTransfer\(folio\)/);
   assert.match(settlements, /Review transfer/);
   assert.match(settlements, /b\.paymentStatus !== PaymentStatus\.PaymentReported/);
-  assert.match(settlements, /Payment transaction ID/);
+  assert.match(settlements, /Bank transaction reference/);
   assert.match(settlements, /Booking \/ Transaction ID/);
   assert.match(settlements, /getPaymentTransactionId\(booking\) \|\| booking\?\.bookingCode/);
   assert.match(settlements, /Copy booking or transaction ID/);
   assert.match(settlements, /Refund Transaction ID/);
-  assert.match(ui, /right-3/);
+  assert.match(ui, /self-end shrink-0/);
   assert.doesNotMatch(ui, /bottom-4 left-4/);
   assert.match(await read('store/HotelContext.tsx'), /lower === "paymentreported"/);
+});
+
+
+test('bank references exclude internal IDs and booking codes', () => {
+  for (const transactionReference of ['', 'MHS123456', ' mhs123456 ', 'MANUAL-MHS123456-abc']) {
+    assert.equal(exports.bankTransactionReference({bookingCode:'MHS123456',transactionReference}), '');
+  }
+  assert.equal(exports.bankTransactionReference({bookingCode:'MHS123456',transactionReference:' BANK-01937 '}), 'BANK-01937');
 });

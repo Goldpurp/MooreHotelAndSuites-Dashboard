@@ -90,6 +90,7 @@ export function HousekeepingReminder() {
 }
 
 const labels: Record<HousekeepingTask['type'], string> = {
+  GeneralCleaning: 'General cleaning',
   CheckoutCleaning: 'Checkout cleaning', StayoverService: 'Stayover service',
   Inspection: 'Inspection / release', MaintenanceRecovery: 'Maintenance recovery', RoomMoveCleaning: 'Room-move cleaning',
 };

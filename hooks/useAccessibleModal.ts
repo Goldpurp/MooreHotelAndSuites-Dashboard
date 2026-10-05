@@ -1,4 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useId } from "react";
+
+const modalStack: string[] = [];
+let originalOverflow = "";
 
 const FOCUSABLE = [
   "button:not([disabled])",
@@ -18,6 +21,7 @@ export function useAccessibleModal(
   onClose: () => void,
   canClose = true,
 ) {
+  const modalId = useId();
   const modalRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   const canCloseRef = useRef(canClose);
@@ -28,12 +32,13 @@ export function useAccessibleModal(
     if (!isOpen) return;
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
+    if (!modalStack.length) originalOverflow = document.body.style.overflow;
+    modalStack.push(modalId);
     document.body.style.overflow = "hidden";
 
     const focusTimer = window.setTimeout(() => {
       const modal = modalRef.current;
-      if (!modal) return;
+      if (!modal || modalStack.at(-1) !== modalId) return;
       const preferred = modal.querySelector<HTMLElement>(
         "[data-modal-cancel], [data-modal-close]",
       );
@@ -43,7 +48,7 @@ export function useAccessibleModal(
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const modal = modalRef.current;
-      if (!modal) return;
+      if (!modal || modalStack.at(-1) !== modalId) return;
 
       if (event.key === "Escape" && canCloseRef.current) {
         event.preventDefault();
@@ -76,10 +81,13 @@ export function useAccessibleModal(
     return () => {
       window.clearTimeout(focusTimer);
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previouslyFocused?.focus?.();
+      const position = modalStack.lastIndexOf(modalId);
+      const wasTop = position === modalStack.length - 1;
+      if (position >= 0) modalStack.splice(position, 1);
+      if (!modalStack.length) document.body.style.overflow = originalOverflow;
+      if (wasTop && previouslyFocused?.isConnected) previouslyFocused.focus();
     };
-  }, [isOpen]);
+  }, [isOpen, modalId]);
 
   return modalRef;
 }

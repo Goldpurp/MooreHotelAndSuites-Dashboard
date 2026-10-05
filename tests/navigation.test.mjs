@@ -27,3 +27,15 @@ test("all desktop and mobile navigation destinations have a rendered page", asyn
     for (const destination of destinations) assert.ok(routes.has(destination), `${destination} needs a page`);
   }
 });
+
+const accessSource=await read('lib/access.ts');
+const accessScript=ts.transpileModule(accessSource.replace(/import[^;]+;/,''),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const accessContext={exports:{},UserRole:{Admin:'Admin',Manager:'Manager',Staff:'Staff',Client:'Client'}};
+vm.runInNewContext(accessScript,accessContext);
+test('verified staff departments receive useful landing pages with least privilege',()=>{
+ for(const [department,expected] of [['Engineering','maintenance'],['Maintenance','maintenance'],['Finance','settlements'],['Cashier','settlements'],['Housekeeping','housekeeping'],['Reception','bookings']]){
+  const user={role:'Staff',department};assert.equal(accessContext.exports.firstAllowedTab(user),expected);
+  assert.equal(accessContext.exports.canOpenTab(user,'pricing'),false);
+  assert.equal(accessContext.exports.canOpenTab(user,'channels'),false);
+ }
+});

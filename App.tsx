@@ -3,8 +3,9 @@ import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import MobileNav from "./components/MobileNav";
 import { ConfirmationProvider } from "./components/ConfirmationProvider";
-import { Toaster } from "sileo";
-import { HotelProvider, useHotel } from "./store/HotelContext";
+import { Toaster, sileo } from "sileo";
+import { api } from "./lib/api";
+import { HotelProvider, useHotel, normalizeBooking } from "./store/HotelContext";
 import { installNotificationSoundUnlock } from "./lib/notificationSound";
 import { canOpenTab, firstAllowedTab } from "./lib/access";
 import { useStaffRealtime } from "./hooks/useStaffRealtime";
@@ -14,6 +15,17 @@ import type { Booking } from "./types";
 import type { PaymentReviewRebooking } from "./lib/paymentReview";
 
 // Lazy loading pages
+const ReservationOperations = lazy(() => import("./pages/ReservationOperations"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const AddOns = lazy(() => import("./pages/AddOns"));
+const GuestCrm = lazy(() => import("./pages/GuestCrm"));
+const ClientAccounts = lazy(() => import("./pages/ClientAccounts"));
+const Channels = lazy(() => import("./pages/Channels"));
+const RetryJobs = lazy(() => import("./pages/RetryJobs"));
+const Inventory = lazy(() => import("./pages/Inventory"));
+const Folios = lazy(() => import("./pages/Folios"));
+const Maintenance = lazy(() => import("./pages/Maintenance"));
+const DailyOperations = lazy(() => import("./pages/DailyOperations"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Bookings = lazy(() => import("./pages/Bookings"));
 const Rooms = lazy(() => import("./pages/Rooms"));
@@ -37,6 +49,8 @@ const AppContent: React.FC = () => {
   const {
     isAuthenticated,
     isInitialLoading,
+    sessionRecoveryError,
+    retrySession,
     isSidebarCollapsed,
     activeTab,
     setActiveTab,
@@ -49,11 +63,13 @@ const AppContent: React.FC = () => {
     requestId: number;
   } | null>(null);
   const [paymentReviewRebooking, setPaymentReviewRebooking] = useState<PaymentReviewRebooking | null>(null);
-  const openPaymentReview = useCallback((booking: Booking) => {
-    setPaymentReviewRequest((current) => ({
-      booking,
-      requestId: (current?.requestId ?? 0) + 1,
-    }));
+  const openPaymentReview = useCallback(async (booking: Booking) => {
+    try {
+      const fresh = normalizeBooking(await api.get(`/api/bookings/${encodeURIComponent(booking.bookingCode)}`));
+      setPaymentReviewRequest((current) => ({ booking: fresh, requestId: (current?.requestId ?? 0) + 1 }));
+    } catch (error) {
+      sileo.error({ title: 'Review unavailable', description: error instanceof Error ? error.message : 'Refresh and try again.' });
+    }
   }, []);
   const choosePaymentReviewReplacement = useCallback((context: PaymentReviewRebooking) => {
     setPaymentReviewRebooking(context);
@@ -78,17 +94,6 @@ const AppContent: React.FC = () => {
       setActiveTab(firstAllowedTab(currentUser));
     }
   }, [activeTab, currentUser, isAuthenticated, setActiveTab]);
-
-  // Watchdog to prevent permanent splash screen hang if synchronization is slow
-  useEffect(() => {
-    if (isInitialLoading) {
-      const timer = setTimeout(() => {
-        // Force refresh data one last time before clearing manually if necessary
-        refreshData().catch(() => {});
-      }, 8000);
-      return () => clearTimeout(timer);
-    }
-  }, [isInitialLoading, refreshData]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -167,6 +172,17 @@ const AppContent: React.FC = () => {
     );
   }
 
+  if (sessionRecoveryError) {
+    return <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-white">
+      <section role="alert" className="max-w-md space-y-5 rounded-2xl border border-white/10 p-8">
+        <h1 className="text-xl font-bold">Connection interrupted</h1>
+        <p>{sessionRecoveryError}</p>
+        <p className="text-sm text-slate-400">Your sign-in is saved. Reconnect to verify your staff profile and continue.</p>
+        <button type="button" onClick={retrySession} className="rounded-xl bg-brand-600 px-5 py-3 font-bold">Retry connection</button>
+      </section>
+    </main>;
+  }
+
   if (!isAuthenticated) {
     return (
       <Suspense
@@ -185,6 +201,17 @@ const AppContent: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case "reservation_operations": return <ReservationOperations />;
+      case "pricing": return <Pricing />;
+      case "addons": return <AddOns />;
+      case "guest_crm": return <GuestCrm />;
+      case "client_accounts": return <ClientAccounts />;
+      case "channels": return <Channels />;
+      case "retry_jobs": return <RetryJobs />;
+      case "inventory": return <Inventory />;
+      case "folios": return <Folios />;
+      case "maintenance": return <Maintenance />;
+      case "daily_operations": return <DailyOperations />;
       case "housekeeping":
         return <HousekeepingPage />;
       case "dashboard":
@@ -234,12 +261,7 @@ const AppContent: React.FC = () => {
       <Sidebar />
       <MobileNav />
       <HousekeepingReminder />
-      <PaymentReviewQueue
-        requestedBooking={paymentReviewRequest?.booking}
-        requestId={paymentReviewRequest?.requestId}
-        onChooseReplacement={choosePaymentReviewReplacement}
-        onOpenSettlements={() => setActiveTab("settlements")}
-      />
+
 
       <div
         className={`h-full min-h-0 flex-1 flex flex-col min-w-0 transition-[margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
@@ -247,6 +269,12 @@ const AppContent: React.FC = () => {
         }`}
       >
         <TopBar />
+      <PaymentReviewQueue
+        requestedBooking={paymentReviewRequest?.booking}
+        requestId={paymentReviewRequest?.requestId}
+        onChooseReplacement={choosePaymentReviewReplacement}
+        onOpenSettlements={() => setActiveTab("settlements")}
+      />
         <main className="flex-1 min-h-0 overflow-hidden">
           <div
             className={`app-scroll-region fluid-padding mx-auto h-full w-full max-w-[1920px] ${

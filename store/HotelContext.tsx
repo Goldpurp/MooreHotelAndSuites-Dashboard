@@ -28,8 +28,12 @@ import {
   BookingInitResponse,
 } from "../types";
 import { api } from "../lib/api";
+import { recoverStaffSession } from "../lib/sessionRecovery";
+import { loadAllPages, Page } from "../lib/pagination";
 import { playNotificationSound } from "../lib/notificationSound";
 import {
+  firstAllowedTab,
+  canReadFolios,
   canReadGuestPii,
   canReadOperations,
   canReadReservations,
@@ -47,9 +51,19 @@ export interface LoginResult {
   mfaSetupRequired: boolean;
 }
 
+export interface BookingGuestPrefill {
+  guestFirstName: string;
+  guestLastName: string;
+  guestEmail: string;
+  guestPhone: string;
+}
+
 interface HotelContextType {
+  bookingGuestRequest: BookingGuestPrefill | null;
+  setBookingGuestRequest: (guest: BookingGuestPrefill | null) => void;
   rooms: Room[];
   bookings: Booking[];
+  paymentBookings: Booking[];
   guests: Guest[];
   staff: StaffUser[];
   notifications: AppNotification[];
@@ -59,6 +73,8 @@ interface HotelContextType {
   currentUser: AppUser | null;
   isAuthenticated: boolean;
   isInitialLoading: boolean;
+  sessionRecoveryError: string | null;
+  retrySession: () => void;
   isSidebarCollapsed: boolean;
   activeTab: string;
   selectedBookingId: string | null;
@@ -89,7 +105,6 @@ interface HotelContextType {
   deleteRoom: (id: string) => Promise<void>;
   toggleRoomMaintenance: (id: string) => Promise<void>;
   addBooking: (payload: any) => Promise<BookingInitResponse>;
-  confirmTransfer: (bookingCode: string, confirmationText: string) => Promise<void>;
   checkInBooking: (bookingId: string) => Promise<void>;
   checkOutBooking: (bookingId: string) => Promise<void>;
   checkInBookingByCode: (code: string) => Promise<void>;
@@ -126,9 +141,102 @@ interface HotelContextType {
   refreshData: (options?: { silent?: boolean }) => Promise<void>;
 }
 
+  const toCanonicalStatus = (val: string | undefined): any => {
+    if (!val) return val;
+    const lower = val.toLowerCase().replace(/[\s_-]/g, "");
+    if (lower === "checkedin") return BookingStatus.CheckedIn;
+    if (lower === "checkedout") return BookingStatus.CheckedOut;
+    if (lower === "occupied") return RoomStatus.Occupied;
+    if (lower === "available") return RoomStatus.Available;
+    if (lower === "cleaning") return RoomStatus.Cleaning;
+    if (lower === "maintenance") return RoomStatus.Maintenance;
+    if (lower === "reserved") return BookingStatus.Reserved;
+    if (lower === "cancelled") return BookingStatus.Cancelled;
+    if (lower === "pending") return BookingStatus.Pending;
+    if (lower === "noshow") return BookingStatus.NoShow;
+    if (lower === "confirmed") return BookingStatus.Confirmed;
+    return val.charAt(0).toUpperCase() + val.slice(1);
+  };
+
+  /**
+   * CHANGE: Added specific normalization for Refund-related payment statuses
+   * to ensure UI logic recognizes these states correctly.
+   */
+  const toCanonicalPaymentStatus = (val: string | undefined): PaymentStatus => {
+    if (!val) return PaymentStatus.Unpaid;
+    const lower = val.toLowerCase().replace(/[\s_-]/g, "");
+    if (lower === "partiallypaid" || lower === "partial") return PaymentStatus.Partial;
+    if (lower === "paid") return PaymentStatus.Paid;
+    if (lower === "paymentreported") return PaymentStatus.PaymentReported;
+    if (lower === "unpaid") return PaymentStatus.Unpaid;
+    if (lower === "awaitingverification")
+      return PaymentStatus.AwaitingVerification;
+    if (lower === "refundpending") return PaymentStatus.RefundPending;
+    if (lower === "refunded") return PaymentStatus.Refunded;
+    return PaymentStatus.Unpaid;
+  };
+
+  const toCanonicalPaymentMethod = (val: string | undefined): PaymentMethod => {
+    if (!val) return PaymentMethod.DirectTransfer;
+    const lower = val.toLowerCase().replace(/[\s_-]/g, "");
+    if (lower === "monnify") return PaymentMethod.Monnify;
+    if (lower === "directtransfer" || lower === "banktransfer") return PaymentMethod.DirectTransfer;
+    return PaymentMethod.DirectTransfer;
+  };
+
+export const normalizeBooking = (b: any): Booking => {
+    return {
+      id: String(b.id || b.Id || ""),
+      bookingCode: String(b.bookingCode || b.BookingCode || ""),
+      roomId: String(b.roomId || b.RoomId || ""),
+      guestId: String(b.guestId || b.GuestId || ""),
+      guestFirstName: b.guestFirstName || b.GuestFirstName || "",
+      guestLastName: b.guestLastName || b.GuestLastName || "",
+      guestEmail: b.guestEmail || b.GuestEmail || "",
+      guestPhone: b.guestPhone || b.GuestPhone || "",
+      checkIn: b.checkIn || b.CheckIn || "",
+      checkOut: b.checkOut || b.CheckOut || "",
+      adultCount: Number(b.adultCount ?? b.AdultCount ?? 1),
+      childCount: Number(b.childCount ?? b.ChildCount ?? 0),
+      status: toCanonicalStatus(
+        b.status || b.Status || BookingStatus.Pending,
+      ) as BookingStatus,
+      amount: Number(b.amount || b.Amount || 0),
+      paymentStatus: toCanonicalPaymentStatus(
+        b.paymentStatus || b.PaymentStatus || "Unpaid",
+      ),
+      paymentMethod: toCanonicalPaymentMethod(b.paymentMethod || b.PaymentMethod || ""),
+      transactionReference:
+        b.transactionReference || b.TransactionReference || "",
+      createdAt: b.createdAt || b.CreatedAt || new Date().toISOString(),
+      notes: b.notes || b.Notes || "",
+      notificationMessage: b.notificationMessage || b.NotificationMessage || undefined,
+      paymentExpiresAtUtc: b.paymentExpiresAtUtc || b.PaymentExpiresAtUtc || null,
+      paymentConfirmationMethod: b.paymentConfirmationMethod ?? b.PaymentConfirmationMethod ?? null,
+      refundReference: b.refundReference ?? b.RefundReference ?? null,
+      refundAmount: b.refundAmount ?? b.RefundAmount ?? null,
+      refundApprovedAmount: b.refundApprovedAmount ?? b.RefundApprovedAmount ?? null,
+      refundChannel: b.refundChannel ?? b.RefundChannel ?? null,
+      refundEvidenceType: b.refundEvidenceType ?? b.RefundEvidenceType ?? null,
+      statusHistory: b.statusHistory || b.StatusHistory || [],
+    };
+  };
+
+
 const HotelContext = createContext<HotelContextType | undefined>(undefined);
 
 const VALID_TABS = new Set([
+  "reservation_operations",
+  "pricing",
+  "addons",
+  "guest_crm",
+  "client_accounts",
+  "channels",
+  "retry_jobs",
+  "inventory",
+  "folios",
+  "maintenance",
+  "daily_operations",
   "housekeeping",
   "dashboard",
   "bookings",
@@ -162,6 +270,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [paymentBookings, setPaymentBookings] = useState<Booking[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -170,6 +279,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [sessionRecoveryError, setSessionRecoveryError] = useState<string | null>(null);
+  const [sessionAttempt, setSessionAttempt] = useState(0);
+  const dataRequestRef = useRef(0);
+  const retrySession = () => { setSessionRecoveryError(null); setIsInitialLoading(true); setSessionAttempt(value => value + 1); };
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [userRole, setUserRole] = useState<UserRole>(UserRole.Staff);
 
@@ -178,6 +291,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null,
   );
+  const [bookingGuestRequest, setBookingGuestRequest] = useState<BookingGuestPrefill | null>(null);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [selectedPaymentBookingId, setSelectedPaymentBookingId] = useState<string | null>(null);
@@ -206,11 +320,14 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const handleSessionEnded = (event: Event) => {
       const reason = (event as CustomEvent<{ reason?: string }>).detail?.reason;
+      dataRequestRef.current++;
+      setSessionRecoveryError(null);
       setIsAuthenticated(false);
       setCurrentUser(null);
       setUserRole(UserRole.Staff);
       setRooms([]);
       setBookings([]);
+      setPaymentBookings([]);
       setGuests([]);
       setStaff([]);
       setNotifications([]);
@@ -218,6 +335,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       setVisitHistory([]);
       setSelectedBookingId(null);
       setSelectedGuestId(null);
+    setBookingGuestRequest(null);
       setSelectedRoomId(null);
       setSelectedPaymentBookingId(null);
       setSelectedProfileId(null);
@@ -247,86 +365,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     return [];
   };
 
-  const toCanonicalStatus = (val: string | undefined): any => {
-    if (!val) return val;
-    const lower = val.toLowerCase().replace(/[\s_-]/g, "");
-    if (lower === "checkedin") return BookingStatus.CheckedIn;
-    if (lower === "checkedout") return BookingStatus.CheckedOut;
-    if (lower === "occupied") return RoomStatus.Occupied;
-    if (lower === "available") return RoomStatus.Available;
-    if (lower === "cleaning") return RoomStatus.Cleaning;
-    if (lower === "maintenance") return RoomStatus.Maintenance;
-    if (lower === "reserved") return BookingStatus.Reserved;
-    if (lower === "cancelled") return BookingStatus.Cancelled;
-    if (lower === "pending") return BookingStatus.Pending;
-    if (lower === "confirmed") return BookingStatus.Confirmed;
-    return val.charAt(0).toUpperCase() + val.slice(1);
-  };
-
-  /**
-   * CHANGE: Added specific normalization for Refund-related payment statuses
-   * to ensure UI logic recognizes these states correctly.
-   */
-  const toCanonicalPaymentStatus = (val: string | undefined): PaymentStatus => {
-    if (!val) return PaymentStatus.Unpaid;
-    const lower = val.toLowerCase().replace(/[\s_-]/g, "");
-    if (lower === "paid") return PaymentStatus.Paid;
-    if (lower === "paymentreported") return PaymentStatus.PaymentReported;
-    if (lower === "unpaid") return PaymentStatus.Unpaid;
-    if (lower === "awaitingverification")
-      return PaymentStatus.AwaitingVerification;
-    if (lower === "refundpending") return PaymentStatus.RefundPending;
-    if (lower === "refunded") return PaymentStatus.Refunded;
-    return PaymentStatus.Unpaid;
-  };
-
-  const toCanonicalPaymentMethod = (val: string | undefined): PaymentMethod => {
-    if (!val) return PaymentMethod.DirectTransfer;
-    const lower = val.toLowerCase().replace(/[\s_-]/g, "");
-    if (lower === "monnify") return PaymentMethod.Monnify;
-    if (lower === "directtransfer" || lower === "banktransfer") return PaymentMethod.DirectTransfer;
-    return PaymentMethod.DirectTransfer;
-  };
-
-  const normalizeBooking = (b: any): Booking => {
-    return {
-      id: String(b.id || b.Id || ""),
-      bookingCode: String(b.bookingCode || b.BookingCode || ""),
-      roomId: String(b.roomId || b.RoomId || ""),
-      guestId: String(b.guestId || b.GuestId || ""),
-      guestFirstName: b.guestFirstName || b.GuestFirstName || "",
-      guestLastName: b.guestLastName || b.GuestLastName || "",
-      guestEmail: b.guestEmail || b.GuestEmail || "",
-      guestPhone: b.guestPhone || b.GuestPhone || "",
-      checkIn: b.checkIn || b.CheckIn || "",
-      checkOut: b.checkOut || b.CheckOut || "",
-      adultCount: Number(b.adultCount ?? b.AdultCount ?? 1),
-      childCount: Number(b.childCount ?? b.ChildCount ?? 0),
-      status: toCanonicalStatus(
-        b.status || b.Status || BookingStatus.Pending,
-      ) as BookingStatus,
-      amount: Number(b.amount || b.Amount || 0),
-      paymentStatus: toCanonicalPaymentStatus(
-        b.paymentStatus || b.PaymentStatus || "Unpaid",
-      ),
-      paymentMethod: toCanonicalPaymentMethod(b.paymentMethod || b.PaymentMethod || ""),
-      transactionReference:
-        b.transactionReference || b.TransactionReference || "",
-      createdAt: b.createdAt || b.CreatedAt || new Date().toISOString(),
-      notes: b.notes || b.Notes || "",
-      notificationMessage: b.notificationMessage || b.NotificationMessage || undefined,
-      paymentExpiresAtUtc: b.paymentExpiresAtUtc || b.PaymentExpiresAtUtc || null,
-      refundAmount: b.refundAmount ?? b.RefundAmount ?? null,
-      refundApprovedAmount: b.refundApprovedAmount ?? b.RefundApprovedAmount ?? null,
-      refundChannel: b.refundChannel ?? b.RefundChannel ?? null,
-      refundEvidenceType: b.refundEvidenceType ?? b.RefundEvidenceType ?? null,
-      statusHistory: b.statusHistory || b.StatusHistory || [],
-    };
-  };
-
   const normalizeVisitRecord = (v: any): VisitRecord => {
     const rawAction = String(v.action || v.Action || "")
       .toLowerCase()
+      .replace(/[\s_-]/g, "")
       .trim();
     let canonicalAction = VisitAction.RESERVATION;
 
@@ -417,6 +459,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const refreshData = useCallback(async (options: { silent?: boolean } = {}) => {
+    const requestId = ++dataRequestRef.current;
     const token = api.getToken();
     if (!token) {
       setIsInitialLoading(false);
@@ -425,6 +468,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       const profile = normalizeUser(await api.get<any>("/api/profile/me"));
+      if (api.getToken() !== token || requestId !== dataRequestRef.current) return;
       if (!profile || profile.role === UserRole.Client) {
         throw new Error("The signed-in staff profile is unavailable.");
       }
@@ -437,31 +481,36 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       const [
         roomsRes,
         bookingsRes,
+        paymentBookingsRes,
         employeesRes,
         clientsRes,
+        guestsRes,
         notificationsRes,
         auditLogsRes,
         visitHistoryRes,
       ] = await Promise.all([
         reservationsRead ? api.get("/api/rooms/management") : Promise.resolve([]),
-        reservationsRead ? api.get("/api/bookings") : Promise.resolve([]),
+        reservationsRead ? loadAllPages((page) => api.get<Page<any>>("/api/bookings", {
+          params: { page: String(page), pageSize: "100" },
+        })) : Promise.resolve([]),
+        canReadFolios(profile) ? loadAllPages((page) => api.get<Page<any>>("/api/folios", {
+          params: { page: String(page), pageSize: "100" },
+        })) : Promise.resolve([]),
         privileged ? api.get("/api/admin/management/employees") : Promise.resolve(null),
-        privileged
-          ? api.get("/api/admin/management/clients")
-          : guestPiiRead
-            ? api.get("/api/guests")
-            : Promise.resolve(null),
+        privileged ? api.get("/api/admin/management/clients") : Promise.resolve(null),
+        guestPiiRead ? loadAllPages<Guest>(page => api.get("/api/guests?page=" + page + "&pageSize=100")) : Promise.resolve(null),
         reservationsRead ? api.get("/api/notifications/staff") : api.get("/api/notifications/my").catch(() => null),
-        isAdmin(profile) ? api.get("/api/audit-logs") : Promise.resolve(null),
+        isAdmin(profile) ? loadAllPages<AuditLog>(page => api.get("/api/audit-logs?page=" + page + "&pageSize=100")) : Promise.resolve(null),
         operationsRead ? api.get("/api/visit-records") : Promise.resolve(null),
       ]);
 
+      if (api.getToken() !== token || requestId !== dataRequestRef.current) return;
       const rawRooms = normalizeData(roomsRes);
       const normalizedRooms = rawRooms.map((r: any) => {
         const enumKey = (value: unknown) => String(value ?? "")
           .toLowerCase()
           .replace(/[\s_-]/g, "");
-        const rawStatus = String(r.status || r.Status || "Available")
+        const rawStatus = String(r.status || r.Status || "Unknown")
           .toLowerCase()
           .replace(/[\s_-]/g, "");
         const statusMap: Record<string, RoomStatus> = {
@@ -470,6 +519,10 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
           cleaning: RoomStatus.Cleaning,
           maintenance: RoomStatus.Maintenance,
           reserved: RoomStatus.Reserved,
+          dirty: RoomStatus.Dirty,
+          clean: RoomStatus.Clean,
+          inspected: RoomStatus.Inspected,
+          outoforder: RoomStatus.OutOfOrder,
         };
         const categoryMap: Record<string, Room["category"]> = {
           standard: "Standard",
@@ -495,7 +548,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
           name: String(r.name || r.Name || ""),
           category: categoryMap[enumKey(rawCategory)] || "Standard",
           floor: floorMap[enumKey(rawFloor)] || PropertyFloor.GroundFloor,
-          status: statusMap[rawStatus] || RoomStatus.Available,
+          status: statusMap[rawStatus] || RoomStatus.Unknown,
           pricePerNight: Number(r.pricePerNight || r.PricePerNight || 0),
           capacity: Number(r.capacity || r.Capacity || 1),
           size: String(r.size || r.Size || ""),
@@ -530,6 +583,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setRooms(normalizedRooms);
       setBookings(normalizeData(bookingsRes).map(normalizeBooking));
+      setPaymentBookings(normalizeData(paymentBookingsRes).map(normalizeBooking));
       setStaff((current) => {
         const employees =
           normalizedEmployees ??
@@ -555,8 +609,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       if (auditLogsRes !== null) {
         setAuditLogs(normalizeData(auditLogsRes));
       }
-      if (clientsRes !== null && guestPiiRead) {
-        setGuests(normalizeData(clientsRes));
+      if (guestsRes !== null && guestPiiRead) {
+        setGuests(normalizeData(guestsRes));
       } else if (!guestPiiRead) {
         setGuests([]);
       }
@@ -571,12 +625,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
           description: 'The system could not update. Some data might be old.'
         });
       }
-      if (error.message?.includes("Authorization Required")) {
-        setIsAuthenticated(false);
-        api.removeToken();
-      }
     } finally {
-      setIsInitialLoading(false);
+      if (requestId === dataRequestRef.current) setIsInitialLoading(false);
     }
   }, []);
 
@@ -609,30 +659,19 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     if (token) {
       let active = true;
       const restoreSession = async () => {
-        try {
-          const data = await api.get<any>("/api/profile/me");
-          const user = normalizeUser(data);
-          if (!user) throw new Error("The signed-in profile could not be loaded.");
-          if (user.role === UserRole.Client) {
-            throw new Error("Guest accounts must use the guest website, not the staff dashboard.");
-          }
-          if (!active) return;
-          // Establish the verified role before authentication becomes visible.
-          // This prevents a valid Admin/Manager deep link being redirected by
-          // the default Staff role during session restoration.
-          setCurrentUser(user);
-          setUserRole(user.role);
+        const result = await recoverStaffSession(async () => normalizeUser(await api.get<any>("/api/profile/me")), api);
+        if (!active || result.kind === 'stale') return;
+        if (result.kind === 'ready') {
+          setSessionRecoveryError(null);
+          setCurrentUser(result.user);
+          setUserRole(result.user.role);
           setIsAuthenticated(true);
           await refreshData();
-        } catch {
-          if (!active) return;
-          setIsAuthenticated(false);
-          setCurrentUser(null);
-          setUserRole(UserRole.Staff);
-          api.removeToken();
-        } finally {
-          if (active) setIsInitialLoading(false);
+        } else {
+          setIsAuthenticated(false); setCurrentUser(null); setUserRole(UserRole.Staff);
+          setSessionRecoveryError(result.kind === 'retry' ? result.message : null);
         }
+        if (active) setIsInitialLoading(false);
       };
       void restoreSession();
       return () => {
@@ -641,7 +680,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       setIsInitialLoading(false);
     }
-  }, [refreshData]);
+  }, [refreshData, sessionAttempt]);
 
   const login = async (
     email: string,
@@ -667,15 +706,22 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       if (mfaSetupRequired) {
         return { requiresTwoFactor: false, mfaSetupRequired: true };
       }
-      const user = normalizeUser(response);
-      if (user) {
-        if (user.role === UserRole.Client) {
-          api.removeToken();
-          throw new Error("Guest accounts must use the guest website, not the staff dashboard.");
-        }
-        setCurrentUser(user);
-        setUserRole(user.role);
+      // Authenticate the complete profile before choosing department access.
+      // The login response has no department or user ID.
+      const result = await recoverStaffSession(async () => normalizeUser(await api.get<any>("/api/profile/me")), api);
+      if (result.kind === 'stale') throw new Error("Sign-in changed. Please try again.");
+      if (result.kind !== 'ready') {
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        setUserRole(UserRole.Staff);
+        setSessionRecoveryError(result.kind === 'retry' ? result.message : null);
+        if (result.kind === 'signedOut') throw new Error("A valid staff account is required to access the dashboard.");
+        return { requiresTwoFactor: false, mfaSetupRequired: false };
       }
+      setSessionRecoveryError(null);
+      setCurrentUser(result.user);
+      setUserRole(result.user.role);
+      setActiveTab(firstAllowedTab(result.user));
       setIsAuthenticated(true);
       await refreshData();
       return { requiresTwoFactor: false, mfaSetupRequired: false };
@@ -685,12 +731,15 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = () => {
+    dataRequestRef.current++;
+    setSessionRecoveryError(null);
     api.removeToken();
     setIsAuthenticated(false);
     setCurrentUser(null);
     setUserRole(UserRole.Staff);
     setRooms([]);
     setBookings([]);
+      setPaymentBookings([]);
     setGuests([]);
     setStaff([]);
     setNotifications([]);
@@ -698,6 +747,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     setVisitHistory([]);
     setSelectedBookingId(null);
     setSelectedGuestId(null);
+    setBookingGuestRequest(null);
     setSelectedRoomId(null);
     setSelectedPaymentBookingId(null);
     setSelectedProfileId(null);
@@ -858,23 +908,6 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     return response;
   };
 
-  const confirmTransfer = async (code: string, confirmationText: string) => {
-    if (confirmationText !== "ACCEPT") {
-      throw new Error('Type "ACCEPT" exactly to confirm this manual payment.');
-    }
-
-    // Keep the dashboard compatible with the current API while the backend moves
-    // to server-generated manual confirmation references. The acknowledgement is
-    // sent separately and must also be validated by the updated backend.
-    const legacyManualReference = `MANUAL-${code.toUpperCase()}-${crypto.randomUUID()}`;
-    await api.post(`/api/bookings/${code}/confirm-transfer`, {
-      confirmationText,
-      confirmationMethod: "TypedAcknowledgement",
-      transactionReference: legacyManualReference,
-    });
-    await refreshData();
-  };
-
   const verifyMonnify = async (code: string) => {
     // The API verifies only the server-owned reference saved when checkout was
     // initialized. Staff must never type or override a Monnify reference.
@@ -1028,6 +1061,7 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
   const value = {
     rooms,
     bookings,
+    paymentBookings,
     guests,
     staff,
     notifications,
@@ -1037,12 +1071,16 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     currentUser,
     isAuthenticated,
     isInitialLoading,
+    sessionRecoveryError,
+    retrySession,
     isSidebarCollapsed,
     activeTab,
     selectedBookingId,
     setSelectedBookingId,
     selectedGuestId,
     setSelectedGuestId,
+    bookingGuestRequest,
+    setBookingGuestRequest,
     selectedRoomId,
     setSelectedRoomId,
     selectedPaymentBookingId,
@@ -1063,7 +1101,6 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     deleteRoom,
     toggleRoomMaintenance,
     addBooking,
-    confirmTransfer,
     verifyMonnify,
     checkInBooking,
     checkOutBooking,

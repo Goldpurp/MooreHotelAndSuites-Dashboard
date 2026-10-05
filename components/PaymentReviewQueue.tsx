@@ -129,7 +129,7 @@ export default function PaymentReviewQueue({
   const evidenceRequired = decision === 'Confirm' || decision === 'Refund';
   const normalizedBankReference = bankReference.trim().toUpperCase();
   const bankReferenceIsBookingCode = Boolean(
-    review && normalizedBankReference === review.bookingCode.trim().toUpperCase(),
+    normalizedBankReference.startsWith('MANUAL-') || (review && normalizedBankReference === review.bookingCode.trim().toUpperCase()),
   );
   const evidenceValid = !evidenceRequired || (
     statementChecked &&
@@ -214,9 +214,9 @@ export default function PaymentReviewQueue({
       type="button"
       onClick={onOpenSettlements}
       aria-label={`Open payment reviews. ${items.length} waiting.`}
-      className={`fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-3 z-[90] rounded-xl border px-4 py-3 text-sm font-bold shadow-xl transition-colors md:bottom-4 md:right-4 ${overdue || queueError ? 'border-amber-400/50 bg-amber-950 text-amber-100' : 'border-slate-600 bg-slate-900 text-white'}`}
+      className={`mx-3 mb-2 self-end shrink-0 rounded-xl border px-4 py-3 text-sm font-bold shadow-xl transition-colors ${overdue || queueError ? 'border-amber-400/50 bg-amber-950 text-amber-100' : 'border-slate-600 bg-slate-900 text-white'}`}
     >
-      {loading ? 'Loading payment reviews' : queueError ? 'Payment review unavailable' : `Payment reviews (${items.length})${overdue ? `, ${overdue} overdue` : ''}`}
+      {loading ? 'Loading payment reviews' : queueError ? 'Payment review unavailable' : `Reported transfers (${items.length})${overdue ? `, ${overdue} overdue` : ''}`}
     </button>
 
     {open && requestedBooking && review ? (
@@ -285,7 +285,7 @@ export default function PaymentReviewQueue({
                 {evidenceRequired ? <>
                   <label className="block text-xs font-bold text-slate-300">Bank transaction ID
                     <input required minLength={6} maxLength={120} value={bankReference} onChange={event => setBankReference(event.target.value)} autoComplete="off" aria-invalid={bankReferenceIsBookingCode} placeholder="Enter the unique ID from the bank statement" className={`mt-2 block w-full rounded-xl border bg-black/30 px-4 py-3 text-sm text-white outline-none ${bankReferenceIsBookingCode ? 'border-rose-500/60' : 'border-white/10 focus:border-amber-400/50'}`} />
-                    <span className={`mt-2 block text-[10px] font-semibold leading-relaxed ${bankReferenceIsBookingCode ? 'text-rose-300' : 'text-slate-500'}`}>{bankReferenceIsBookingCode ? 'The booking reference is not a bank transaction ID.' : 'Use the unique transfer or credit reference shown on the hotel bank statement.'}</span>
+                    <span className={`mt-2 block text-[10px] font-semibold leading-relaxed ${bankReferenceIsBookingCode ? 'text-rose-300' : 'text-slate-500'}`}>{bankReferenceIsBookingCode ? 'Use the bank reference, not a booking or internal confirmation reference.' : 'Use the unique transfer or credit reference shown on the hotel bank statement.'}</span>
                   </label>
                   <label className="block text-xs font-bold text-slate-300">Exact amount received (NGN)
                     <input required type="number" inputMode="decimal" min="0.01" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} className="mt-2 block w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-amber-400/50" />

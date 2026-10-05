@@ -77,3 +77,9 @@ export function parsePaymentReviewRoomOptions(value: unknown): PaymentReviewRoom
   }
   return { ...item, rooms } as PaymentReviewRoomOptions;
 }
+
+export function bankTransactionReference(booking: Pick<Booking, 'transactionReference' | 'bookingCode'> | null | undefined): string {
+  const reference = booking?.transactionReference?.trim() || '';
+  if (!reference || reference.toUpperCase().startsWith('MANUAL-') || reference.toUpperCase() === booking?.bookingCode?.trim().toUpperCase()) return '';
+  return reference;
+}

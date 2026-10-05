@@ -94,14 +94,14 @@ const StaffManagement: React.FC = () => {
   }, [filteredStaff, selectedProfileId, setSelectedProfileId]);
 
   useEffect(() => {
-    if (paginatedStaff.length > 0 && !selectedStaffId) {
+    if (paginatedStaff.length > 0 && !paginatedStaff.some(item => item.id === selectedStaffId)) {
       setSelectedStaffId(paginatedStaff[0].id);
     }
   }, [paginatedStaff, selectedStaffId]);
 
   useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
-  const selectedStaff = useMemo(() => staff.find(s => s.id === selectedStaffId), [staff, selectedStaffId]);
+  const selectedStaff = useMemo(() => paginatedStaff.find(s => s.id === selectedStaffId), [paginatedStaff, selectedStaffId]);
 
   const canPerformSuspension = (targetUser: StaffUser) => {
     if (!currentUser || currentUser.role !== UserRole.Admin) return false;
@@ -136,7 +136,7 @@ const StaffManagement: React.FC = () => {
             <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Staff</h1>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
+            <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
             <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
               <button onClick={() => { setEditingUser(null); setIsModalOpen(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg whitespace-nowrap"><UserPlus size={16} /> Add Staff</button>
             </PermissionWrapper>
@@ -208,9 +208,9 @@ const StaffManagement: React.FC = () => {
           <div className="px-8 py-4 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
              <div className="text-[10px] text-slate-600 font-black uppercase tracking-widest">{filteredStaff.length} Total</div>
              <div className="flex gap-2">
-                <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={18} /></button>
+                <button aria-label="Previous page" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={18} /></button>
                 <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[11px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
-                <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={18} /></button>
+                <button aria-label="Next page" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={18} /></button>
              </div>
           </div>
         </div>
@@ -224,7 +224,7 @@ const StaffManagement: React.FC = () => {
                  <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Staff Details</h3>
                  <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">Details</p>
               </div>
-              <button onClick={() => setSelectedStaffId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
+              <button aria-label="Close details" onClick={() => setSelectedStaffId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
             </div>
 
             <div className="flex flex-col items-center mb-10 pt-4">

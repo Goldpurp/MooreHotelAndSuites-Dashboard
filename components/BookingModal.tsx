@@ -28,7 +28,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
   initialData = null,
   paymentReviewRebooking = null,
 }) => {
-  const { rooms, addBooking, isRoomAvailable, setActiveTab, refreshData, guests, selectedGuestId } = useHotel();
+  const { rooms, addBooking, isRoomAvailable, setActiveTab, refreshData, guests } = useHotel();
   const isPaymentReviewRebooking = Boolean(paymentReviewRebooking);
   
   const getLocalDateStr = (offsetDays = 0) => {
@@ -107,12 +107,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
   const availableRooms = useMemo(() => {
     return rooms.filter(room => {
-      if (!room.isOnline) return false;
+      if (!room.isOnline || !validGuestCounts || room.capacity < adultCount + childCount) return false;
       const isFreeForDates = isRoomAvailable(room.id, formData.checkIn, formData.checkOut);
       if (!isFreeForDates) return false;
       return true;
     });
-  }, [rooms, formData.checkIn, formData.checkOut, isRoomAvailable]);
+  }, [rooms, formData.checkIn, formData.checkOut, isRoomAvailable, validGuestCounts, adultCount, childCount]);
 
   useEffect(() => {
     if (isPaymentReviewRebooking) return;
@@ -149,20 +149,6 @@ const BookingModal: React.FC<BookingModalProps> = ({
         guestPhone: initialData?.guestPhone || '',
         guestId: ''
       };
-
-      // If we have a selectedGuestId from the context (e.g. from Guests page), use it
-      if (selectedGuestId && !prefilled.guestEmail) {
-        const guest = guests?.find(g => g.id === selectedGuestId);
-        if (guest) {
-          prefilled = {
-            guestFirstName: guest.firstName,
-            guestLastName: guest.lastName,
-            guestEmail: guest.email,
-            guestPhone: guest.phone,
-            guestId: guest.id
-          };
-        }
-      }
 
       const reviewBooking = paymentReviewRebooking?.booking;
       setFormData({
@@ -633,7 +619,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                         ) : validationFields.includes('roomId') ? (
                            <span className="text-[8px] text-rose-500 font-black uppercase tracking-widest animate-pulse">Select a room to proceed</span>
                          ) : (
-                           <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{availableRooms.length} Rooms Available</span>
+                           <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{availableRooms.length} rooms fit the dates and guest count</span>
                          )}
                      </div>
                      {paymentReviewRebooking ? (
@@ -679,7 +665,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
                          <span>The guest has reviewed and accepted the <a href={policies?.privacyPolicyUrl || '#'} target="_blank" rel="noreferrer" className="text-brand-400">Privacy Notice</a> and <a href={policies?.bookingTermsUrl || '#'} target="_blank" rel="noreferrer" className="text-brand-400">Booking Terms</a>.</span>
                        </label>
                      )}
-                     <button type="button" onClick={validateAndShowConfirm} disabled={!canContinue} className={`w-full py-5 sm:py-7 rounded-2xl sm:rounded-[2rem] font-black text-[11px] sm:text-[13px] uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 ${!canContinue ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : isWalkIn ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-amber-900/20' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-900/20'}`}>
+                     <button aria-label="Next page" type="button" onClick={validateAndShowConfirm} disabled={!canContinue} className={`w-full py-5 sm:py-7 rounded-2xl sm:rounded-[2rem] font-black text-[11px] sm:text-[13px] uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 ${!canContinue ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : isWalkIn ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-amber-900/20' : 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-900/20'}`}>
                         {isPricing ? <><Loader2 size={18} className="animate-spin" /> Requesting current price</> : isPaymentReviewRebooking ? <>Review room assignment <ChevronRight size={18} strokeWidth={3} /></> : <>Get current price <ChevronRight size={18} strokeWidth={3} /></>}
                      </button>
                   </div>

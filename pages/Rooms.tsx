@@ -132,7 +132,7 @@ const Rooms: React.FC = () => {
       <div className="glass-card min-h-0 flex-1 rounded-2xl flex flex-col overflow-hidden border border-white/5 shadow-xl">
         <div className="px-6 py-4 border-b border-white/5 flex flex-col lg:flex-row items-center justify-between bg-slate-900/40 gap-4">
           <div className="flex items-center gap-3 flex-1 w-full max-w-2xl">
-             <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all shrink-0 ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
+             <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all shrink-0 ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
              <div className="relative flex-1">
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14}/>
                <input 
@@ -159,8 +159,8 @@ const Rooms: React.FC = () => {
             </div>
             
             <div className="flex gap-1 bg-black/40 p-1 rounded-xl border border-white/5 shrink-0 ml-auto lg:ml-0">
-               <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}><List size={16}/></button>
-               <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}><LayoutGrid size={16}/></button>
+               <button aria-label="List view" onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}><List size={16}/></button>
+               <button aria-label="Grid view" onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-slate-600'}`}><LayoutGrid size={16}/></button>
             </div>
           </div>
         </div>
@@ -206,11 +206,11 @@ const Rooms: React.FC = () => {
                         <td data-label="Actions" className="responsive-table-padding text-right">
                             <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                                <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
-                                 <button onClick={(e) => { e.stopPropagation(); setRoomForMaintenance(room); setIsMaintenanceModalOpen(true); }} className={`p-2 rounded-lg border transition-all ${room.status === RoomStatus.Maintenance ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-white/5 text-slate-600 border-white/5 hover:text-amber-500'}`}><Wrench size={14}/></button>
-                                 <button onClick={(e) => { e.stopPropagation(); setEditingRoom(room); setIsModalOpen(true); }} className="p-2 bg-white/5 text-slate-600 hover:text-blue-400 rounded-lg border border-white/5 transition-all"><Pencil size={14}/></button>
-                                 <button onClick={(e) => { e.stopPropagation(); setRoomToDelete(room); setIsDeleteModalOpen(true); }} className="p-2 bg-white/5 text-slate-600 hover:text-rose-500 rounded-lg border border-white/5 transition-all"><Trash2 size={14}/></button>
+                                 <button aria-label="Room maintenance" onClick={(e) => { e.stopPropagation(); setRoomForMaintenance(room); setIsMaintenanceModalOpen(true); }} className={`p-2 rounded-lg border transition-all ${room.status === RoomStatus.Maintenance ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-white/5 text-slate-600 border-white/5 hover:text-amber-500'}`}><Wrench size={14}/></button>
+                                 <button aria-label="Edit room" onClick={(e) => { e.stopPropagation(); setEditingRoom(room); setIsModalOpen(true); }} className="p-2 bg-white/5 text-slate-600 hover:text-blue-400 rounded-lg border border-white/5 transition-all"><Pencil size={14}/></button>
+                                 <button aria-label="Delete room" onClick={(e) => { e.stopPropagation(); setRoomToDelete(room); setIsDeleteModalOpen(true); }} className="p-2 bg-white/5 text-slate-600 hover:text-rose-500 rounded-lg border border-white/5 transition-all"><Trash2 size={14}/></button>
                                </PermissionWrapper>
-                               <button onClick={() => { setViewingRoom(room); setIsDetailOpen(true); }} className="p-2 bg-white/5 text-slate-600 hover:text-white rounded-lg border border-white/5 transition-all"><Eye size={14}/></button>
+                               <button aria-label="View details" onClick={() => { setViewingRoom(room); setIsDetailOpen(true); }} className="p-2 bg-white/5 text-slate-600 hover:text-white rounded-lg border border-white/5 transition-all"><Eye size={14}/></button>
                             </div>
                         </td>
                       </tr>
@@ -247,9 +247,9 @@ const Rooms: React.FC = () => {
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
            <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Total Rooms • {filteredRooms.length}</div>
            <div className="flex gap-2">
-              <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
+              <button aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
-              <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
+              <button aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
            </div>
         </div>
       </div>

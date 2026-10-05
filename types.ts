@@ -1,4 +1,9 @@
 export enum RoomStatus {
+  Dirty = "Dirty",
+  Clean = "Clean",
+  Inspected = "Inspected",
+  OutOfOrder = "OutOfOrder",
+  Unknown = "Unknown",
   Available = "Available",
   Occupied = "Occupied",
   Cleaning = "Cleaning",
@@ -171,6 +176,8 @@ export interface Booking {
   paymentStatus: PaymentStatus;
   paymentMethod?: string;
   transactionReference?: string;
+  paymentConfirmationMethod?: string | null;
+  refundReference?: string | null;
   createdAt: string;
   notes?: string;
   notificationMessage?: string;

@@ -355,7 +355,7 @@ const Auth: React.FC = () => {
                         }
                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono tracking-widest"
                       />
-                      <button
+                      <button aria-label={showPassword ? "Hide password" : "Show password"}
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1"
@@ -457,7 +457,7 @@ const Auth: React.FC = () => {
                     </div>
                   )}
 
-                  <button
+                  <button aria-label="Refresh data"
                     type="submit"
                     disabled={isLoading || !!success}
                     className="w-full bg-white text-slate-950 hover:bg-slate-200 disabled:bg-slate-800 disabled:text-slate-500 font-black py-4 rounded-2xl text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 mt-10 shadow-2xl active:scale-95"

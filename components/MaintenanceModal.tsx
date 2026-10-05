@@ -71,7 +71,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
                   {isEnteringMaintenance ? 'Initialize Maintenance?' : 'Mark Room as Ready?'}
                 </h3>
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-                  {isEnteringMaintenance 
+                  {isEnteringMaintenance
                     ? `Revoking ${room.name} availability will block all future automated asset allocations for this room.`
                     : `Confirm ${room.name} inspection completion. The asset will be restored to the live booking ledger.`
                   }
@@ -102,9 +102,9 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
             </div>
 
             <div className="px-8 py-6 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
-              <button 
-                onClick={handleConfirm} 
-                disabled={isSubmitting} 
+              <button aria-label="Room maintenance"
+                onClick={handleConfirm}
+                disabled={isSubmitting}
                 className={`w-full py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 ${isEnteringMaintenance ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-900/20' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20'}`}
               >
                 {isSubmitting ? (

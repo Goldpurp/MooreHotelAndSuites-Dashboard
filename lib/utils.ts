@@ -40,73 +40,39 @@ export const downloadCSV = (data: any[], filename: string) => {
  * @param title Title of the document.
  * @param filename Desired name of the file.
  */
-export const downloadPDF = (data: any[], title: string, filename: string) => {
-  if (!data || data.length === 0) return;
-
-  const doc = new jsPDF();
-  const headers = Object.keys(data[0]);
-  const rows = data.map(item => Object.values(item)) as any[][];
-
-  // Branding: Moore Hotel & Suites
-  doc.setFontSize(22);
-  doc.setTextColor(2, 6, 23); // Slate 950
-  doc.text("MOORE HOTEL & SUITES", 14, 22);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100, 116, 139); // Slate 500
-  doc.text("OPERATIONAL INTELLIGENCE & FORENSIC LEDGER", 14, 28);
-  
-  doc.setDrawColor(226, 232, 240); // Slate 200
-  doc.line(14, 32, 196, 32);
-
-  // Document Title
-  doc.setFontSize(16);
-  doc.setTextColor(2, 6, 23);
-  doc.text(title.toUpperCase(), 14, 45);
-  
-  doc.setFontSize(9);
-  doc.setTextColor(148, 163, 184); // Slate 400
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 50);
-
-  // Data Table
-  autoTable(doc, {
-    startY: 55,
-    head: [headers.map(h => h.toUpperCase())],
-    body: rows,
-    theme: 'grid',
-    headStyles: { 
-      fillColor: [2, 6, 23], 
-      textColor: [255, 255, 255], 
-      fontSize: 8, 
-      fontStyle: 'bold' 
-    },
-    styles: { 
-      fontSize: 7, 
-      cellPadding: 3,
-      valign: 'middle'
-    },
-    alternateRowStyles: { 
-      fillColor: [248, 250, 252] // Slate 50
-    },
-    margin: { top: 55 }
+export const createReportPDF = (data: Record<string, unknown>[], title: string) => {
+  const headers = data.length ? Object.keys(data[0]) : [];
+  const doc = new jsPDF({ orientation: headers.length > 5 ? 'landscape' : 'portrait' });
+  const width = doc.internal.pageSize.getWidth();
+  doc.setFontSize(18); doc.text('MOORE HOTEL & SUITES', 14, 18);
+  doc.setFontSize(12); doc.text(title, 14, 26);
+  doc.setFontSize(8); doc.text('Generated: ' + new Date().toLocaleString('en-GB'), 14, 33);
+  const format = (key: string, value: unknown) => {
+    if (value == null) return '';
+    if (/amount|total|paid|refund/i.test(key) && typeof value === 'number') return 'NGN ' + value.toLocaleString('en-NG', {minimumFractionDigits:2,maximumFractionDigits:2});
+    if (/checkin|checkout|createdat|date/i.test(key) && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0,10);
+    return String(value);
+  };
+  if (!data.length) doc.text('No records for this selection.', 14, 44);
+  else autoTable(doc, {
+    startY: 40,
+    head: [headers.map(key=>key.replace(/([a-z])([A-Z])/g,'$1 $2'))],
+    body: data.map(row=>headers.map(key=>format(key,row[key]))),
+    theme: 'grid', rowPageBreak: 'avoid', showHead: 'everyPage',
+    headStyles: {fillColor:[2,6,23],textColor:255,fontSize:8,fontStyle:'bold'},
+    styles: {fontSize:8,cellPadding:2,valign:'middle',overflow:'linebreak'},
+    alternateRowStyles:{fillColor:[248,250,252]},
+    columnStyles:Object.fromEntries(headers.map((key,index)=>[index,/^(ref|reference|bookingcode)$/i.test(key) ? {minCellWidth:30} : /transaction|bankreference/i.test(key) ? {minCellWidth:45} : /checkin|checkout|createdat/i.test(key) ? {minCellWidth:23} : {}])),
+    margin:{top:18,bottom:18,left:14,right:14}
   });
-
-  // Footer
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(148, 163, 184);
-    doc.text(
-      `MOORE HOTEL & SUITES • SECURITY PROTOCOL • Page ${i} of ${pageCount}`,
-      doc.internal.pageSize.getWidth() / 2,
-      doc.internal.pageSize.getHeight() - 10,
-      { align: 'center' }
-    );
+  const count=doc.getNumberOfPages();
+  for(let page=1;page<=count;page++){
+    doc.setPage(page);doc.setFontSize(8);
+    doc.text('Moore Hotels & Suites | Page '+page+' of '+count,width/2,doc.internal.pageSize.getHeight()-9,{align:'center'});
   }
-
-  doc.save(filename);
+  return doc;
 };
+export const downloadPDF = (data: Record<string, unknown>[], title: string, filename: string) => createReportPDF(data, title).save(filename);
 
 /**
  * Calculates password strength on a scale of 0-5.

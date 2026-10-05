@@ -10,7 +10,7 @@ import StaffSuspensionModal from '../components/StaffSuspensionModal';
 import { StaffUser, UserRole } from '../types';
 
 const ClientManagement: React.FC = () => {
-  const { staff, toggleStaffStatus, refreshData, currentUser, setSelectedGuestId, setActiveTab, selectedProfileId, setSelectedProfileId } = useHotel();
+  const { staff, toggleStaffStatus, refreshData, currentUser, setBookingGuestRequest, setActiveTab, selectedProfileId, setSelectedProfileId } = useHotel();
   const [isSuspensionOpen, setIsSuspensionOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState<StaffUser | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
@@ -65,10 +65,10 @@ const ClientManagement: React.FC = () => {
   useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
   useEffect(() => {
-    if (paginatedClients.length > 0 && !selectedStaffId) setSelectedStaffId(paginatedClients[0].id);
+    if (paginatedClients.length > 0 && !paginatedClients.some(item => item.id === selectedStaffId)) setSelectedStaffId(paginatedClients[0].id);
   }, [paginatedClients, selectedStaffId]);
 
-  const selectedClient = useMemo(() => staff.find(s => s.id === selectedStaffId), [staff, selectedStaffId]);
+  const selectedClient = useMemo(() => paginatedClients.find(s => s.id === selectedStaffId), [paginatedClients, selectedStaffId]);
 
   return (
     <div className="master-detail-workspace flex h-full min-h-0 flex-row gap-6 overflow-hidden">
@@ -81,7 +81,7 @@ const ClientManagement: React.FC = () => {
             </div>
             <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Guest List</h1>
           </div>
-          <button onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
+          <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
         </div>
 
         <div className="glass-card rounded-2xl flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
@@ -150,9 +150,9 @@ const ClientManagement: React.FC = () => {
           <div className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
              <div className="text-[9px] text-slate-700 font-black uppercase tracking-widest">Guest Sync • {filteredClients.length} Guests</div>
              <div className="flex gap-2">
-                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
+                <button aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
                 <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
+                <button aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
              </div>
           </div>
         </div>
@@ -166,7 +166,7 @@ const ClientManagement: React.FC = () => {
                  <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Guest Details</h3>
                  <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">Guest History</p>
               </div>
-              <button onClick={() => setSelectedStaffId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
+              <button aria-label="Close details" onClick={() => setSelectedStaffId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
             </div>
 
             <div className="flex flex-col items-center mb-10 pt-4">
@@ -197,7 +197,7 @@ const ClientManagement: React.FC = () => {
             </div>
 
             <div className="mt-10 pt-6 border-t border-white/10">
-              <button onClick={() => { setSelectedGuestId(selectedClient.id); setActiveTab('bookings'); }} className="w-full py-5 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3"><UserPlus size={20} strokeWidth={3}/> NEW BOOKING</button>
+              <button onClick={() => { setBookingGuestRequest({ guestFirstName: selectedClient.name.split(' ')[0] || '', guestLastName: selectedClient.name.split(' ').slice(1).join(' '), guestEmail: selectedClient.email, guestPhone: selectedClient.phone || '' }); setActiveTab('bookings'); }} className="w-full py-5 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3"><UserPlus size={20} strokeWidth={3}/> NEW BOOKING</button>
             </div>
           </div>
         </div>

@@ -35,6 +35,7 @@ const Guests: React.FC = () => {
     setActiveTab,
     selectedGuestId,
     setSelectedGuestId,
+    setBookingGuestRequest,
     setSelectedBookingId,
     refreshData,
   } = useHotel();
@@ -204,7 +205,7 @@ const Guests: React.FC = () => {
               {activeTab === "in-house" ? "Checked In" : "Past Guests"}
             </h1>
           </div>
-          <button
+          <button aria-label="Refresh data"
             onClick={handleManualRefresh}
             className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? "animate-spin" : ""}`}
           >
@@ -299,6 +300,9 @@ const Guests: React.FC = () => {
                     return (
                       <tr
                         key={resident.id}
+                        tabIndex={0}
+                        aria-label={'Open guest details for ' + resident.firstName + ' ' + resident.lastName}
+                        onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setLocalSelectedId(resident.id); } }}
                         onClick={() => setLocalSelectedId(resident.id)}
                         className={`hover:bg-white/[0.02] transition-all cursor-pointer group border-l-4 ${localSelectedId === resident.id ? "bg-white/[0.04] border-brand-500" : "border-transparent"}`}
                       >
@@ -387,9 +391,9 @@ const Guests: React.FC = () => {
                         <td data-label="Stay" className="responsive-table-padding col-priority-low">
                           <div className="flex items-center gap-2 adaptive-text-xs font-bold text-slate-600">
                             <span className={isOverdue ? "text-rose-400" : ""}>
-                              {active
+                              {visibleBooking
                                 ? new Date(
-                                    active.booking.checkIn,
+                                    visibleBooking.checkIn,
                                   ).toLocaleDateString("en-GB", {
                                     day: "2-digit",
                                     month: "short",
@@ -400,11 +404,11 @@ const Guests: React.FC = () => {
                             <span
                               className={`uppercase ${isOverdue ? "text-rose-500" : ""}`}
                             >
-                              {active
+                              {visibleBooking
                                 ? isOverdue
-                                  ? `OVERDUE (${new Date(active.booking.checkOut).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })})`
+                                  ? `OVERDUE (${new Date(visibleBooking.checkOut).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })})`
                                   : new Date(
-                                      active.booking.checkOut,
+                                      visibleBooking.checkOut,
                                     ).toLocaleDateString("en-GB", {
                                       day: "2-digit",
                                       month: "short",
@@ -445,7 +449,7 @@ const Guests: React.FC = () => {
               {filteredResidents.length} Guests
             </span>
             <div className="flex gap-2">
-              <button
+              <button aria-label="Previous page"
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
                 className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"
@@ -457,7 +461,7 @@ const Guests: React.FC = () => {
                   {currentPage} / {totalPages || 1}
                 </span>
               </div>
-              <button
+              <button aria-label="Next page"
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                 }
@@ -483,7 +487,7 @@ const Guests: React.FC = () => {
                   History
                 </p>
               </div>
-              <button
+              <button aria-label="Close details"
                 onClick={() => setSelectedGuestId(null)}
                 className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"
               >
@@ -660,7 +664,12 @@ const Guests: React.FC = () => {
                         </div>
                         <button
                           onClick={() => {
-                            setSelectedGuestId(selectedResident.id);
+                            setBookingGuestRequest({
+                      guestFirstName: selectedResident.firstName,
+                      guestLastName: selectedResident.lastName,
+                      guestEmail: selectedResident.email,
+                      guestPhone: selectedResident.phone,
+                    });
                             setActiveTab("bookings");
                             setSelectedBookingId(stay.id);
                           }}
@@ -695,7 +704,12 @@ const Guests: React.FC = () => {
               ) : (
                 <button
                   onClick={() => {
-                    setSelectedGuestId(selectedResident.id);
+                    setBookingGuestRequest({
+                      guestFirstName: selectedResident.firstName,
+                      guestLastName: selectedResident.lastName,
+                      guestEmail: selectedResident.email,
+                      guestPhone: selectedResident.phone,
+                    });
                     setActiveTab("bookings");
                   }}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
