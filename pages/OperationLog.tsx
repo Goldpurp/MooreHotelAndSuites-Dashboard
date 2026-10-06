@@ -31,19 +31,17 @@ const getActivityDescription = (record: VisitRecord) => {
       return `${guest} was checked out of ${room}.`;
     case VisitAction.VOID:
       return `The reservation for ${guest} was cancelled.`;
-    case 'NoShow':
-      return `${guest} was marked as a no-show for ${room}.`;
     default:
       return `A hotel activity was recorded for ${guest}.`;
   }
 };
 
 const OperationLog: React.FC = () => {
-  const { visitHistory, refreshData, bookings, rooms, selectedVisitRecordId, setSelectedVisitRecordId } = useHotel();
+  const { visitHistory, refreshData, selectedVisitRecordId, setSelectedVisitRecordId } = useHotel();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [inspectingRecord, setInspectingRecord] = useState<VisitRecord | null>(null);
   const [localSearch, setLocalSearch] = useState('');
-  const [activeProtocol, setActiveProtocol] = useState<'All' | VisitAction | 'NoShow'>('All');
+  const [activeProtocol, setActiveProtocol] = useState<'All' | VisitAction>('All');
   const [currentPage, setCurrentPage] = useState(1);
   const detailsModalRef = useAccessibleModal(Boolean(inspectingRecord), () => setInspectingRecord(null));
   const PAGE_SIZE = 15;
@@ -53,44 +51,14 @@ const OperationLog: React.FC = () => {
   const filteredLogs = useMemo(() => {
     const q = localSearch.toLowerCase().trim();
     
-    // Build base logs from visitHistory
-    let baseLogs: any[] = (visitHistory || []).map(log => ({ ...log }));
-
-    // Inject No-Shows from bookings if they are in the past
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const noShows = (bookings || [])
-      .filter(b => (b.status === 'Reserved' || b.status === 'Confirmed') && new Date(b.checkIn) < today)
-      .map(b => {
-        const room = rooms.find(r => r.id === b.roomId);
-        return {
-          id: `noshow-${b.id}`,
-          guestId: b.guestId || '',
-          guestName: `${b.guestFirstName} ${b.guestLastName}`,
-          roomId: b.roomId,
-          roomNumber: room?.name || '---',
-          bookingCode: b.bookingCode,
-          action: 'NoShow', // Custom action for display
-          timestamp: b.checkIn,
-          authorizedBy: 'System Audit'
-        };
-      });
-
-    const combinedLogs = [...baseLogs, ...noShows];
-
-    return combinedLogs
-      .filter((log: any) => {
-        if (!log) return false;
+    return visitHistory
+      .filter((log) => {
         const matchesSearch = (log.guestName || '').toLowerCase().includes(q) || (log.bookingCode || '').toLowerCase().includes(q) || (log.roomNumber || '').toLowerCase().includes(q) || (log.authorizedBy || '').toLowerCase().includes(q);
-        
-        const matchesProtocol = activeProtocol === 'All' || 
-                               (activeProtocol === 'NoShow' ? log.action === 'NoShow' : log.action === activeProtocol);
-        
+        const matchesProtocol = activeProtocol === 'All' || log.action === activeProtocol;
         return matchesSearch && matchesProtocol;
       })
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [visitHistory, bookings, rooms, localSearch, activeProtocol]);
+  }, [visitHistory, localSearch, activeProtocol]);
 
   const totalPages = Math.ceil(filteredLogs.length / PAGE_SIZE);
 
@@ -144,7 +112,6 @@ const OperationLog: React.FC = () => {
       case VisitAction.CHECK_OUT: return { label: 'Check Out', classes: 'bg-amber-500/10 text-amber-400 border-amber-500/20', icon: <LogOut size={10} /> };
       case VisitAction.RESERVATION: return { label: 'New Booking', classes: 'bg-blue-600/10 text-blue-400 border-blue-600/20', icon: <Calendar size={10} /> };
       case VisitAction.VOID: return { label: 'Cancelled', classes: 'bg-rose-500/10 text-rose-400 border-rose-500/20', icon: <X size={10} /> };
-      case 'NoShow' as any: return { label: 'No Show', classes: 'bg-rose-900/20 text-rose-500 border-rose-900/30', icon: <X size={10} /> };
       default: return { label: 'Standard', classes: 'bg-slate-500/10 text-slate-400 border-slate-500/20', icon: <Clock size={10} /> };
     }
   };
@@ -172,8 +139,8 @@ const OperationLog: React.FC = () => {
               <input type="text" placeholder="Search logs..." value={localSearch} onChange={(e) => setLocalSearch(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none font-medium" />
            </div>
            <div className="flex items-center gap-1.5 p-1.5 bg-black/40 rounded-xl border border-white/5 overflow-x-auto no-scrollbar">
-              {(['All', VisitAction.RESERVATION, VisitAction.CHECK_IN, VisitAction.CHECK_OUT, VisitAction.VOID, 'NoShow'] as const).map((p) => (
-                <button key={p} onClick={() => setActiveProtocol(p)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeProtocol === p ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300'}`}>{p === 'All' ? 'ALL' : p === 'NoShow' ? 'NO SHOW' : p.toUpperCase()}</button>
+              {(['All', VisitAction.RESERVATION, VisitAction.CHECK_IN, VisitAction.CHECK_OUT, VisitAction.VOID] as const).map((p) => (
+                <button key={p} onClick={() => setActiveProtocol(p)} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeProtocol === p ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300'}`}>{p === 'All' ? 'ALL' : p.toUpperCase()}</button>
               ))}
            </div>
         </div>
