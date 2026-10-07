@@ -49,7 +49,8 @@ const Dashboard: React.FC = () => {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refreshData();
+    const refreshed = await refreshData();
+    if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
       title: 'Dashboard Updated',
       description: 'The dashboard charts and stats have been updated.'

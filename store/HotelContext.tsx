@@ -28,6 +28,7 @@ import {
   BookingInitResponse,
 } from "../types";
 import { api } from "../lib/api";
+import { parseClientAccounts } from "../lib/clientAccounts";
 import { recoverStaffSession } from "../lib/sessionRecovery";
 import { loadAllPages, Page } from "../lib/pagination";
 import { playNotificationSound } from "../lib/notificationSound";
@@ -74,6 +75,8 @@ interface HotelContextType {
   isAuthenticated: boolean;
   isInitialLoading: boolean;
   sessionRecoveryError: string | null;
+  dataLoadError: string | null;
+  isDataRefreshing: boolean;
   retrySession: () => void;
   isSidebarCollapsed: boolean;
   activeTab: string;
@@ -138,7 +141,7 @@ interface HotelContextType {
     updates: Partial<AppUser>,
     options?: { persist?: boolean },
   ) => Promise<void>;
-  refreshData: (options?: { silent?: boolean }) => Promise<void>;
+  refreshData: (options?: { silent?: boolean }) => Promise<boolean>;
 }
 
   const toCanonicalStatus = (val: string | undefined): any => {
@@ -226,17 +229,6 @@ export const normalizeBooking = (b: any): Booking => {
 const HotelContext = createContext<HotelContextType | undefined>(undefined);
 
 const VALID_TABS = new Set([
-  "reservation_operations",
-  "pricing",
-  "addons",
-  "guest_crm",
-  "client_accounts",
-  "channels",
-  "retry_jobs",
-  "inventory",
-  "folios",
-  "maintenance",
-  "daily_operations",
   "housekeeping",
   "dashboard",
   "bookings",
@@ -282,6 +274,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   const [sessionRecoveryError, setSessionRecoveryError] = useState<string | null>(null);
   const [sessionAttempt, setSessionAttempt] = useState(0);
   const dataRequestRef = useRef(0);
+  const [dataLoadError, setDataLoadError] = useState<string | null>(null);
+  const [isDataRefreshing, setIsDataRefreshing] = useState(false);
   const retrySession = () => { setSessionRecoveryError(null); setIsInitialLoading(true); setSessionAttempt(value => value + 1); };
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [userRole, setUserRole] = useState<UserRole>(UserRole.Staff);
@@ -330,6 +324,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       setPaymentBookings([]);
       setGuests([]);
       setStaff([]);
+      setDataLoadError(null);
+      setIsDataRefreshing(false);
       setNotifications([]);
       setAuditLogs([]);
       setVisitHistory([]);
@@ -463,12 +459,13 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = api.getToken();
     if (!token) {
       setIsInitialLoading(false);
-      return;
+      return false;
     }
 
+    setIsDataRefreshing(true);
     try {
       const profile = normalizeUser(await api.get<any>("/api/profile/me"));
-      if (api.getToken() !== token || requestId !== dataRequestRef.current) return;
+      if (api.getToken() !== token || requestId !== dataRequestRef.current) return false;
       if (!profile || profile.role === UserRole.Client) {
         throw new Error("The signed-in staff profile is unavailable.");
       }
@@ -504,7 +501,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
         operationsRead ? api.get("/api/visit-records") : Promise.resolve(null),
       ]);
 
-      if (api.getToken() !== token || requestId !== dataRequestRef.current) return;
+      if (api.getToken() !== token || requestId !== dataRequestRef.current) return false;
       const rawRooms = normalizeData(roomsRes);
       const normalizedRooms = rawRooms.map((r: any) => {
         const enumKey = (value: unknown) => String(value ?? "")
@@ -577,9 +574,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       const normalizedClients =
         clientsRes === null || !privileged
           ? null
-          : normalizeData(clientsRes)
-              .map((u) => normalizeUser(u))
-              .filter((u): u is StaffUser => u !== null);
+          : parseClientAccounts(clientsRes);
 
       setRooms(normalizedRooms);
       setBookings(normalizeData(bookingsRes).map(normalizeBooking));
@@ -617,7 +612,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
       if (visitHistoryRes !== null) {
         setVisitHistory(normalizeData(visitHistoryRes).map(normalizeVisitRecord));
       }
+      setDataLoadError(null);
+      return true;
     } catch (error: any) {
+      if (requestId !== dataRequestRef.current || api.getToken() !== token) return false;
+      setDataLoadError(error instanceof Error ? error.message : 'Hotel data could not be loaded.');
       console.error("System Sync Failed:", error);
       if (!options.silent) {
         sileo.error({
@@ -625,8 +624,12 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
           description: 'The system could not update. Some data might be old.'
         });
       }
+      return false;
     } finally {
-      if (requestId === dataRequestRef.current) setIsInitialLoading(false);
+      if (requestId === dataRequestRef.current) {
+        setIsInitialLoading(false);
+        setIsDataRefreshing(false);
+      }
     }
   }, []);
 
@@ -733,6 +736,8 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = () => {
     dataRequestRef.current++;
     setSessionRecoveryError(null);
+    setDataLoadError(null);
+    setIsDataRefreshing(false);
     api.removeToken();
     setIsAuthenticated(false);
     setCurrentUser(null);
@@ -1072,6 +1077,8 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     isAuthenticated,
     isInitialLoading,
     sessionRecoveryError,
+    dataLoadError,
+    isDataRefreshing,
     retrySession,
     isSidebarCollapsed,
     activeTab,

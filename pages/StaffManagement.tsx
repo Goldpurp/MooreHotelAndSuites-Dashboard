@@ -52,7 +52,8 @@ const StaffManagement: React.FC = () => {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refreshData();
+    const refreshed = await refreshData();
+    if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
       title: 'Staff List Updated',
       description: 'The staff list has been updated.'

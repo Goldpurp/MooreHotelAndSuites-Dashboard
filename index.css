@@ -309,6 +309,8 @@ textarea {
     position: fixed;
     z-index: 80;
     inset: 4.75rem 0.75rem calc(5.75rem + env(safe-area-inset-bottom));
+    height: auto;
+    background: #0a0f1a;
     width: auto;
     min-width: 0;
     max-width: none;

@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { CheckCircle2, RefreshCw, ShieldCheck, ChevronLeft, ChevronRight, X, Eye } from "lucide-react";
 import { api } from "../lib/api";
 import { sileo } from "sileo";
 
-import { normalizePrivacyRequest, privacyRequestClosed, PrivacyRequest, RequestStatus } from '../lib/privacyRequests';
+import { parsePrivacyRequestPage, privacyRequestClosed, PrivacyRequest, RequestStatus } from '../lib/privacyRequests';
 
 interface Draft {
   status: RequestStatus;
@@ -40,24 +40,28 @@ const PrivacyRequests: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const pageSize = 50;
+  const requestSequence = useRef(0);
 
   const load = useCallback(async () => {
+    const sequence = ++requestSequence.current;
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get<any>("/api/privacy/requests", { params: { page: String(page), pageSize: String(pageSize) } });
-      const items = (response.items || response.Items || []).map(normalizePrivacyRequest);
-      setTotalCount(response.totalCount ?? response.TotalCount ?? items.length);
+      const response = await api.get<unknown>("/api/privacy/requests", { params: { page: String(page), pageSize: String(pageSize) } });
+      const { items, totalCount } = parsePrivacyRequestPage(response, page, pageSize);
+      if (sequence !== requestSequence.current) return;
+      setTotalCount(totalCount);
+      setSelectedId(current => items.some(item => item.id === current) ? current : null);
       setRequests(items);
       setDrafts(Object.fromEntries(items.map((request: PrivacyRequest) => [request.id, emptyDraft(request)])));
     } catch (error) {
-      setError(error instanceof Error ? error.message : "The queue could not be loaded.");
+      if (sequence === requestSequence.current) setError(error instanceof Error ? error.message : "The queue could not be loaded.");
     } finally {
-      setLoading(false);
+      if (sequence === requestSequence.current) setLoading(false);
     }
   }, [page]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void load(); return () => { requestSequence.current++; }; }, [load]);
 
   const updateDraft = (id: string, changes: Partial<Draft>) =>
     setDrafts((current) => ({ ...current, [id]: { ...current[id], ...changes } }));
@@ -121,7 +125,7 @@ const PrivacyRequests: React.FC = () => {
               <th className="responsive-table-padding">Request</th><th className="responsive-table-padding">Requested</th><th className="responsive-table-padding">Due</th><th className="responsive-table-padding">Status</th><th className="responsive-table-padding text-right">Actions</th>
             </tr></thead>
             <tbody className="divide-y divide-white/5">
-              {!loading && !error && requests.length === 0 && <tr><td colSpan={5} className="py-32 text-center text-slate-700 adaptive-text-sm font-black uppercase tracking-widest">No privacy requests</td></tr>}
+              {!loading && !error && requests.length === 0 && <tr><td colSpan={5} className="px-6 py-24 text-center"><p className="adaptive-text-sm font-black uppercase tracking-widest text-slate-400">No privacy requests submitted</p><p className="mt-3 text-sm text-slate-500">Guest requests for data access, correction or deletion appear here after submission.</p></td></tr>}
               {requests.map((request) => <tr key={request.id} onClick={() => setSelectedId(request.id)} className={`hover:bg-white/[0.02] transition-all group border-l-4 cursor-pointer ${selectedId === request.id ? 'bg-white/[0.04] border-brand-500' : 'border-transparent'}`}>
                 <td data-label="Request" className="responsive-table-padding"><button type="button" onClick={() => setSelectedId(request.id)} className="adaptive-text-sm font-black text-white uppercase hover:text-brand-400">{request.type}</button></td>
                 <td data-label="Requested" className="responsive-table-padding text-xs text-slate-400">{new Date(request.requestedAtUtc).toLocaleDateString('en-GB')}</td>
@@ -133,7 +137,7 @@ const PrivacyRequests: React.FC = () => {
           </table>
         </div>
         <nav aria-label="Privacy request pages" className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
-          <div className="text-[9px] text-slate-700 font-black uppercase tracking-widest">Total requests • {totalCount}</div>
+          <div className="text-[9px] text-slate-700 font-black uppercase tracking-widest">{loading ? 'Loading requests…' : error ? 'Privacy requests unavailable' : `Total requests • ${totalCount}`}</div>
           <div className="flex gap-2">
             <button type="button" aria-label="Previous page" disabled={page === 1 || loading || saving !== null} onClick={() => { setSelectedId(null); setPage((current) => current - 1); }} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
             <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{page} / {Math.max(1, Math.ceil(totalCount / pageSize))}</span></div>

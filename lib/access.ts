@@ -27,20 +27,8 @@ export const canReadOperations = (user: AppUser | null) => canManageReservations
 export const canManageHousekeeping = (user: AppUser | null) =>
   isPrivileged(user) || (user?.role === UserRole.Staff && department(user) === 'housekeeping');
 
-export const canManageMaintenance = (user: AppUser | null) => isPrivileged(user) || (user?.role === UserRole.Staff && ["maintenance", "engineering"].includes(department(user)));
-
 export const canOpenTab = (user: AppUser | null, tab: string) => {
   switch (tab) {
-    case "reservation_operations": return canManageReservations(user);
-    case "pricing": return isPrivileged(user);
-    case "addons": return canReadReservations(user);
-    case "guest_crm": return canReadGuestPii(user);
-    case "client_accounts": return isPrivileged(user);
-    case "channels": return isPrivileged(user);
-    case "retry_jobs": return isPrivileged(user);
-    case "inventory": return isPrivileged(user);
-    case "maintenance": return canManageMaintenance(user);
-    case "daily_operations": return canReadOperations(user);
     case "housekeeping":
       return canManageHousekeeping(user);
     case "dashboard":
@@ -56,7 +44,6 @@ export const canOpenTab = (user: AppUser | null, tab: string) => {
       return canReadReservations(user);
     case "guests":
       return canReadGuestPii(user);
-    case "folios":
     case "settlements":
       return canReadFolios(user);
     case "settings":
@@ -67,4 +54,4 @@ export const canOpenTab = (user: AppUser | null, tab: string) => {
 };
 
 export const firstAllowedTab = (user: AppUser | null) =>
-  ["dashboard", "bookings", "rooms", "guests", "settlements", "housekeeping", "maintenance", "daily_operations", "settings"].find((tab) => canOpenTab(user, tab)) || "settings";
+  ["dashboard", "bookings", "rooms", "guests", "settlements", "housekeeping", "settings"].find((tab) => canOpenTab(user, tab)) || "settings";
