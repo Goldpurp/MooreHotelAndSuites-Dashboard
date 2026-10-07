@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { 
   Search, ShieldCheck, RefreshCw, Mail, Phone, ChevronLeft, ChevronRight, 
@@ -8,32 +8,53 @@ import { sileo } from 'sileo';
 import RoleBadge from '../components/RoleBadge';
 import StaffSuspensionModal from '../components/StaffSuspensionModal';
 import { StaffUser, UserRole } from '../types';
+import { api } from '../lib/api';
+import { parseClientAccounts } from '../lib/clientAccounts';
 
 const ClientManagement: React.FC = () => {
-  const { staff, toggleStaffStatus, refreshData, currentUser, setBookingGuestRequest, setActiveTab, selectedProfileId, setSelectedProfileId } = useHotel();
+  const { toggleStaffStatus, currentUser, setBookingGuestRequest, setActiveTab, selectedProfileId, setSelectedProfileId } = useHotel();
   const [isSuspensionOpen, setIsSuspensionOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState<StaffUser | null>(null);
-  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Suspended'>('All');
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [clients, setClients] = useState<StaffUser[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const requestSequence = useRef(0);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;
 
-  const handleManualRefresh = async () => {
+  const loadClients = useCallback(async () => {
+    const sequence = ++requestSequence.current;
     setIsRefreshing(true);
-    await refreshData();
-    sileo.success({
-      title: 'List Updated',
-      description: 'The guest list has been updated.'
-    });
-    setTimeout(() => setIsRefreshing(false), 800);
+    setLoadError(null);
+    try {
+      const result = parseClientAccounts(await api.get<unknown>('/api/admin/management/clients'));
+      if (sequence !== requestSequence.current) return false;
+      setClients(result);
+      setSelectedStaffId(current => current === undefined ? result[0]?.id ?? null : result.some(client => client.id === current) ? current : null);
+      return true;
+    } catch (error) {
+      if (sequence === requestSequence.current) setLoadError(error instanceof Error ? error.message : 'Client accounts could not be loaded.');
+      return false;
+    } finally {
+      if (sequence === requestSequence.current) setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadClients();
+    return () => { requestSequence.current++; };
+  }, [loadClients]);
+
+  const handleManualRefresh = async () => {
+    if (await loadClients()) sileo.success({ title: 'Clients updated', description: 'Client accounts have been refreshed.' });
   };
 
   const filteredClients = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    const allClients = (staff || []).filter(s => s && s.role === UserRole.Client);
-    return allClients
+    return clients
       .filter(s => {
         const matchesSearch = (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q);
         const sStatus = String(s.status).toLowerCase();
@@ -41,7 +62,7 @@ const ClientManagement: React.FC = () => {
         return matchesSearch && matchesStatus;
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [staff, searchQuery, statusFilter]);
+  }, [clients, searchQuery, statusFilter]);
 
   const totalPages = Math.ceil(filteredClients.length / PAGE_SIZE);
 
@@ -65,7 +86,7 @@ const ClientManagement: React.FC = () => {
   useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
   useEffect(() => {
-    if (paginatedClients.length > 0 && !paginatedClients.some(item => item.id === selectedStaffId)) setSelectedStaffId(paginatedClients[0].id);
+    if (selectedStaffId && paginatedClients.length > 0 && !paginatedClients.some(item => item.id === selectedStaffId)) setSelectedStaffId(paginatedClients[0].id);
   }, [paginatedClients, selectedStaffId]);
 
   const selectedClient = useMemo(() => paginatedClients.find(s => s.id === selectedStaffId), [paginatedClients, selectedStaffId]);
@@ -77,18 +98,18 @@ const ClientManagement: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
-              <p className="adaptive-text-xs text-emerald-400 font-black uppercase tracking-widest leading-none">Guests</p>
+              <p className="adaptive-text-xs text-emerald-400 font-black uppercase tracking-widest leading-none">Accounts</p>
             </div>
-            <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Guest List</h1>
+            <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Clients</h1>
           </div>
-          <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
+          <button aria-label="Refresh clients" disabled={isRefreshing} onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
         </div>
 
         <div className="glass-card rounded-2xl flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
           <div className="px-6 py-4 border-b border-white/5 bg-slate-950/60 flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-emerald-500 transition-colors" size={14} />
-              <input type="text" placeholder="Search for guests..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-10 pr-4 adaptive-text-xs text-white outline-none font-bold placeholder:text-slate-800" />
+              <input type="text" placeholder="Search for clients..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-10 pr-4 adaptive-text-xs text-white outline-none font-bold placeholder:text-slate-800" />
             </div>
             <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
                {(['All', 'Active', 'Suspended'] as const).map(f => (
@@ -97,19 +118,25 @@ const ClientManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="scroll-pane min-h-0 flex-1 overflow-auto">
+          <div className="scroll-pane min-h-0 flex-1 overflow-auto" aria-busy={isRefreshing}>
+            {isRefreshing && <p role="status" className="p-6 text-sm text-slate-300">Loading client accounts…</p>}
+            {loadError && <p role="alert" className="m-4 rounded-xl border border-rose-500/30 p-4 text-sm text-rose-300">{loadError} Use Refresh to try again.</p>}
             <table className="mobile-card-table w-full text-left min-w-[700px]">
               <thead>
                 <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-950/40">
-                  <th className="responsive-table-padding">Guest Name</th>
+                  <th className="responsive-table-padding">Client Name</th>
                   <th className="responsive-table-padding col-priority-med">Joined</th>
                   <th className="responsive-table-padding text-center">Status</th>
                   <th className="responsive-table-padding text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {paginatedClients.length === 0 ? (
-                  <tr><td colSpan={4} className="py-32 text-center text-slate-700 adaptive-text-sm font-black uppercase tracking-widest">No guests found</td></tr>
+                {!isRefreshing && !loadError && paginatedClients.length === 0 ? (
+                  <tr><td colSpan={4} className="px-6 py-24 text-center">
+                    <p className="adaptive-text-sm font-black uppercase tracking-widest text-slate-400">{clients.length ? 'No matching clients' : 'No client accounts yet'}</p>
+                    <p className="mt-3 text-sm text-slate-500">{clients.length ? 'Try another name, email or status filter.' : 'Registered online accounts appear here. Booking guests are listed in Guests.'}</p>
+                    {!clients.length && <button type="button" onClick={() => setActiveTab('guests')} className="mt-4 rounded-xl border border-white/10 px-4 py-2 text-sm font-bold text-brand-400 hover:bg-white/5">View guests</button>}
+                  </td></tr>
                 ) : (
                   paginatedClients.map((client) => {
                     const isActive = String(client.status).toLowerCase() === 'active';
@@ -136,7 +163,7 @@ const ClientManagement: React.FC = () => {
                         <td data-label="Actions" className="responsive-table-padding text-right">
                            <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
                              {currentUser?.role === UserRole.Admin ? (
-                               <button onClick={() => { setUserToToggle(client); setIsSuspensionOpen(true); }} className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isActive ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-600' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-600 hover:text-white'}`}><Shield size={16} /></button>
+                               <button aria-label={`${isActive ? 'Suspend' : 'Activate'} ${client.name}`} disabled={isRefreshing || Boolean(loadError)} onClick={() => { setUserToToggle(client); setIsSuspensionOpen(true); }} className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isActive ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-600' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-600 hover:text-white'}`}><Shield size={16} /></button>
                              ) : <Shield size={16} className="text-slate-800 opacity-20 mr-2" />}
                            </div>
                         </td>
@@ -148,7 +175,7 @@ const ClientManagement: React.FC = () => {
             </table>
           </div>
           <div className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
-             <div className="text-[9px] text-slate-700 font-black uppercase tracking-widest">Guest Sync • {filteredClients.length} Guests</div>
+             <div className="text-[9px] text-slate-700 font-black uppercase tracking-widest">{isRefreshing ? 'Loading accounts…' : loadError ? 'Client accounts unavailable' : `Client accounts • ${filteredClients.length}`}</div>
              <div className="flex gap-2">
                 <button aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
                 <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
@@ -163,8 +190,8 @@ const ClientManagement: React.FC = () => {
           <div className="glass-card scroll-pane rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
             <div className="flex justify-between items-start mb-10">
               <div className="space-y-1">
-                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Guest Details</h3>
-                 <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">Guest History</p>
+                 <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">Client Details</h3>
+                 <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">Account details</p>
               </div>
               <button aria-label="Close details" onClick={() => setSelectedStaffId(null)} className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"><X size={18}/></button>
             </div>
@@ -206,7 +233,7 @@ const ClientManagement: React.FC = () => {
       <StaffSuspensionModal
         isOpen={isSuspensionOpen}
         onClose={() => setIsSuspensionOpen(false)}
-        onConfirm={toggleStaffStatus}
+        onConfirm={async (id) => { await toggleStaffStatus(id); await loadClients(); }}
         user={userToToggle}
       />
     </div>

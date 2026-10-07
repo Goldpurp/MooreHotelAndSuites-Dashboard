@@ -44,7 +44,8 @@ const Rooms: React.FC = () => {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refreshData();
+    const refreshed = await refreshData();
+    if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
       title: 'Rooms Updated',
       description: 'The room list and status have been updated.'

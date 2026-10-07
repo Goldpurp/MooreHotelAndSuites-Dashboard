@@ -63,7 +63,8 @@ const Reports: React.FC = () => {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refreshData();
+    const refreshed = await refreshData();
+    if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
       title: 'Analytics Updated',
       description: 'The business charts and logs have been updated.'

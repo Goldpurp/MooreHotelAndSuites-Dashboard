@@ -295,7 +295,8 @@ const Bookings: React.FC<BookingsProps> = ({
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refreshData();
+    const refreshed = await refreshData();
+    if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
       title: 'Bookings Updated',
       description: 'The booking list has been updated.'

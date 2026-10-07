@@ -183,7 +183,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
       throw new Error(
         isMultipart
           ? 'The upload timed out before the hotel service responded. Use fewer or smaller images and try again.'
-          : 'Connection timed out. Check that the correct API profile is running.',
+          : 'The hotel service did not respond in time. Please try again.',
       );
     }
     if (error instanceof TypeError && /fetch|network|load/i.test(error.message)) {

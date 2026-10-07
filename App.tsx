@@ -15,17 +15,6 @@ import type { Booking } from "./types";
 import type { PaymentReviewRebooking } from "./lib/paymentReview";
 
 // Lazy loading pages
-const ReservationOperations = lazy(() => import("./pages/ReservationOperations"));
-const Pricing = lazy(() => import("./pages/Pricing"));
-const AddOns = lazy(() => import("./pages/AddOns"));
-const GuestCrm = lazy(() => import("./pages/GuestCrm"));
-const ClientAccounts = lazy(() => import("./pages/ClientAccounts"));
-const Channels = lazy(() => import("./pages/Channels"));
-const RetryJobs = lazy(() => import("./pages/RetryJobs"));
-const Inventory = lazy(() => import("./pages/Inventory"));
-const Folios = lazy(() => import("./pages/Folios"));
-const Maintenance = lazy(() => import("./pages/Maintenance"));
-const DailyOperations = lazy(() => import("./pages/DailyOperations"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Bookings = lazy(() => import("./pages/Bookings"));
 const Rooms = lazy(() => import("./pages/Rooms"));
@@ -50,6 +39,8 @@ const AppContent: React.FC = () => {
     isAuthenticated,
     isInitialLoading,
     sessionRecoveryError,
+    dataLoadError,
+    isDataRefreshing,
     retrySession,
     isSidebarCollapsed,
     activeTab,
@@ -201,17 +192,6 @@ const AppContent: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "reservation_operations": return <ReservationOperations />;
-      case "pricing": return <Pricing />;
-      case "addons": return <AddOns />;
-      case "guest_crm": return <GuestCrm />;
-      case "client_accounts": return <ClientAccounts />;
-      case "channels": return <Channels />;
-      case "retry_jobs": return <RetryJobs />;
-      case "inventory": return <Inventory />;
-      case "folios": return <Folios />;
-      case "maintenance": return <Maintenance />;
-      case "daily_operations": return <DailyOperations />;
       case "housekeeping":
         return <HousekeepingPage />;
       case "dashboard":
@@ -269,6 +249,10 @@ const AppContent: React.FC = () => {
         }`}
       >
         <TopBar />
+        {dataLoadError && <div role="alert" className="mx-4 mt-3 flex shrink-0 items-center justify-between gap-4 rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 py-3 text-sm text-rose-300">
+          <p>Hotel data could not be refreshed. {dataLoadError} Visible records may be out of date.</p>
+          <button type="button" disabled={isDataRefreshing} onClick={() => void refreshData()} className="shrink-0 rounded-lg border border-rose-500/30 px-3 py-2 font-bold disabled:opacity-50">{isDataRefreshing ? 'Retrying…' : 'Retry data loading'}</button>
+        </div>}
       <PaymentReviewQueue
         requestedBooking={paymentReviewRequest?.booking}
         requestId={paymentReviewRequest?.requestId}

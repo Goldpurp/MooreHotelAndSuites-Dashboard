@@ -57,7 +57,8 @@ const Guests: React.FC = () => {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refreshData();
+    const refreshed = await refreshData();
+    if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
       title: 'Guests Updated',
       description: 'The guest list has been updated.'

@@ -33,9 +33,16 @@ const accessScript=ts.transpileModule(accessSource.replace(/import[^;]+;/,''),{c
 const accessContext={exports:{},UserRole:{Admin:'Admin',Manager:'Manager',Staff:'Staff',Client:'Client'}};
 vm.runInNewContext(accessScript,accessContext);
 test('verified staff departments receive useful landing pages with least privilege',()=>{
- for(const [department,expected] of [['Engineering','maintenance'],['Maintenance','maintenance'],['Finance','settlements'],['Cashier','settlements'],['Housekeeping','housekeeping'],['Reception','bookings']]){
+ for(const [department,expected] of [['Engineering','settings'],['Maintenance','settings'],['Finance','settlements'],['Cashier','settlements'],['Housekeeping','housekeeping'],['Reception','bookings']]){
   const user={role:'Staff',department};assert.equal(accessContext.exports.firstAllowedTab(user),expected);
   assert.equal(accessContext.exports.canOpenTab(user,'pricing'),false);
   assert.equal(accessContext.exports.canOpenTab(user,'channels'),false);
  }
+});
+
+// The dashboard must keep the page set that predates the QA expansion.
+test('only the original dashboard pages are routable', async () => {
+  const app = await read('App.tsx');
+  const routes = [...app.matchAll(/case "([a-z_]+)":/g)].map(match => match[1]).sort();
+  assert.deepEqual(routes, ['dashboard','bookings','rooms','guests','reports','operation_log','staff','clients','settings','settlements','privacy','housekeeping'].sort());
 });

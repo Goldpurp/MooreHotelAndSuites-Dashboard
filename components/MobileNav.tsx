@@ -51,17 +51,6 @@ const MobileNav: React.FC = () => {
     { id: 'settlements', label: 'Payments', icon: CheckCircle2 },
   ].filter((item) => canOpenTab(currentUser, item.id));
   const secondary = [
-    { id: 'reservation_operations', label: 'Reservations', icon: ClipboardList, visible: true },
-    { id: 'pricing', label: 'Pricing', icon: ClipboardList, visible: true },
-    { id: 'addons', label: 'Add-on services', icon: ClipboardList, visible: true },
-    { id: 'guest_crm', label: 'Guest CRM', icon: ClipboardList, visible: true },
-    { id: 'client_accounts', label: 'Client account care', icon: ClipboardList, visible: true },
-    { id: 'channels', label: 'Channels', icon: ClipboardList, visible: true },
-    { id: 'retry_jobs', label: 'Failed jobs', icon: ClipboardList, visible: true },
-    { id: 'inventory', label: 'Inventory', icon: ClipboardList, visible: true },
-    { id: 'folios', label: 'Guest folios', icon: ClipboardList, visible: true },
-    { id: 'maintenance', label: 'Maintenance', icon: ClipboardList, visible: true },
-    { id: 'daily_operations', label: 'Daily operations', icon: ClipboardList, visible: true },
     { id: 'housekeeping', label: 'Housekeeping', icon: ClipboardList, visible: true },
     { id: 'guests', label: 'Guests', icon: Users, visible: true },
     { id: 'reports', label: 'Reports', icon: FileBarChart, visible: privileged },

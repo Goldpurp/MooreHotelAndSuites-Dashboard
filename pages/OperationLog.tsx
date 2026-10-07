@@ -82,7 +82,8 @@ const OperationLog: React.FC = () => {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refreshData();
+    const refreshed = await refreshData();
+    if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
       title: 'Log Updated',
       description: 'The log has been updated.'
