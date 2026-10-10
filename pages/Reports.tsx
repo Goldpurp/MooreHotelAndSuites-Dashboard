@@ -52,7 +52,7 @@ const getAuditPresentation = (log: AuditLog) => {
 
 const Reports: React.FC = () => {
   const { bookings, rooms, auditLogs, staff, currentUser, refreshData, selectedAuditLogId, setSelectedAuditLogId } = useHotel();
-  const {analytics, error: analyticsError, loading: analyticsLoading} = useAnalytics('month', bookings);
+  const {analytics, error: analyticsError, loading: analyticsLoading, refreshing: analyticsRefreshing} = useAnalytics('month', bookings);
   const confirm = useConfirmation();
   const [reportTab, setReportTab] = useState<'analytics' | 'audit'>('analytics');
   const [inspectingLog, setInspectingLog] = useState<AuditLog | null>(null);
@@ -66,8 +66,8 @@ const Reports: React.FC = () => {
     const refreshed = await refreshData();
     if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
-      title: 'Analytics Updated',
-      description: 'The business charts and logs have been updated.'
+      title: 'Hotel records updated',
+      description: 'The latest bookings, rooms, and activity have been loaded.'
     });
     setTimeout(() => setIsRefreshing(false), 800);
   };
@@ -109,7 +109,8 @@ const Reports: React.FC = () => {
     window.print();
   };
 
-  const money = (value: number | undefined) => value === undefined ? 'Unavailable' : `₦${value.toLocaleString()}`;
+  const missingValue = analyticsLoading ? 'Loading…' : 'Unavailable';
+  const money = (value: number | undefined) => value === undefined ? missingValue : `₦${value.toLocaleString()}`;
   const revenueTrendsData = analytics?.revenueDynamics.map(point => ({month:point.date, revenue:point.value})) ?? [];
 
   const occupancyByCategory = useMemo(() => {
@@ -170,12 +171,12 @@ const Reports: React.FC = () => {
 
       {reportTab === 'analytics' ? (
         <div className="space-y-6">
-          {analyticsError ? <p role="alert" className="text-sm text-amber-300">{analyticsError}</p> : null}
-          <p className="text-xs text-slate-400">{analyticsLoading ? 'Loading accounting report…' : analytics ? `${analytics.fromDate} to ${analytics.toDate} · Hotel local dates · Payments ${money(analytics.report.payments)} less refunds ${money(analytics.report.refunds)}. Expenses are not tracked.` : 'Accounting report unavailable.'}</p>
+          {analyticsError ? <p role="alert" className="text-sm text-amber-300">{analytics ? `Showing the last successful report. ${analyticsError}` : analyticsError}</p> : null}
+          <p className="text-xs text-slate-400">{analyticsLoading ? 'Loading accounting report…' : analytics ? `${analytics.fromDate} to ${analytics.toDate}${analyticsRefreshing ? ' · Refreshing…' : ''} · Hotel local dates · Payments ${money(analytics.report.payments)} less refunds ${money(analytics.report.refunds)}. Expenses are not tracked.` : 'Accounting report unavailable.'}</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: 'Net receipts', value: money(analytics?.kpis.netRevenue), color: 'text-emerald-400', icon: CreditCard },
-              { label: 'Room-night occupancy', value: analytics ? `${analytics.kpis.occupancyRate}%` : 'Unavailable', color: 'text-blue-400', icon: Building },
+              { label: 'Room-night occupancy', value: analytics ? `${analytics.kpis.occupancyRate}%` : missingValue, color: 'text-blue-400', icon: Building },
               { label: 'RevPAR', value: money(analytics?.report.revPar), color: 'text-amber-400', icon: Activity },
               { label: 'Average nightly rate', value: money(analytics?.report.adr), color: 'text-indigo-400', icon: Users }
             ].map(card => (
