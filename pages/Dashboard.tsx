@@ -42,7 +42,7 @@ const Dashboard: React.FC = () => {
     refreshData,
   } = useHotel();
   const [timeFilter, setTimeFilter] = useState<"Day" | "Week" | "Month">("Week");
-  const {analytics, error: analyticsError, loading: analyticsLoading} = useAnalytics(timeFilter.toLowerCase(), bookings);
+  const {analytics, error: analyticsError, loading: analyticsLoading, refreshing: analyticsRefreshing} = useAnalytics(timeFilter.toLowerCase(), bookings);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [queuePage, setQueuePage] = useState(1);
   const QUEUE_PAGE_SIZE = 8;
@@ -52,8 +52,8 @@ const Dashboard: React.FC = () => {
     const refreshed = await refreshData();
     if (!refreshed) { setIsRefreshing(false); return; }
     sileo.success({
-      title: 'Dashboard Updated',
-      description: 'The dashboard charts and stats have been updated.'
+      title: 'Hotel records updated',
+      description: 'The latest bookings, rooms, and activity have been loaded.'
     });
     setTimeout(() => setIsRefreshing(false), 1000);
   };
@@ -108,7 +108,8 @@ const Dashboard: React.FC = () => {
   }, [totalQueuePages]);
 
   const revenueTrendData = analytics?.revenueDynamics.map(point => ({date:point.date, revenue:point.value})) ?? [];
-  const money = (value: number | undefined) => value === undefined ? 'Unavailable' : `₦${value.toLocaleString()}`;
+  const missingValue = analyticsLoading ? 'Loading…' : 'Unavailable';
+  const money = (value: number | undefined) => value === undefined ? missingValue : `₦${value.toLocaleString()}`;
   const kpis = analytics?.kpis;
 
 
@@ -134,12 +135,12 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {analyticsError ? <p role="alert" className="text-sm text-amber-300">{analyticsError}</p> : null}
-      <p className="text-xs text-slate-400">{analyticsLoading ? 'Loading accounting report…' : analytics ? `${analytics.fromDate} to ${analytics.toDate} · Hotel local dates · Net receipts = posted payments less refunds. Occupancy uses room nights.` : 'Accounting report unavailable.'}</p>
+      {analyticsError ? <p role="alert" className="text-sm text-amber-300">{analytics ? `Showing the last successful report. ${analyticsError}` : analyticsError}</p> : null}
+      <p className="text-xs text-slate-400">{analyticsLoading ? 'Loading accounting report…' : analytics ? `${analytics.fromDate} to ${analytics.toDate}${analyticsRefreshing ? ' · Refreshing…' : ''} · Hotel local dates · Net receipts = posted payments less refunds. Occupancy uses room nights.` : 'Accounting report unavailable.'}</p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Net receipts" value={money(kpis?.netRevenue)} growth={kpis?.revenueGrowthPercentage ?? null} icon={DollarSign} color="bg-blue-500/10 text-blue-400" />
-        <StatCard label="Occupancy" value={kpis ? `${kpis.occupancyRate}%` : 'Unavailable'} growth={kpis?.occupancyGrowthPercentage ?? null} icon={Bed} color="bg-emerald-500/10 text-emerald-400" />
-        <StatCard label="Guests" value={kpis?.activeGuests ?? 'Unavailable'} growth={null} icon={UserCheck} color="bg-amber-500/10 text-amber-400" />
+        <StatCard label="Occupancy" value={kpis ? `${kpis.occupancyRate}%` : missingValue} growth={kpis?.occupancyGrowthPercentage ?? null} icon={Bed} color="bg-emerald-500/10 text-emerald-400" />
+        <StatCard label="Guests" value={kpis?.activeGuests ?? missingValue} growth={null} icon={UserCheck} color="bg-amber-500/10 text-amber-400" />
         <StatCard label="Average nightly rate" value={money(kpis?.avgNightlyRate)} growth={null} icon={Activity} color="bg-indigo-500/10 text-indigo-400" />
       </div>
 
