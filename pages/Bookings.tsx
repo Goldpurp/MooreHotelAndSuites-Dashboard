@@ -236,12 +236,13 @@ const Bookings: React.FC<BookingsProps> = ({
 
   useEffect(() => {
     if (selectedBookingId) {
-      const found = (bookings || []).find((b) => b.id === selectedBookingId);
-      setSelectedBooking(found || null);
+      const found = (bookings || []).find((b) => b.id === selectedBookingId)
+        || paginatedBookings.find((b) => b.id === selectedBookingId);
+      setSelectedBooking(current => found || (current?.id === selectedBookingId ? current : null));
     } else {
       setSelectedBooking(null);
     }
-  }, [selectedBookingId, bookings]);
+  }, [selectedBookingId, bookings, paginatedBookings]);
 
   const handleSelectBooking = (b: Booking) => {
     setSelectedBooking(b);
@@ -306,8 +307,8 @@ const Bookings: React.FC<BookingsProps> = ({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col gap-4 overflow-hidden lg:flex-row lg:gap-6">
-      <div className="flex min-h-0 flex-[4] min-w-0 flex-col gap-4">
-        <div className="flex items-end justify-between gap-4">
+      <div className="booking-list flex min-h-0 flex-[4] min-w-0 flex-col gap-4">
+        <div className="booking-toolbar flex flex-wrap items-end justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
@@ -320,7 +321,7 @@ const Bookings: React.FC<BookingsProps> = ({
             </h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
 
           <div className="flex items-center gap-2">
             <button
@@ -410,7 +411,7 @@ const Bookings: React.FC<BookingsProps> = ({
           {pageError && <p role="alert" className="px-6 py-3 text-rose-300">{pageError}</p>}
           {pageLoading && <p role="status" className="px-6 py-3 text-slate-400">Loading bookings…</p>}
           <div aria-busy={pageLoading} className="scroll-pane min-h-0 flex-1 overflow-auto">
-            <table className="mobile-card-table w-full text-left min-w-[600px]">
+            <table className="booking-table mobile-card-table w-full text-left min-w-[600px]">
               <thead className="sticky top-0 bg-slate-950/90 z-10 border-b border-white/10">
                 <tr className="text-slate-500 adaptive-text-xs font-normal uppercase tracking-normal">
                   <th className="responsive-table-padding">Guest Details</th>
@@ -423,16 +424,13 @@ const Bookings: React.FC<BookingsProps> = ({
                   <th className="responsive-table-padding text-right">
                     Payment
                   </th>
-                  <th className="responsive-table-padding text-right">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {paginatedBookings.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={4}
                       className="py-32 text-center text-slate-700 font-normal uppercase adaptive-text-sm"
                     >
                       No records found in current view
@@ -452,6 +450,15 @@ const Bookings: React.FC<BookingsProps> = ({
                       <tr
                         key={b.id}
                         onClick={() => handleSelectBooking(b)}
+                        tabIndex={0}
+                        aria-label={`Booking ${b.bookingCode}`}
+                        aria-selected={isSelected}
+                        onKeyDown={(event) => {
+                          if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+                            event.preventDefault();
+                            handleSelectBooking(b);
+                          }
+                        }}
                         className={`cursor-pointer transition-all group border-l-4 ${isSelected ? cfg.band + " border-brand-500" : "hover:bg-white/[0.02] border-transparent"}`}
                       >
                         <td data-label="Guest" className="responsive-table-padding">
@@ -466,7 +473,7 @@ const Bookings: React.FC<BookingsProps> = ({
                                 {guestName}
                               </p>
                               <p className="break-all text-xs font-normal uppercase tracking-normal text-slate-500">
-                                Booking: {b.bookingCode}
+                                Booking: <span className="whitespace-nowrap">{b.bookingCode}</span>
                               </p>
                             </div>
                           </div>
@@ -513,52 +520,7 @@ const Bookings: React.FC<BookingsProps> = ({
                             </p>
                           </div>
                         </td>
-                        <td data-label="Actions" className="responsive-table-padding text-right">
-                          <div
-                            className="flex items-center justify-end gap-2"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {["confirmed", "pending", "reserved"].includes(
-                              b.status?.toLowerCase(),
-                            ) ? (
-                              <>
-                                <button
-                                  onClick={(e) =>
-                                    handleOpenCheckInConfirm(e, b)
-                                  }
-                                  disabled={!isPaid || effectiveStatus === "NoShow"}
-                                  className={`${(!isPaid || effectiveStatus === "NoShow") ? "opacity-30" : "bg-emerald-600 hover:bg-emerald-700"} p-2.5 rounded-xl text-white shadow-lg active:scale-95 transition-all flex items-center gap-2`}
-                                  title="Check In"
-                                >
-                                  {isPaid ? (
-                                    <Zap size={14} fill="currentColor" />
-                                  ) : (
-                                    <Lock size={14} />
-                                  )}
-                                </button>
-                                <button aria-label="Cancel booking"
-                                  onClick={(e) => handleOpenVoidModal(e, b)}
-                                  className="p-2.5 rounded-xl border border-white/5 bg-white/5 text-slate-600 hover:text-rose-500 transition-all"
-                                >
-                                  <XCircle size={14} />
-                                </button>
-                              </>
-                            ) : b.status?.toLowerCase() === "checkedin" ||
-                              b.status?.toLowerCase() === "inhouse" ? (
-                              <button
-                                onClick={() => navigateToGuestStay(b.guestId)}
-                                className="bg-brand-600 hover:bg-brand-700 text-white p-2.5 rounded-xl shadow-lg active:scale-95 transition-all"
-                                title="Manage Stay"
-                              >
-                                <User size={14} />
-                              </button>
-                            ) : (
-                              <div className="p-2 text-slate-800 opacity-20">
-                                <Lock size={16} />
-                              </div>
-                            )}
-                          </div>
-                        </td>
+
                       </tr>
                     );
                   })
@@ -685,7 +647,7 @@ const Bookings: React.FC<BookingsProps> = ({
                   <span className="text-xs text-slate-600 font-normal uppercase block mb-1">
                     Room No.
                   </span>
-                  <span className="adaptive-text-base font-normal text-brand-500 tracking-tighter whitespace-nowrap">
+                  <span className="adaptive-text-base font-normal text-brand-500 tracking-tighter break-words">
                     {selectedRoom?.name || "---"}
                   </span>
                 </div>
@@ -698,6 +660,11 @@ const Bookings: React.FC<BookingsProps> = ({
                   </span>
                 </div>
               </div>
+
+              <dl className="grid grid-cols-2 gap-3 rounded-2xl border border-white/5 bg-[#0d131f] p-4">
+                <div><dt className="text-xs text-slate-500">Check-in</dt><dd className="mt-1 text-sm text-slate-200">{new Date(selectedBooking.checkIn).toLocaleDateString("en-GB")}</dd></div>
+                <div><dt className="text-xs text-slate-500">Check-out</dt><dd className="mt-1 text-sm text-slate-200">{new Date(selectedBooking.checkOut).toLocaleDateString("en-GB")}</dd></div>
+              </dl>
 
               <div className="bg-[#0d131f] p-5 rounded-2xl border border-white/5 space-y-4">
                 <div className="flex items-center gap-4 text-slate-500">
@@ -719,17 +686,17 @@ const Bookings: React.FC<BookingsProps> = ({
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-white/10">
+            <div className="shrink-0 mt-4 pt-4 border-t border-white/10 space-y-3">
               {["confirmed", "pending", "reserved"].includes(
                 selectedBooking.status?.toLowerCase(),
               ) ? (
-                <button
+                <button type="button" aria-label={`Check in ${selectedBooking.bookingCode}`}
                   onClick={(e) => handleOpenCheckInConfirm(e, selectedBooking)}
                   disabled={
                     (selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || 
                     getBookingStatus(selectedBooking) === "NoShow"
                   }
-                  className={`w-full ${(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || getBookingStatus(selectedBooking) === "NoShow" ? "bg-slate-900 text-slate-700 cursor-not-allowed" : "bg-[#10b981] hover:bg-[#059669] text-white shadow-xl shadow-emerald-950/60"} font-medium py-5 rounded-2xl adaptive-text-sm uppercase tracking-normal transition-all active:scale-95 flex items-center justify-center gap-3`}
+                  className={`w-full ${(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || getBookingStatus(selectedBooking) === "NoShow" ? "bg-slate-900 text-slate-400 cursor-not-allowed" : "bg-[#10b981] hover:bg-[#059669] text-white shadow-xl shadow-emerald-950/60"} font-medium py-5 rounded-2xl adaptive-text-sm uppercase tracking-normal transition-all active:scale-95 flex items-center justify-center gap-3`}
                 >
                   {(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || getBookingStatus(selectedBooking) === "NoShow" ? (
                     <Lock size={20} />
@@ -744,7 +711,7 @@ const Bookings: React.FC<BookingsProps> = ({
                 </button>
               ) : selectedBooking.status?.toLowerCase() === "checkedin" ||
                 selectedBooking.status?.toLowerCase() === "inhouse" ? (
-                <button
+                <button type="button" aria-label={`Manage stay ${selectedBooking.bookingCode}`}
                   onClick={() => navigateToGuestStay(selectedBooking.guestId)}
                   className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-5 rounded-2xl adaptive-text-sm uppercase tracking-normal transition-all active:scale-95 flex items-center justify-center gap-3 shadow-xl"
                 >
@@ -753,9 +720,15 @@ const Bookings: React.FC<BookingsProps> = ({
               ) : (
                 <button
                   disabled
-                  className="w-full bg-slate-900 text-slate-800 font-medium py-5 rounded-2xl adaptive-text-sm uppercase tracking-normal border border-white/5 cursor-not-allowed"
+                  className="w-full bg-slate-900 text-slate-400 font-medium py-5 rounded-2xl adaptive-text-sm uppercase tracking-normal border border-white/5 cursor-not-allowed"
                 >
                   <Lock size={20} /> CLOSED
+                </button>
+              )}
+              {["confirmed", "pending", "reserved"].includes(selectedBooking.status?.toLowerCase()) && (
+                <button type="button" onClick={(event) => handleOpenVoidModal(event, selectedBooking)}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-300 hover:bg-rose-500/20">
+                  <XCircle size={18} className="shrink-0" />Cancel booking
                 </button>
               )}
             </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useId } from "react";
 
-const modalStack: string[] = [];
+const modalStack: { id: string; layer: number; ref: { current: HTMLDivElement | null } }[] = [];
 let originalOverflow = "";
 
 const FOCUSABLE = [
@@ -20,6 +20,7 @@ export function useAccessibleModal(
   isOpen: boolean,
   onClose: () => void,
   canClose = true,
+  layer = 200,
 ) {
   const modalId = useId();
   const modalRef = useRef<HTMLDivElement>(null);
@@ -33,12 +34,13 @@ export function useAccessibleModal(
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
     if (!modalStack.length) originalOverflow = document.body.style.overflow;
-    modalStack.push(modalId);
+    modalStack.push({ id: modalId, layer, ref: modalRef });
+    modalStack.sort((a, b) => a.layer - b.layer);
     document.body.style.overflow = "hidden";
 
     const focusTimer = window.setTimeout(() => {
       const modal = modalRef.current;
-      if (!modal || modalStack.at(-1) !== modalId) return;
+      if (!modal || modalStack.at(-1)?.id !== modalId) return;
       const preferred = modal.querySelector<HTMLElement>(
         "[data-modal-cancel], [data-modal-close]",
       );
@@ -48,7 +50,7 @@ export function useAccessibleModal(
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const modal = modalRef.current;
-      if (!modal || modalStack.at(-1) !== modalId) return;
+      if (!modal || modalStack.at(-1)?.id !== modalId) return;
 
       if (event.key === "Escape" && canCloseRef.current) {
         event.preventDefault();
@@ -81,13 +83,16 @@ export function useAccessibleModal(
     return () => {
       window.clearTimeout(focusTimer);
       document.removeEventListener("keydown", handleKeyDown);
-      const position = modalStack.lastIndexOf(modalId);
+      const position = modalStack.findIndex(entry => entry.id === modalId);
       const wasTop = position === modalStack.length - 1;
       if (position >= 0) modalStack.splice(position, 1);
       if (!modalStack.length) document.body.style.overflow = originalOverflow;
-      if (wasTop && previouslyFocused?.isConnected) previouslyFocused.focus();
+      if (wasTop) {
+        if (previouslyFocused?.isConnected) previouslyFocused.focus();
+        else modalStack.at(-1)?.ref.current?.focus();
+      }
     };
-  }, [isOpen, modalId]);
+  }, [isOpen, modalId, layer]);
 
   return modalRef;
 }

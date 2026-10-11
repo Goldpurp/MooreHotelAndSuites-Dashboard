@@ -42,9 +42,11 @@ const PrivacyRequests: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const pageSize = 50;
   const requestSequence = useRef(0);
+  const requestInFlight = useRef(false);
 
   const load = useCallback(async () => {
     const sequence = ++requestSequence.current;
+    requestInFlight.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -58,11 +60,34 @@ const PrivacyRequests: React.FC = () => {
     } catch (error) {
       if (sequence === requestSequence.current) setError(error instanceof Error ? error.message : "The queue could not be loaded.");
     } finally {
-      if (sequence === requestSequence.current) setLoading(false);
+      if (sequence === requestSequence.current) {
+        requestInFlight.current = false;
+        setLoading(false);
+      }
     }
   }, [page]);
 
   useEffect(() => { void load(); return () => { requestSequence.current++; }; }, [load]);
+
+  useEffect(() => {
+    // Keep the queue current when guests submit from another tab, without
+    // replacing a draft while an administrator has request details open.
+    if (selectedId || saving) return;
+    const refreshVisibleQueue = () => {
+      if (document.visibilityState !== "hidden" && window.navigator.onLine !== false && !requestInFlight.current) void load();
+    };
+    const timer = window.setInterval(refreshVisibleQueue, 30_000);
+    window.addEventListener("focus", refreshVisibleQueue);
+    window.addEventListener("online", refreshVisibleQueue);
+    document.addEventListener("visibilitychange", refreshVisibleQueue);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshVisibleQueue);
+      window.removeEventListener("online", refreshVisibleQueue);
+      document.removeEventListener("visibilitychange", refreshVisibleQueue);
+    };
+  }, [load, selectedId, saving]);
+
 
   const updateDraft = (id: string, changes: Partial<Draft>) =>
     setDrafts((current) => ({ ...current, [id]: { ...current[id], ...changes } }));
@@ -119,7 +144,7 @@ const PrivacyRequests: React.FC = () => {
       </header>
       <div className="glass-card rounded-2xl min-h-0 flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
         <div className="scroll-pane min-h-0 flex-1 overflow-auto">
-          {loading && <p role="status" className="p-6 text-slate-300">Loading privacy requests…</p>}
+          {loading && requests.length === 0 && <p role="status" className="p-6 text-slate-300">Loading privacy requests…</p>}
           {error && <p role="alert" className="m-4 rounded-xl border border-rose-500/30 p-4 text-rose-300">{error} Use Refresh to try again.</p>}
           <table className="mobile-card-table w-full text-left min-w-[700px]">
             <thead><tr className="text-slate-500 text-xs font-normal uppercase tracking-normal border-b border-white/5 bg-slate-950/40">

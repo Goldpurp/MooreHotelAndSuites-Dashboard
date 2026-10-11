@@ -325,7 +325,19 @@ textarea {
   overscroll-behavior: contain;
 }
 .modal-backdrop :is(input, select, textarea) { min-width: 0; }
-.modal-backdrop :is(h1, h2, h3, p, label, button) { overflow-wrap: anywhere; }
+.modal-backdrop :is(h1, h2, h3, p, label) { overflow-wrap: anywhere; }
+/* Action labels wrap at spaces, never in the middle of a word. Icons and
+   close controls retain their size when a dialog header/footer is crowded. */
+.modal-backdrop button, .detail-panel button { overflow-wrap: normal; word-break: normal; flex-shrink: 0; }
+.modal-backdrop button svg, .detail-panel button svg { flex-shrink: 0; }
+.dialog-actions { flex-shrink: 0; flex-wrap: wrap; }
+.dialog-actions > p { flex: 1; min-width: 0; }
+.dialog-actions > button { min-height: 44px; padding-inline: 1rem; }
+@media (max-width: 639px) {
+  .dialog-actions { flex-direction: column; padding: 1rem; }
+  .dialog-actions > button { flex: none; width: 100%; }
+}
+
 .auth-error { background: transparent; border: 0; padding: 0; }
 
 /* Utilities for requested layout updates */
@@ -416,3 +428,22 @@ textarea {
   margin-block: 0;
   overflow-y: auto;
 }
+
+.booking-table .responsive-table-padding { padding-inline: 0.75rem; }
+.booking-toolbar { flex-wrap: wrap; }
+.booking-toolbar > div { min-width: 0; max-width: 100%; }
+.booking-toolbar button { flex-shrink: 0; }
+
+/* Keep booking actions in the details pane without squeezing the adjacent
+   table. Less important columns remain available in Booking Details. */
+.booking-list { container-type: inline-size; container-name: records; }
+@container records (max-width: 639px) {
+  .booking-table { min-width: 0 !important; table-layout: fixed; }
+  .booking-table .col-priority-low { display: none; }
+}
+@container records (max-width: 480px) {
+  .booking-table .col-priority-med { display: none; }
+}
+
+/* Record details stay below confirmations, even if resizing reparents them. */
+.modal-backdrop.detail-backdrop { z-index: 190; }

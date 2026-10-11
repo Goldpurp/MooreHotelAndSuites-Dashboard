@@ -264,9 +264,9 @@ const OperationLog: React.FC = () => {
                     </div>
                  </dl>
               </div>
-              <div className="px-5 sm:px-8 py-4 bg-slate-950/60 border-t border-white/5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                 <p className="flex items-center gap-2 text-xs font-normal text-slate-600"><ShieldCheck size={14}/> Booking references are shown in full; private system credentials remain protected.</p>
-                 <button type="button" data-modal-close onClick={() => setInspectingRecord(null)} className="px-8 sm:px-6 py-2 sm:py-3 bg-brand-600 hover:bg-brand-700 text-white font-medium text-xs sm:text-[12px] uppercase tracking-normal rounded-xl shadow-xl transition-all active:scale-95">Close</button>
+              <div className="dialog-actions px-5 sm:px-8 py-4 bg-slate-950/60 border-t border-white/5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                 <p className="flex items-center gap-2 text-xs font-normal text-slate-600"><ShieldCheck size={14} className="shrink-0"/> Booking references are shown in full; private system credentials remain protected.</p>
+                 <button type="button" data-modal-close onClick={() => setInspectingRecord(null)} className="shrink-0 whitespace-nowrap px-8 sm:px-6 py-2 sm:py-3 bg-brand-600 hover:bg-brand-700 text-white font-medium text-xs sm:text-[12px] uppercase tracking-normal rounded-xl shadow-xl transition-all active:scale-95">Close</button>
               </div>
            </div>
         </div></ModalPortal>
