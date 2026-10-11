@@ -1,276 +1,70 @@
 import React from "react";
-import {
-  LayoutDashboard,
-  CalendarDays,
-  Bed,
-  Users,
-  FileBarChart,
-  Settings,
-  LogOut,
-  ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  CheckCircle2,
-  UserSquare,
-  FileLock2,
-} from "lucide-react";
+import { LayoutDashboard, CalendarDays, Bed, Users, FileBarChart, Settings,
+  LogOut, ShieldCheck, ChevronLeft, ChevronRight, ClipboardList, CheckCircle2,
+  UserSquare, FileLock2 } from "lucide-react";
 import { useHotel } from "../store/HotelContext";
-import PermissionWrapper from "./PermissionWrapper";
 import Logo from "./Logo";
-import { UserRole } from "../types";
 import { useConfirmation } from "./ConfirmationProvider";
-import { canOpenTab, isPrivileged } from "../lib/access";
+import { canOpenTab } from "../lib/access";
+
+const operations = [
+  { id: "dashboard", label: "Home", icon: LayoutDashboard },
+  { id: "bookings", label: "Bookings", icon: CalendarDays },
+  { id: "settlements", label: "Payments", icon: CheckCircle2 },
+  { id: "rooms", label: "Rooms", icon: Bed },
+  { id: "housekeeping", label: "Housekeeping", icon: ClipboardList },
+  { id: "guests", label: "Guests", icon: Users },
+  { id: "reports", label: "Stats", icon: FileBarChart },
+];
+const management = [
+  { id: "operation_log", label: "Activity", icon: ClipboardList },
+  { id: "privacy", label: "Privacy", icon: FileLock2 },
+  { id: "staff", label: "Staff", icon: ShieldCheck },
+  { id: "clients", label: "Clients", icon: UserSquare },
+  { id: "settings", label: "Settings", icon: Settings },
+];
 
 const Sidebar: React.FC = () => {
-  const { logout, isSidebarCollapsed, toggleSidebar, activeTab, setActiveTab, currentUser } =
-    useHotel();
+  const { logout, isSidebarCollapsed: collapsed, toggleSidebar, activeTab, setActiveTab, currentUser } = useHotel();
   const confirm = useConfirmation();
-
   const handleLogout = async () => {
-    const accepted = await confirm({
-      title: "Log out of Moore Hotels?",
-      message: "You will need to enter your staff credentials again to access hotel operations.",
-      confirmLabel: "Log out",
-      cancelLabel: "Stay signed in",
-      tone: "danger",
-    });
-    if (accepted) logout();
+    if (await confirm({ title: "Log out of Moore Hotels?", message: "You will need to enter your staff credentials again to access hotel operations.", confirmLabel: "Log out", cancelLabel: "Stay signed in", tone: "danger" })) logout();
   };
-
-  const privileged = isPrivileged(currentUser);
-  const menuItems = [
-    { id: "dashboard", label: "Home", icon: LayoutDashboard },
-    { id: "bookings", label: "Bookings", icon: CalendarDays },
-    { id: "settlements", label: "Payments", icon: CheckCircle2 },
-    { id: "rooms", label: "Rooms", icon: Bed },
-    { id: "housekeeping", label: "Housekeeping", icon: ClipboardList },
-    { id: "guests", label: "Guests", icon: Users },
-  ].filter((item) => canOpenTab(currentUser, item.id));
-
+  const renderItem = (item: typeof operations[number]) => (
+    <button key={item.id} type="button" aria-label={item.label}
+      aria-current={activeTab === item.id ? "page" : undefined}
+      title={collapsed ? item.label : undefined}
+      onClick={() => setActiveTab(item.id)}
+      className={`relative flex min-h-11 w-full items-center rounded-xl border text-xs font-normal uppercase transition-colors duration-150 ${collapsed ? "justify-center px-2" : "gap-3 px-4"} ${activeTab === item.id ? "border-brand-500/20 bg-brand-600/20 text-white" : "border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}>
+      {activeTab === item.id && <span aria-hidden="true" className="absolute left-0 h-6 w-1 rounded-r-full bg-brand-500" />}
+      <item.icon size={22} className={`shrink-0 ${activeTab === item.id ? "text-brand-500" : ""}`} />
+      {!collapsed && <span className="truncate">{item.label}</span>}
+    </button>
+  );
   return (
-    <aside
-      className={`h-screen bg-slate-950/95 backdrop-blur-3xl border-r border-white/10 hidden md:flex flex-col fixed left-0 top-0 z-50 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
-        isSidebarCollapsed ? "w-20" : "w-64"
-      }`}
-    >
-      <div className="p-6 flex items-center gap-4 h-24 overflow-hidden">
-        <Logo
-          size={isSidebarCollapsed ? "md" : "xl"}
-          className="shrink-0 transition-all duration-300"
-        />
-        {!isSidebarCollapsed && (
-          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-            <h1 className="text-sm font-semibold text-white tracking-tighter whitespace-nowrap leading-tight uppercase">
-              Moore Hotels <br /> & Suites
-            </h1>
-            {/* <p className="text-brand-500 font-black tracking-dash uppercase whitespace-nowrap mt-0.5">
-              Global Operations
-            </p> */}
-          </div>
-        )}
+    <aside aria-label="Main navigation" className={`relative z-50 hidden h-full shrink-0 flex-col border-r border-white/10 bg-slate-950 md:flex ${collapsed ? "w-20" : "w-64"}`}>
+      <div className={`flex h-24 shrink-0 items-center overflow-hidden ${collapsed ? "justify-center px-3" : "gap-4 px-5"}`}>
+        <Logo size={collapsed ? "md" : "xl"} className="shrink-0" />
+        {!collapsed && <h1 className="text-sm font-semibold uppercase leading-tight text-white">Moore Hotels<br />&amp; Suites</h1>}
       </div>
-
-      <button
-        aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        onClick={toggleSidebar}
-        className="absolute -right-3.5 top-20 w-7 h-7 bg-brand-600 rounded-full border border-white/20 flex items-center justify-center text-white shadow-2xl hover:bg-brand-500 transition-all z-[60] active:scale-90 group"
-      >
-        {isSidebarCollapsed ? (
-          <ChevronRight size={16} />
-        ) : (
-          <ChevronLeft size={16} />
-        )}
+      <button type="button" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!collapsed} onClick={toggleSidebar}
+        className="absolute -right-3.5 top-20 z-[60] flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-brand-600 text-white hover:bg-brand-500 transition-colors">
+        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>
-
-      <nav className="flex-1 px-4 pt-8 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden">
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            aria-label={item.label}
-            title={isSidebarCollapsed ? item.label : undefined}
-            onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
-              activeTab === item.id
-                ? "bg-brand-600/20 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] border border-brand-500/20"
-                : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"
-            }`}
-          >
-            {activeTab === item.id && (
-              <div className="absolute left-0 w-1.5 h-6 bg-brand-500 rounded-r-full shadow-[0_0_15px_rgba(59,130,246,0.8)]" />
-            )}
-            <item.icon
-              size={22}
-              className={`shrink-0 transition-all ${activeTab === item.id ? "text-brand-500 scale-110" : "group-hover:text-slate-200 group-hover:scale-105"}`}
-            />
-            <span
-              className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${
-                isSidebarCollapsed
-                  ? "opacity-0 -translate-x-10 invisible"
-                  : "opacity-100 translate-x-0 visible"
-              }`}
-            >
-              {item.label}
-            </span>
-          </button>
-        ))}
-
-        {/* RESTRICTED: Only Admin and Manager can access Analytics */}
-        <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
-          <button
-            aria-label="Stats"
-                title={isSidebarCollapsed ? "Stats" : undefined}
-                onClick={() => setActiveTab("reports")}
-            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
-              activeTab === "reports"
-                ? "bg-brand-600/20 text-white border border-brand-500/20"
-                : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"
-            }`}
-          >
-            {activeTab === "reports" && (
-              <div className="absolute left-0 w-1.5 h-6 bg-brand-500 rounded-r-full shadow-[0_0_15px_rgba(59,130,246,0.8)]" />
-            )}
-            <FileBarChart
-              size={22}
-              className={`shrink-0 transition-all ${activeTab === "reports" ? "text-brand-500 scale-110" : "group-hover:text-slate-200"}`}
-            />
-            <span
-              className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
-            >
-              Stats
-            </span>
-          </button>
-        </PermissionWrapper>
-
-        <div className="pt-10">
-          {!isSidebarCollapsed && (
-            <p className="px-4 text-xs text-slate-600 font-normal uppercase tracking-normal mb-5 flex items-center gap-2">
-              <span className="w-4 h-px bg-slate-800"></span> Manage
-            </p>
-          )}
-
-          <div className="space-y-1.5">
-            <PermissionWrapper
-              allowedRoles={[UserRole.Admin, UserRole.Manager]}
-            >
-              {canOpenTab(currentUser, "operation_log") && <button
-                aria-label="Activity"
-                title={isSidebarCollapsed ? "Activity" : undefined}
-                onClick={() => setActiveTab("operation_log")}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
-                  activeTab === "operation_log"
-                    ? "bg-brand-600/20 text-white border border-brand-500/20"
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"
-                }`}
-              >
-                <ClipboardList
-                  size={22}
-                  className={`shrink-0 ${activeTab === "operation_log" ? "text-brand-500" : "group-hover:text-slate-200"}`}
-                />
-                <span
-                  className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
-                >
-                  Activity
-                </span>
-              </button>}
-
-              {canOpenTab(currentUser, "privacy") && <button
-                aria-label="Privacy"
-                title={isSidebarCollapsed ? "Privacy" : undefined}
-                onClick={() => setActiveTab("privacy")}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${activeTab === "privacy" ? "bg-brand-600/20 text-white border border-brand-500/20" : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"}`}
-              >
-                <FileLock2 size={22} className={`shrink-0 ${activeTab === "privacy" ? "text-brand-500" : "group-hover:text-slate-200"}`} />
-                <span className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}>Privacy</span>
-              </button>}
-
-              <button
-                aria-label="Staff"
-                title={isSidebarCollapsed ? "Staff" : undefined}
-                onClick={() => setActiveTab("staff")}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
-                  activeTab === "staff"
-                    ? "bg-brand-600/20 text-white border border-brand-500/20"
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"
-                }`}
-              >
-                <ShieldCheck
-                  size={22}
-                  className={`shrink-0 ${activeTab === "staff" ? "text-brand-500" : "group-hover:text-slate-200"}`}
-                />
-                <span
-                  className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
-                >
-                  Staff
-                </span>
-              </button>
-
-              <button
-                aria-label="Clients"
-                title={isSidebarCollapsed ? "Clients" : undefined}
-                onClick={() => setActiveTab("clients")}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
-                  activeTab === "clients"
-                    ? "bg-brand-600/20 text-white border border-brand-500/20"
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"
-                }`}
-              >
-                <UserSquare
-                  size={22}
-                  className={`shrink-0 ${activeTab === "clients" ? "text-brand-500" : "group-hover:text-slate-200"}`}
-                />
-                <span
-                  className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
-                >
-                  Clients
-                </span>
-              </button>
-            </PermissionWrapper>
-
-            <button
-              aria-label="Settings"
-                title={isSidebarCollapsed ? "Settings" : undefined}
-                onClick={() => setActiveTab("settings")}
-              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
-                activeTab === "settings"
-                  ? "bg-brand-600/20 text-white border border-brand-500/20"
-                  : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"
-              }`}
-            >
-              <Settings
-                size={22}
-                className={`shrink-0 ${activeTab === "settings" ? "text-brand-500" : "group-hover:text-slate-200"}`}
-              />
-              <span
-                className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
-              >
-                Settings
-              </span>
-            </button>
-          </div>
+      <nav aria-label="Hotel pages" className="scroll-pane min-h-0 flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden px-3 py-5">
+        {operations.filter(item => canOpenTab(currentUser, item.id)).map(renderItem)}
+        <div className="mt-5 border-t border-white/5 pt-4">
+          {!collapsed && <p className="mb-3 px-4 text-xs uppercase text-slate-500">Manage</p>}
+          <div className="space-y-1.5">{management.filter(item => canOpenTab(currentUser, item.id)).map(renderItem)}</div>
         </div>
       </nav>
-
-      <div className="p-4 mt-auto border-t border-white/5">
-        <button
-          aria-label="Log Out"
-          title={isSidebarCollapsed ? "Log Out" : undefined}
-          onClick={handleLogout}
-          className="w-full flex items-center gap-4 px-4 py-4 text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all text-[12px] font-medium uppercase tracking-normal group"
-        >
-          <LogOut
-            size={22}
-            className="group-hover:-translate-x-1 transition-transform shrink-0"
-          />
-          <span
-            className={`transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
-          >
-            Log Out
-          </span>
+      <div className="shrink-0 border-t border-white/5 p-3">
+        <button type="button" aria-label="Log Out" title={collapsed ? "Log Out" : undefined} onClick={handleLogout}
+          className={`flex min-h-11 w-full items-center rounded-xl text-xs font-medium uppercase text-rose-400 hover:bg-rose-500/10 transition-colors ${collapsed ? "justify-center px-2" : "gap-3 px-4"}`}>
+          <LogOut size={22} className="shrink-0" />{!collapsed && <span>Log Out</span>}
         </button>
       </div>
     </aside>
   );
 };
-
 export default Sidebar;

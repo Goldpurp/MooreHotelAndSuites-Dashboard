@@ -1,4 +1,4 @@
-import { useAccessibleModal } from "../hooks/useAccessibleModal";
+import DetailPanel from "../components/DetailPanel";
 import React, { useState, useEffect, useMemo } from "react";
 import { useHotel, normalizeBooking } from "../store/HotelContext";
 import { api } from "../lib/api";
@@ -80,7 +80,6 @@ const Bookings: React.FC<BookingsProps> = ({
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [preFillData, setPreFillData] = useState<any>(null);
 
-  const detailsRef = useAccessibleModal(Boolean(selectedBooking), () => setSelectedBookingId(null));
   useEffect(() => {
     if (!bookingGuestRequest) return;
     setPreFillData(bookingGuestRequest);
@@ -568,11 +567,11 @@ const Bookings: React.FC<BookingsProps> = ({
             </table>
           </div>
 
-          <div className="px-8 py-4 border-t border-white/10 bg-slate-950/60 flex items-center justify-between">
+          <div className="px-8 py-4 border-t border-white/10 bg-slate-950/60 flex items-center justify-between pagination-footer">
             <span className="text-xs text-slate-600 font-normal uppercase tracking-normal">
               {totalRecords} Total Records
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-2 pagination-controls">
               <button aria-label="Previous page"
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
@@ -600,21 +599,7 @@ const Bookings: React.FC<BookingsProps> = ({
       </div>
 
       {selectedBooking && (
-        <>
-          <button
-            type="button"
-            aria-label="Close booking details"
-            onClick={() => hotel.setSelectedBookingId(null)}
-            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
-          />
-          <aside
-            ref={detailsRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="booking-details-title"
-            className="fixed inset-x-3 top-3 bottom-[5.75rem] z-50 flex min-w-0 max-w-none flex-col gap-4 overflow-hidden animate-in slide-in-from-right-4 duration-300 lg:static lg:inset-auto lg:z-auto lg:h-full lg:min-w-[350px] lg:max-w-[480px] lg:flex-[1.3] lg:duration-500"
-          >
+        <DetailPanel label="Booking details" onClose={() => hotel.setSelectedBookingId(null)}>
           <div className="glass-card rounded-2xl p-5 sm:p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] relative shadow-2xl shadow-black/60">
             <div className="flex justify-between items-start mb-6 sm:mb-6">
               <div className="space-y-1">
@@ -775,8 +760,7 @@ const Bookings: React.FC<BookingsProps> = ({
               )}
             </div>
           </div>
-          </aside>
-        </>
+        </DetailPanel>
       )}
 
       <BookingModal

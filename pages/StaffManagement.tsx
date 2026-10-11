@@ -1,3 +1,4 @@
+import DetailPanel from "../components/DetailPanel";
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { 
@@ -95,8 +96,8 @@ const StaffManagement: React.FC = () => {
   }, [filteredStaff, selectedProfileId, setSelectedProfileId]);
 
   useEffect(() => {
-    if (paginatedStaff.length > 0 && !paginatedStaff.some(item => item.id === selectedStaffId)) {
-      setSelectedStaffId(paginatedStaff[0].id);
+    if (selectedStaffId && !paginatedStaff.some(item => item.id === selectedStaffId)) {
+      setSelectedStaffId(null);
     }
   }, [paginatedStaff, selectedStaffId]);
 
@@ -120,7 +121,7 @@ const StaffManagement: React.FC = () => {
     switch(role?.toLowerCase()) {
       case 'admin': return "Full access to all system settings and tools.";
       case 'manager': return "Can manage bookings, payments, and staff.";
-      case 'staff': return "Can manage bookings and guests.";
+      case 'staff': return "Access is based on the assigned department.";
       default: return "Staff member.";
     }
   };
@@ -175,7 +176,7 @@ const StaffManagement: React.FC = () => {
                   paginatedStaff.map((user) => {
                     const isActive = String(user.status).toLowerCase() === 'active';
                     return (
-                      <tr key={user.id} onClick={() => setSelectedStaffId(user.id)} className={`hover:bg-brand-500/[0.02] transition-all group border-l-4 ${selectedStaffId === user.id ? 'bg-white/[0.04] border-brand-500' : 'border-transparent'}`}>
+                      <tr key={user.id} tabIndex={0} aria-label={`Open staff details for ${user.name}`} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setSelectedStaffId(user.id); } }} onClick={() => setSelectedStaffId(user.id)} className={`hover:bg-brand-500/[0.02] transition-all group border-l-4 ${selectedStaffId === user.id ? 'bg-white/[0.04] border-brand-500' : 'border-transparent'}`}>
                         <td data-label="Name" className="responsive-table-padding">
                           <div className="flex items-center gap-4">
                             <img src={user.avatarUrl} className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl object-cover ring-2 ring-white/5" alt=""/>
@@ -195,7 +196,7 @@ const StaffManagement: React.FC = () => {
                         <td data-label="Actions" className="responsive-table-padding text-right">
                            <div className="flex justify-end" onClick={e => e.stopPropagation()}>
                              {currentUser?.role === UserRole.Admin && user.role !== UserRole.Admin ? (
-                               <button onClick={() => handleToggleAccessRequest(user)} className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isActive ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>{isActive ? <ShieldOff size={16} /> : <ShieldCheck size={16} />}</button>
+                               <button aria-label={`${isActive ? "Suspend" : "Activate"} ${user.name}`} onClick={() => handleToggleAccessRequest(user)} className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isActive ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>{isActive ? <ShieldOff size={16} /> : <ShieldCheck size={16} />}</button>
                              ) : <Lock size={16} className="text-slate-800 opacity-20 mr-2" />}
                            </div>
                         </td>
@@ -206,9 +207,9 @@ const StaffManagement: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <div className="px-8 py-4 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
+          <div className="px-8 py-4 border-t border-white/5 bg-slate-950/60 flex items-center justify-between pagination-footer">
              <div className="text-xs text-slate-600 font-normal uppercase tracking-normal">{filteredStaff.length} Total</div>
-             <div className="flex gap-2">
+             <div className="flex gap-2 pagination-controls">
                 <button aria-label="Previous page" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={18} /></button>
                 <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-xs font-normal text-white">{currentPage} / {totalPages || 1}</span></div>
                 <button aria-label="Next page" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={18} /></button>
@@ -218,7 +219,7 @@ const StaffManagement: React.FC = () => {
       </div>
 
       {selectedStaff && (
-        <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
+        <DetailPanel label="Staff details" onClose={() => setSelectedStaffId(null)}>
           <div className="glass-card scroll-pane rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <div className="space-y-1">
@@ -273,7 +274,7 @@ const StaffManagement: React.FC = () => {
               </PermissionWrapper>
             </div>
           </div>
-        </div>
+        </DetailPanel>
       )}
 
       <CreateUserModal isOpen={isModalOpen} editingUser={editingUser} onClose={() => { setIsModalOpen(false); setEditingUser(null); }} />

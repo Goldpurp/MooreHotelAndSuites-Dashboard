@@ -279,9 +279,9 @@ const Dashboard: React.FC = () => {
             </tbody>
           </table>
         </div>
-        <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between pagination-footer">
            <div className="text-xs text-slate-600 font-normal uppercase tracking-normal">Showing {paginatedQueue.length} of {sortedActionableBookings.length} entries</div>
-           <div className="flex gap-2">
+           <div className="flex gap-2 pagination-controls">
               <button aria-label="Previous page" onClick={() => setQueuePage(p => Math.max(1, p - 1))} disabled={queuePage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
               <button aria-label="Next page" onClick={() => setQueuePage(p => Math.min(totalQueuePages, p + 1))} disabled={queuePage === totalQueuePages || totalQueuePages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
            </div>

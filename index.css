@@ -58,8 +58,8 @@ textarea {
 }
 
 * {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.42) transparent;
 }
 
 @media (max-width: 639px) {
@@ -203,9 +203,8 @@ textarea {
 
 /* Standardized Scrollbars */
 *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  width: 6px;
+  height: 6px;
 }
 
 *::-webkit-scrollbar-track {
@@ -254,19 +253,6 @@ textarea {
   padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
 }
 
-.route-stage {
-  animation: route-stage-in 240ms ease-out;
-}
-
-@keyframes route-stage-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 .mobile-nav-backdrop {
   animation: surface-fade-in 180ms ease-out both;
 }
@@ -303,40 +289,12 @@ textarea {
 }
 
 @media (max-width: 1023px) {
-  .master-detail-workspace > .split-main {
-    width: 100%;
-  }
-
-  .master-detail-workspace > .split-side {
-    position: fixed;
-    z-index: 80;
-    inset: 4.75rem 0.75rem calc(5.75rem + env(safe-area-inset-bottom));
-    height: auto;
-    background: #0a0f1a;
-    width: auto;
-    min-width: 0;
-    max-width: none;
-    border-radius: 1rem;
-    filter: drop-shadow(0 28px 60px rgba(0, 0, 0, 0.65));
-    animation: detail-pane-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
+  .master-detail-workspace > .split-main { width: 100%; }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .master-detail-workspace > .split-side {
-    inset: 5.75rem 1.25rem 1.25rem calc(5rem + 1.25rem);
-  }
-}
-
-@keyframes detail-pane-in {
-  from {
-    opacity: 0;
-    transform: translateX(18px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
+.detail-panel > .glass-card {
+  min-height: 0;
+  padding: clamp(1rem, 2vw, 1.5rem);
 }
 
 .glass-card {
@@ -437,4 +395,24 @@ textarea {
     min-width: 350px;
     max-width: 480px;
   }
+}
+
+/* Small screens scroll the page as well as long record lists, so headers and
+   filters cannot squeeze the records into an unusable strip. */
+@media (max-width: 767px), (max-height: 540px) {
+  .workspace-viewport { overflow-y: auto; }
+  .workspace-viewport > .route-stage { height: auto; min-height: 100%; }
+  .workspace-viewport > .route-stage > div { height: auto; min-height: 100%; }
+  .workspace-viewport .scroll-pane { max-height: 65dvh; flex-shrink: 0; }
+}
+
+.pagination-controls { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 639px) {
+  .pagination-footer { flex-wrap: wrap; gap: 0.75rem; padding: 0.75rem; }
+}
+
+.modal-backdrop > .mobile-nav-sheet {
+  max-height: calc(100dvh - 7rem - env(safe-area-inset-bottom));
+  margin-block: 0;
+  overflow-y: auto;
 }

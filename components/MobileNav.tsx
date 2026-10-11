@@ -105,13 +105,13 @@ const MobileNav: React.FC = () => {
       )}
 
       <nav className="fixed inset-x-0 bottom-0 z-[150] border-t border-white/10 bg-slate-950/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-2xl md:hidden" aria-label="Primary navigation">
-        <div className="mx-auto grid max-w-xl grid-cols-5 gap-1">
+        <div className="mx-auto grid max-w-xl grid-cols-5 gap-0 sm:gap-1">
           {primary.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => navigate(item.id)}
-              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium ${
+              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0 sm:px-1 text-xs font-medium ${
                 activeTab === item.id ? 'bg-brand-500/15 text-brand-400' : 'text-slate-500'
               }`}
             >
@@ -123,7 +123,7 @@ const MobileNav: React.FC = () => {
             type="button"
             onClick={() => setMoreOpen(true)}
             aria-expanded={moreOpen}
-            className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium text-slate-500"
+            className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0 sm:px-1 text-xs font-medium text-slate-500"
           >
             <Menu size={19} /> <span>More</span>
           </button>

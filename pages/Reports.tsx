@@ -160,7 +160,7 @@ const Reports: React.FC = () => {
             <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}>
               <RefreshCw size={18} />
             </button>
-            <button onClick={handlePrint} className="bg-white/5 hover:bg-white/10 text-slate-400 p-2 lg:px-4 lg:py-2.5 rounded-lg adaptive-text-xs font-medium uppercase border border-white/5 transition-all"><Printer size={14}/></button>
+            <button aria-label="Print report" onClick={handlePrint} className="bg-white/5 hover:bg-white/10 text-slate-400 p-2 lg:px-4 lg:py-2.5 rounded-lg adaptive-text-xs font-medium uppercase border border-white/5 transition-all"><Printer size={14}/></button>
             <button onClick={handleExportLedger} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg adaptive-text-xs font-medium uppercase flex items-center gap-2 transition-all shadow-xl whitespace-nowrap"><FileDown size={16}/> Export Records</button>
          </div>
       </div>
@@ -277,9 +277,9 @@ const Reports: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-2 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
+          <div className="px-4 py-2 border-t border-white/5 bg-slate-950/60 flex items-center justify-between pagination-footer">
             <p className="text-xs text-slate-700 font-normal uppercase">Change History</p>
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 pagination-controls">
               <button aria-label="Previous page" onClick={() => setAuditPage(p => Math.max(1, p - 1))} disabled={auditPage === 1} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronLeft size={12} /></button>
               <button aria-label="Next page" onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))} disabled={auditPage >= totalAuditPages} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronRight size={12} /></button>
             </div>

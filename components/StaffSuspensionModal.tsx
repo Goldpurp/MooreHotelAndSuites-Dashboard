@@ -1,3 +1,4 @@
+import { staffLabel } from "../lib/staffLabel";
 import ModalPortal from './ModalPortal';
 import React, { useState } from 'react';
 import { X, Lock, Activity, Loader2, ShieldOff, ShieldCheck, ShieldAlert } from 'lucide-react';
@@ -87,7 +88,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                     <img src={user.avatarUrl || "/avatar-placeholder.svg"} className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/10" alt="" />
                     <div className="min-w-0">
                        <p className="text-sm md:text-[14px] font-normal text-white uppercase tracking-tight truncate">{user.name}</p>
-                       <p className="text-xs md:text-xs text-slate-400 font-normal tracking-normal uppercase">{user.role}</p>
+                       <p className="text-xs md:text-xs text-slate-400 font-normal tracking-normal uppercase">{staffLabel(user)}</p>
                        <p className="text-xs md:text-xs text-slate-400 font-normal tracking-normal uppercase">{user.department}</p>
                     </div>
                  </div>

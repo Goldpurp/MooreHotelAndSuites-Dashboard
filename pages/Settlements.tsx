@@ -346,9 +346,9 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
           </table>
         </div>
 
-        <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between pagination-footer">
            <div className="text-xs text-slate-600 font-normal uppercase italic tracking-normal">All Records Sorted • {filteredHistory.length} Records</div>
-           <div className="flex gap-2">
+           <div className="flex gap-2 pagination-controls">
               <button aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-xs font-normal text-white">{currentPage} / {totalPages || 1}</span></div>
               <button aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
