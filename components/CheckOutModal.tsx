@@ -1,3 +1,4 @@
+import ModalPortal from './ModalPortal';
 import React, { useState } from 'react';
 import { X, LogOut, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 import { sileo } from 'sileo';
@@ -43,7 +44,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
   );
 
   return (
-    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label="Confirm guest check-out" tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+    <ModalPortal><div ref={modalRef} role="alertdialog" aria-modal="true" aria-label="Confirm guest check-out" tabIndex={-1} className="modal-backdrop fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className="glass-card w-full max-w-md rounded-[2rem] shadow-[0_0_50px_rgba(225,29,72,0.15)] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300">
           <>
             <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-rose-500/5">
@@ -52,8 +53,8 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
                   <LogOut size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight uppercase">Confirm Check-out</h2>
-                  <p className="text-[8px] text-rose-400 font-black uppercase tracking-[0.15em]">Check-out</p>
+                  <h2 className="text-lg font-semibold text-white tracking-tight uppercase">Confirm Check-out</h2>
+                  <p className="text-xs text-rose-400 font-normal uppercase tracking-normal">Check-out</p>
                 </div>
               </div>
               <button type="button" data-modal-close aria-label="Close check-out confirmation" onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all">
@@ -65,13 +66,13 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
               <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
                 <img src={guest.avatarUrl} className="w-14 h-14 rounded-xl object-cover ring-2 ring-white/10" alt="" />
                 <div className="min-w-0">
-                  <p className="text-sm font-black text-white uppercase truncate">{guest.firstName} {guest.lastName}</p>
+                  <p className="text-sm font-normal text-white uppercase truncate">{guest.firstName} {guest.lastName}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Guest verified</span>
+                    <span className="text-xs font-normal text-slate-500 uppercase tracking-normal">Guest verified</span>
                     <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{room.name}</span>
+                    <span className="text-xs font-normal text-blue-400 uppercase tracking-normal">{room.name}</span>
                   </div>
-                  <p className="mt-2 break-all text-[8px] font-black uppercase tracking-wider text-slate-500">
+                  <p className="mt-2 break-all text-xs font-normal uppercase tracking-normal text-slate-500">
                     Ref: {booking.bookingCode || "Not available"}
                   </p>
                 </div>
@@ -79,44 +80,44 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
-                  <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest mb-1">Nights</p>
-                  <p className="text-sm font-black text-white">{stayNights} Night(s)</p>
+                  <p className="text-xs text-slate-500 font-normal uppercase tracking-normal mb-1">Nights</p>
+                  <p className="text-sm font-normal text-white">{stayNights} Night(s)</p>
                 </div>
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
-                  <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest mb-1">Room Category</p>
-                  <p className="text-sm font-black text-white uppercase">{room.category}</p>
+                  <p className="text-xs text-slate-500 font-normal uppercase tracking-normal mb-1">Room Category</p>
+                  <p className="text-sm font-normal text-white uppercase">{room.category}</p>
                 </div>
               </div>
 
               <div className="bg-emerald-500/5 p-5 rounded-2xl border border-emerald-500/10">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Payment</span>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${booking.paymentStatus === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500 text-white animate-pulse'}`}>
+                  <span className="text-xs text-slate-400 font-normal uppercase tracking-normal">Payment</span>
+                  <span className={`text-xs font-normal uppercase tracking-normal px-2 py-1 rounded-lg ${booking.paymentStatus === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500 text-white animate-pulse'}`}>
                     {booking.paymentStatus}
                   </span>
                 </div>
                 <div className="flex justify-between items-end pt-3 border-t border-white/5">
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Total Amount</span>
-                  <span className="text-2xl font-black text-white tracking-tighter">₦{booking.amount.toLocaleString()}</span>
+                  <span className="text-xs text-slate-400 font-normal uppercase tracking-normal">Total Amount</span>
+                  <span className="text-2xl font-normal text-white tracking-tighter">₦{booking.amount.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="flex items-start gap-4 p-4 bg-rose-500/10 rounded-xl border border-rose-500/20">
                 <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-rose-300 leading-relaxed font-bold uppercase tracking-tight">
-                  This will close the booking and mark <span className="text-white font-black">{room.name}</span> for cleaning.
+                <p className="text-xs text-rose-300 leading-relaxed font-normal uppercase tracking-tight">
+                  This will close the booking and mark <span className="text-white font-normal">{room.name}</span> for cleaning.
                 </p>
               </div>
             </div>
 
             <div className="px-8 py-6 border-t border-white/5 flex gap-3 bg-slate-950/40">
-              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-xl text-xs font-medium uppercase tracking-normal text-slate-500 hover:text-white transition-all border border-white/5">
                 Cancel
               </button>
               <button 
                 onClick={handleConfirm} 
                 disabled={isSubmitting}
-                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:bg-rose-900/50 disabled:text-rose-400"
+                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-xs font-medium uppercase tracking-normal shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:bg-rose-900/50 disabled:text-rose-400"
               >
                 {isSubmitting ? (
                   <>
@@ -130,7 +131,7 @@ const CheckOutModal: React.FC<CheckOutModalProps> = ({ isOpen, onClose, onConfir
             </div>
           </>
       </div>
-    </div>
+    </div></ModalPortal>
   );
 };
 

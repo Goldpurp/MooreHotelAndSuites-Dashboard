@@ -1,3 +1,4 @@
+import ModalPortal from '../components/ModalPortal';
 import { auditDetails, auditActor } from '../lib/auditPresentation';
 import { isAdmin } from '../lib/access';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -151,22 +152,22 @@ const Reports: React.FC = () => {
          <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="w-8 h-[2px] bg-brand-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.4)]"></span>
-              <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-[0.15em]">Analytics</p>
+              <p className="adaptive-text-xs text-brand-400 font-normal uppercase tracking-normal">Analytics</p>
             </div>
-            <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Analytics</h1>
+            <h1 className="adaptive-text-2xl font-semibold text-white tracking-tight uppercase leading-none">Analytics</h1>
          </div>
          <div className="flex gap-2">
             <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}>
               <RefreshCw size={18} />
             </button>
-            <button onClick={handlePrint} className="bg-white/5 hover:bg-white/10 text-slate-400 p-2 lg:px-4 lg:py-2.5 rounded-lg adaptive-text-xs font-black uppercase border border-white/5 transition-all"><Printer size={14}/></button>
-            <button onClick={handleExportLedger} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-xl whitespace-nowrap"><FileDown size={16}/> Export Records</button>
+            <button onClick={handlePrint} className="bg-white/5 hover:bg-white/10 text-slate-400 p-2 lg:px-4 lg:py-2.5 rounded-lg adaptive-text-xs font-medium uppercase border border-white/5 transition-all"><Printer size={14}/></button>
+            <button onClick={handleExportLedger} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-lg adaptive-text-xs font-medium uppercase flex items-center gap-2 transition-all shadow-xl whitespace-nowrap"><FileDown size={16}/> Export Records</button>
          </div>
       </div>
 
       <div className="flex gap-1 bg-black/40 p-1 rounded-xl w-fit border border-white/5">
-        <button onClick={() => setReportTab('analytics')} className={`px-6 py-2 rounded-lg adaptive-text-xs font-black uppercase tracking-[0.1em] transition-all ${reportTab === 'analytics' ? 'bg-brand-600 text-white' : 'text-slate-600'}`}>Stats</button>
-        {isAdmin(currentUser) && (<button onClick={() => setReportTab('audit')} className={`px-6 py-2 rounded-lg adaptive-text-xs font-black uppercase tracking-[0.1em] transition-all ${reportTab === 'audit' ? 'bg-brand-600 text-white' : 'text-slate-600'}`}>History</button>)}
+        <button onClick={() => setReportTab('analytics')} className={`px-6 py-2 rounded-lg adaptive-text-xs font-medium uppercase tracking-normal transition-all ${reportTab === 'analytics' ? 'bg-brand-600 text-white' : 'text-slate-600'}`}>Stats</button>
+        {isAdmin(currentUser) && (<button onClick={() => setReportTab('audit')} className={`px-6 py-2 rounded-lg adaptive-text-xs font-medium uppercase tracking-normal transition-all ${reportTab === 'audit' ? 'bg-brand-600 text-white' : 'text-slate-600'}`}>History</button>)}
       </div>
 
       {reportTab === 'analytics' ? (
@@ -185,8 +186,8 @@ const Reports: React.FC = () => {
                     <card.icon size={14} className={card.color} />
                   </div>
                   <div>
-                    <span className="text-slate-600 text-[8px] font-black uppercase block mb-1">{card.label}</span>
-                    <h3 className="adaptive-text-lg font-black text-white truncate leading-none">{card.value}</h3>
+                    <span className="text-slate-600 text-xs font-normal uppercase block mb-1">{card.label}</span>
+                    <h3 className="adaptive-text-lg font-semibold text-white truncate leading-none">{card.value}</h3>
                   </div>
               </div>
             ))}
@@ -194,7 +195,7 @@ const Reports: React.FC = () => {
 
           <div className="grid grid-cols-12 gap-4 lg:gap-6">
             <div className="col-span-12 xl:col-span-8 glass-card adaptive-p rounded-xl border border-white/5 bg-slate-900/20">
-                <h3 className="adaptive-text-lg font-black text-white uppercase tracking-tight mb-8">Net receipts by hotel date</h3>
+                <h3 className="adaptive-text-lg font-semibold text-white uppercase tracking-tight mb-8">Net receipts by hotel date</h3>
                 <div className="h-64 lg:h-80 w-full">
                   <ReResponsiveContainer width="100%" height="100%">
                       <ReAreaChart data={revenueTrendsData}>
@@ -202,16 +203,16 @@ const Reports: React.FC = () => {
                           <linearGradient id="colorRevR" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/><stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/></linearGradient>
                         </defs>
                         <ReCartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                        <ReXAxis dataKey="month" stroke="#475569" axisLine={false} tickLine={false} dy={10} fontSize={9} fontWeight={900} />
-                        <ReYAxis stroke="#475569" axisLine={false} tickLine={false} fontSize={9} fontWeight={900} tickFormatter={(v) => `₦${v/1000}k`} />
-                        <ReTooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem' }} itemStyle={{ fontSize: '10px', fontWeight: 900 }} />
+                        <ReXAxis dataKey="month" stroke="#475569" axisLine={false} tickLine={false} dy={10} fontSize={12} fontWeight={400} />
+                        <ReYAxis stroke="#475569" axisLine={false} tickLine={false} fontSize={12} fontWeight={400} tickFormatter={(v) => `₦${v/1000}k`} />
+                        <ReTooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem' }} itemStyle={{ fontSize: "12px", fontWeight: 400 }} />
                         <ReArea type="monotone" dataKey="revenue" name="Yield" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevR)" />
                       </ReAreaChart>
                   </ReResponsiveContainer>
                 </div>
             </div>
             <div className="col-span-12 xl:col-span-4 glass-card adaptive-p rounded-xl border border-white/5 flex flex-col">
-                <h3 className="adaptive-text-lg font-black text-white uppercase mb-6">Room Usage</h3>
+                <h3 className="adaptive-text-lg font-semibold text-white uppercase mb-6">Room Usage</h3>
                 <div className="h-40 relative mb-6">
                   <ReResponsiveContainer width="100%" height="100%">
                       <RePieChart>
@@ -221,8 +222,8 @@ const Reports: React.FC = () => {
                       </RePieChart>
                   </ReResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="adaptive-text-2xl font-black text-white">{rooms.length ? Math.round(rooms.filter(room => room.status === RoomStatus.Occupied).length / rooms.length * 100) : 0}%</span>
-                      <span className="text-[7px] text-slate-600 font-black uppercase">Usage</span>
+                      <span className="adaptive-text-2xl font-normal text-white">{rooms.length ? Math.round(rooms.filter(room => room.status === RoomStatus.Occupied).length / rooms.length * 100) : 0}%</span>
+                      <span className="text-[7px] text-slate-600 font-normal uppercase">Usage</span>
                   </div>
                 </div>
                 <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar">
@@ -230,9 +231,9 @@ const Reports: React.FC = () => {
                     <div key={cat.name} className="flex items-center justify-between bg-black/40 p-2.5 rounded-lg border border-white/5">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }}></div>
-                          <p className="text-[9px] font-black text-white uppercase truncate">{cat.name}</p>
+                          <p className="text-xs font-normal text-white uppercase truncate">{cat.name}</p>
                         </div>
-                        <span className="text-[11px] font-black text-slate-300">{cat.value}%</span>
+                        <span className="text-xs font-normal text-slate-300">{cat.value}%</span>
                     </div>
                   ))}
                 </div>
@@ -244,7 +245,7 @@ const Reports: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="mobile-card-table w-full text-left min-w-[700px]">
               <thead>
-                <tr className="text-slate-600 adaptive-text-xs font-black uppercase tracking-widest border-b border-white/5 bg-slate-950/40">
+                <tr className="text-slate-600 adaptive-text-xs font-normal uppercase tracking-normal border-b border-white/5 bg-slate-950/40">
                   <th className="responsive-table-padding">Time</th>
                   <th className="responsive-table-padding">Handled By</th>
                   <th className="responsive-table-padding">Action</th>
@@ -257,16 +258,16 @@ const Reports: React.FC = () => {
                   <tr key={log.id} className="hover:bg-white/[0.01] transition-all group border-l-2 border-transparent hover:border-brand-500">
                     <td data-label="Time" className="responsive-table-padding">
                       <div className="min-w-0">
-                        <p className="adaptive-text-sm font-black text-white truncate leading-none mb-1">{new Date(log.createdAt).toLocaleDateString('en-GB')}</p>
-                        <p className="text-[7px] text-slate-700 font-bold uppercase truncate">{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="adaptive-text-sm font-normal text-white truncate leading-none mb-1">{new Date(log.createdAt).toLocaleDateString('en-GB')}</p>
+                        <p className="text-[7px] text-slate-700 font-normal uppercase truncate">{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </td>
-                    <td data-label="Handled By" className="responsive-table-padding"><p className="adaptive-text-sm font-black text-slate-300 uppercase truncate max-w-[140px]">{auditActor(log.profileId, staff)}</p></td>
+                    <td data-label="Handled By" className="responsive-table-padding"><p className="adaptive-text-sm font-normal text-slate-300 uppercase truncate max-w-[140px]">{auditActor(log.profileId, staff)}</p></td>
                     <td data-label="Action" className="responsive-table-padding">
-                      <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase border ${getAuditPresentation(log).classes}`}>{getAuditPresentation(log).label}</span>
+                      <span className={`px-2 py-0.5 rounded text-[7px] font-normal uppercase border ${getAuditPresentation(log).classes}`}>{getAuditPresentation(log).label}</span>
                     </td>
                     <td data-label="Area" className="responsive-table-padding">
-                      <p className="adaptive-text-xs font-black text-white uppercase leading-none truncate">{getFriendlyAreaName(log.entityType)}</p>
+                      <p className="adaptive-text-xs font-normal text-white uppercase leading-none truncate">{getFriendlyAreaName(log.entityType)}</p>
                     </td>
                     <td data-label="Details" className="responsive-table-padding text-right">
                       <button type="button" aria-label="View change summary" onClick={() => setInspectingLog(log)} className="bg-white/5 hover:bg-white/10 text-brand-400 p-1.5 rounded-lg border border-white/5 transition-all"><Eye size={14}/></button>
@@ -277,7 +278,7 @@ const Reports: React.FC = () => {
             </table>
           </div>
           <div className="px-4 py-2 border-t border-white/5 bg-slate-950/60 flex items-center justify-between">
-            <p className="text-[8px] text-slate-700 font-black uppercase">Change History</p>
+            <p className="text-xs text-slate-700 font-normal uppercase">Change History</p>
             <div className="flex gap-1.5">
               <button aria-label="Previous page" onClick={() => setAuditPage(p => Math.max(1, p - 1))} disabled={auditPage === 1} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronLeft size={12} /></button>
               <button aria-label="Next page" onClick={() => setAuditPage(p => Math.min(totalAuditPages, p + 1))} disabled={auditPage >= totalAuditPages} className="p-1 border border-white/10 rounded text-slate-600 disabled:opacity-10 transition-all bg-white/5"><ChevronRight size={12} /></button>
@@ -287,36 +288,36 @@ const Reports: React.FC = () => {
       )}
 
       {inspectingLog && (
-        <div ref={auditModalRef} role="dialog" aria-modal="true" aria-label="Audit record details" tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-300 overflow-hidden">
+        <ModalPortal><div ref={auditModalRef} role="dialog" aria-modal="true" aria-label="Audit record details" tabIndex={-1} className="modal-backdrop fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-[#020617]/95 backdrop-blur-md animate-in fade-in duration-300 overflow-hidden">
            <div className="w-full max-w-lg bg-[#0a0f1d] border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] shadow-3xl flex flex-col max-h-[92vh] sm:max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-300">
               <div className="px-5 sm:px-7 py-5 border-b border-white/5 flex items-center justify-between gap-4 bg-slate-950/40">
                  <div>
-                   <p className="text-[9px] font-black uppercase tracking-[0.18em] text-brand-400">Change history</p>
-                   <h3 className="text-lg font-black text-white">Change summary</h3>
+                   <p className="text-xs font-normal uppercase tracking-normal text-brand-400">Change history</p>
+                   <h3 className="text-lg font-semibold text-white">Change summary</h3>
                  </div>
                  <button type="button" data-modal-close aria-label="Close audit details" onClick={() => setInspectingLog(null)} className="p-2 hover:bg-white/10 text-slate-500 rounded-xl transition-all active:scale-90"><X size={18}/></button>
               </div>
               <div className="scroll-pane flex-1 space-y-5 overflow-y-auto p-5 sm:p-7">
                  <section className="rounded-2xl border border-brand-500/15 bg-brand-500/[0.06] p-5">
                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                     <span className={`rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase tracking-wider ${getAuditPresentation(inspectingLog).classes}`}>{getAuditPresentation(inspectingLog).label}</span>
-                     <span className="text-[10px] font-bold text-slate-500">{formatPrivateDateTime(inspectingLog.createdAt)}</span>
+                     <span className={`rounded-lg border px-3 py-1.5 text-xs font-normal uppercase tracking-normal ${getAuditPresentation(inspectingLog).classes}`}>{getAuditPresentation(inspectingLog).label}</span>
+                     <span className="text-xs font-normal text-slate-500">{formatPrivateDateTime(inspectingLog.createdAt)}</span>
                    </div>
-                   <p className="text-sm font-semibold leading-6 text-slate-200">{getAuditPresentation(inspectingLog).description}</p>
+                   <p className="text-sm font-normal leading-6 text-slate-200">{getAuditPresentation(inspectingLog).description}</p>
                  </section>
 
                  <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
-                     <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><ShieldCheck size={14}/> Handled by</dt>
-                     <dd className="text-sm font-black text-white">{auditActor(inspectingLog.profileId, staff)}</dd>
+                     <dt className="mb-2 flex items-center gap-2 text-xs font-normal uppercase tracking-normal text-slate-600"><ShieldCheck size={14}/> Handled by</dt>
+                     <dd className="text-sm font-normal text-white">{auditActor(inspectingLog.profileId, staff)}</dd>
                    </div>
                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4">
-                     <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><Layers3 size={14}/> Area</dt>
-                     <dd className="truncate text-sm font-black text-white">{getFriendlyAreaName(inspectingLog.entityType)}</dd>
+                     <dt className="mb-2 flex items-center gap-2 text-xs font-normal uppercase tracking-normal text-slate-600"><Layers3 size={14}/> Area</dt>
+                     <dd className="truncate text-sm font-normal text-white">{getFriendlyAreaName(inspectingLog.entityType)}</dd>
                    </div>
                    <div className="rounded-2xl border border-white/5 bg-white/[0.035] p-4 sm:col-span-2">
-                     <dt className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-600"><CalendarClock size={14}/> Recorded</dt>
-                     <dd className="text-sm font-black text-white">{formatPrivateDateTime(inspectingLog.createdAt)}</dd>
+                     <dt className="mb-2 flex items-center gap-2 text-xs font-normal uppercase tracking-normal text-slate-600"><CalendarClock size={14}/> Recorded</dt>
+                     <dd className="text-sm font-normal text-white">{formatPrivateDateTime(inspectingLog.createdAt)}</dd>
                    </div>
                    <div className="rounded-2xl border border-white/5 p-4 sm:col-span-2">
                      <dt className="text-xs text-slate-400">Record reference</dt>
@@ -324,7 +325,7 @@ const Reports: React.FC = () => {
                    </div>
                  </dl>
                  <section aria-label="Recorded changes" className="space-y-3">
-                   <h4 className="text-sm font-bold">Recorded changes</h4>
+                   <h4 className="text-sm font-semibold">Recorded changes</h4>
                    {auditDetails(inspectingLog).changes.length ? auditDetails(inspectingLog).changes.map(change => (
                      <div key={change.field} className="rounded-xl border border-white/10 p-3">
                        <p className="text-xs text-slate-400">{change.field}</p>
@@ -335,11 +336,11 @@ const Reports: React.FC = () => {
                  </section>
               </div>
               <div className="px-5 sm:px-7 py-4 bg-slate-950/60 border-t border-white/5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                 <p className="flex items-center gap-2 text-[9px] font-bold text-slate-600"><ShieldCheck size={14}/> Only approved audit fields are displayed.</p>
-                 <button type="button" data-modal-close onClick={() => setInspectingLog(null)} className="px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-xl transition-all active:scale-95">Close</button>
+                 <p className="flex items-center gap-2 text-xs font-normal text-slate-600"><ShieldCheck size={14}/> Only approved audit fields are displayed.</p>
+                 <button type="button" data-modal-close onClick={() => setInspectingLog(null)} className="px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-medium text-xs uppercase tracking-normal rounded-xl shadow-xl transition-all active:scale-95">Close</button>
               </div>
            </div>
-        </div>
+        </div></ModalPortal>
       )}
     </div>
   );

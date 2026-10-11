@@ -61,7 +61,7 @@ const Sidebar: React.FC = () => {
         />
         {!isSidebarCollapsed && (
           <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-            <h1 className="text-sm font-black text-white tracking-tighter whitespace-nowrap leading-tight uppercase">
+            <h1 className="text-sm font-semibold text-white tracking-tighter whitespace-nowrap leading-tight uppercase">
               Moore Hotels <br /> & Suites
             </h1>
             {/* <p className="text-brand-500 font-black tracking-dash uppercase whitespace-nowrap mt-0.5">
@@ -87,6 +87,8 @@ const Sidebar: React.FC = () => {
         {menuItems.map((item) => (
           <button
             key={item.id}
+            aria-label={item.label}
+            title={isSidebarCollapsed ? item.label : undefined}
             onClick={() => setActiveTab(item.id)}
             className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
               activeTab === item.id
@@ -102,7 +104,7 @@ const Sidebar: React.FC = () => {
               className={`shrink-0 transition-all ${activeTab === item.id ? "text-brand-500 scale-110" : "group-hover:text-slate-200 group-hover:scale-105"}`}
             />
             <span
-              className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${
+              className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${
                 isSidebarCollapsed
                   ? "opacity-0 -translate-x-10 invisible"
                   : "opacity-100 translate-x-0 visible"
@@ -116,7 +118,9 @@ const Sidebar: React.FC = () => {
         {/* RESTRICTED: Only Admin and Manager can access Analytics */}
         <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
           <button
-            onClick={() => setActiveTab("reports")}
+            aria-label="Stats"
+                title={isSidebarCollapsed ? "Stats" : undefined}
+                onClick={() => setActiveTab("reports")}
             className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
               activeTab === "reports"
                 ? "bg-brand-600/20 text-white border border-brand-500/20"
@@ -131,7 +135,7 @@ const Sidebar: React.FC = () => {
               className={`shrink-0 transition-all ${activeTab === "reports" ? "text-brand-500 scale-110" : "group-hover:text-slate-200"}`}
             />
             <span
-              className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
+              className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
             >
               Stats
             </span>
@@ -140,7 +144,7 @@ const Sidebar: React.FC = () => {
 
         <div className="pt-10">
           {!isSidebarCollapsed && (
-            <p className="px-4 text-[10px] text-slate-600 font-black uppercase tracking-dash mb-5 flex items-center gap-2">
+            <p className="px-4 text-xs text-slate-600 font-normal uppercase tracking-normal mb-5 flex items-center gap-2">
               <span className="w-4 h-px bg-slate-800"></span> Manage
             </p>
           )}
@@ -150,6 +154,8 @@ const Sidebar: React.FC = () => {
               allowedRoles={[UserRole.Admin, UserRole.Manager]}
             >
               {canOpenTab(currentUser, "operation_log") && <button
+                aria-label="Activity"
+                title={isSidebarCollapsed ? "Activity" : undefined}
                 onClick={() => setActiveTab("operation_log")}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
                   activeTab === "operation_log"
@@ -162,21 +168,25 @@ const Sidebar: React.FC = () => {
                   className={`shrink-0 ${activeTab === "operation_log" ? "text-brand-500" : "group-hover:text-slate-200"}`}
                 />
                 <span
-                  className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
+                  className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
                 >
                   Activity
                 </span>
               </button>}
 
               {canOpenTab(currentUser, "privacy") && <button
+                aria-label="Privacy"
+                title={isSidebarCollapsed ? "Privacy" : undefined}
                 onClick={() => setActiveTab("privacy")}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${activeTab === "privacy" ? "bg-brand-600/20 text-white border border-brand-500/20" : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"}`}
               >
                 <FileLock2 size={22} className={`shrink-0 ${activeTab === "privacy" ? "text-brand-500" : "group-hover:text-slate-200"}`} />
-                <span className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}>Privacy</span>
+                <span className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}>Privacy</span>
               </button>}
 
               <button
+                aria-label="Staff"
+                title={isSidebarCollapsed ? "Staff" : undefined}
                 onClick={() => setActiveTab("staff")}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
                   activeTab === "staff"
@@ -189,13 +199,15 @@ const Sidebar: React.FC = () => {
                   className={`shrink-0 ${activeTab === "staff" ? "text-brand-500" : "group-hover:text-slate-200"}`}
                 />
                 <span
-                  className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
+                  className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
                 >
                   Staff
                 </span>
               </button>
 
               <button
+                aria-label="Clients"
+                title={isSidebarCollapsed ? "Clients" : undefined}
                 onClick={() => setActiveTab("clients")}
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
                   activeTab === "clients"
@@ -208,7 +220,7 @@ const Sidebar: React.FC = () => {
                   className={`shrink-0 ${activeTab === "clients" ? "text-brand-500" : "group-hover:text-slate-200"}`}
                 />
                 <span
-                  className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
+                  className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
                 >
                   Clients
                 </span>
@@ -216,7 +228,9 @@ const Sidebar: React.FC = () => {
             </PermissionWrapper>
 
             <button
-              onClick={() => setActiveTab("settings")}
+              aria-label="Settings"
+                title={isSidebarCollapsed ? "Settings" : undefined}
+                onClick={() => setActiveTab("settings")}
               className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group ${
                 activeTab === "settings"
                   ? "bg-brand-600/20 text-white border border-brand-500/20"
@@ -228,7 +242,7 @@ const Sidebar: React.FC = () => {
                 className={`shrink-0 ${activeTab === "settings" ? "text-brand-500" : "group-hover:text-slate-200"}`}
               />
               <span
-                className={`font-black text-[12px] tracking-widest uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
+                className={`font-normal text-[12px] tracking-normal uppercase transition-all duration-500 ${isSidebarCollapsed ? "opacity-0 invisible -translate-x-10" : "opacity-100 visible translate-x-0"}`}
               >
                 Settings
               </span>
@@ -239,8 +253,10 @@ const Sidebar: React.FC = () => {
 
       <div className="p-4 mt-auto border-t border-white/5">
         <button
+          aria-label="Log Out"
+          title={isSidebarCollapsed ? "Log Out" : undefined}
           onClick={handleLogout}
-          className="w-full flex items-center gap-4 px-4 py-4 text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all text-[12px] font-black uppercase tracking-widest group"
+          className="w-full flex items-center gap-4 px-4 py-4 text-rose-400/80 hover:bg-rose-500/10 hover:text-rose-400 rounded-2xl transition-all text-[12px] font-medium uppercase tracking-normal group"
         >
           <LogOut
             size={22}

@@ -1,9 +1,10 @@
+import AppToaster from './components/AppToaster';
 import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import MobileNav from "./components/MobileNav";
 import { ConfirmationProvider } from "./components/ConfirmationProvider";
-import { Toaster, sileo } from "sileo";
+import { sileo } from "sileo";
 import { api } from "./lib/api";
 import { HotelProvider, useHotel, normalizeBooking } from "./store/HotelContext";
 import { installNotificationSoundUnlock } from "./lib/notificationSound";
@@ -54,6 +55,11 @@ const AppContent: React.FC = () => {
     requestId: number;
   } | null>(null);
   const [paymentReviewRebooking, setPaymentReviewRebooking] = useState<PaymentReviewRebooking | null>(null);
+  useEffect(() => {
+    setPaymentReviewRequest(null);
+    setPaymentReviewRebooking(null);
+  }, [isAuthenticated, currentUser?.id]);
+
   const openPaymentReview = useCallback(async (booking: Booking) => {
     try {
       const fresh = normalizeBooking(await api.get(`/api/bookings/${encodeURIComponent(booking.bookingCode)}`));
@@ -141,11 +147,11 @@ const AppContent: React.FC = () => {
           </div>
         </div>
         <div className="text-center space-y-3">
-          <h2 className="text-white font-black uppercase tracking-[0.5em] text-sm drop-shadow-2xl">
+          <h2 className="text-white font-semibold uppercase tracking-[0.5em] text-sm drop-shadow-2xl">
             Moore Systems
           </h2>
           <div className="flex flex-col items-center gap-1">
-            <p className="text-slate-600 text-[9px] font-black uppercase tracking-[0.3em] animate-pulse">
+            <p className="text-slate-600 text-xs font-normal uppercase tracking-normal animate-pulse">
               Checking Security...
             </p>
             <div className="w-48 h-[1px] bg-slate-800 relative overflow-hidden mt-2">
@@ -166,10 +172,10 @@ const AppContent: React.FC = () => {
   if (sessionRecoveryError) {
     return <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-white">
       <section role="alert" className="max-w-md space-y-5 rounded-2xl border border-white/10 p-8">
-        <h1 className="text-xl font-bold">Connection interrupted</h1>
+        <h1 className="text-xl font-semibold">Connection interrupted</h1>
         <p>{sessionRecoveryError}</p>
         <p className="text-sm text-slate-400">Your sign-in is saved. Reconnect to verify your staff profile and continue.</p>
-        <button type="button" onClick={retrySession} className="rounded-xl bg-brand-600 px-5 py-3 font-bold">Retry connection</button>
+        <button type="button" onClick={retrySession} className="rounded-xl bg-brand-600 px-5 py-3 font-medium">Retry connection</button>
       </section>
     </main>;
   }
@@ -179,7 +185,7 @@ const AppContent: React.FC = () => {
       <Suspense
         fallback={
           <div className="h-screen bg-slate-950 flex items-center justify-center">
-            <div className="text-slate-600 font-black uppercase tracking-[0.5em] text-xs animate-pulse">
+            <div className="text-slate-600 font-normal uppercase tracking-normal text-xs animate-pulse">
               Opening Moore...
             </div>
           </div>
@@ -237,7 +243,6 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="h-[100dvh] min-h-0 overflow-hidden bg-slate-950 flex text-slate-50 font-sans selection:bg-brand-500/30">
-      <Toaster />
       <Sidebar />
       <MobileNav />
       <HousekeepingReminder />
@@ -251,7 +256,7 @@ const AppContent: React.FC = () => {
         <TopBar />
         {dataLoadError && <div role="alert" className="mx-4 mt-3 flex shrink-0 items-center justify-between gap-4 rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 py-3 text-sm text-rose-300">
           <p>Hotel data could not be refreshed. {dataLoadError} Visible records may be out of date.</p>
-          <button type="button" disabled={isDataRefreshing} onClick={() => void refreshData()} className="shrink-0 rounded-lg border border-rose-500/30 px-3 py-2 font-bold disabled:opacity-50">{isDataRefreshing ? 'Retrying…' : 'Retry data loading'}</button>
+          <button type="button" disabled={isDataRefreshing} onClick={() => void refreshData()} className="shrink-0 rounded-lg border border-rose-500/30 px-3 py-2 font-medium disabled:opacity-50">{isDataRefreshing ? 'Retrying…' : 'Retry data loading'}</button>
         </div>}
       <PaymentReviewQueue
         requestedBooking={paymentReviewRequest?.booking}
@@ -275,7 +280,7 @@ const AppContent: React.FC = () => {
               fallback={
                 <div className="flex flex-col items-center justify-center h-[60vh] gap-6">
                   <div className="w-14 h-14 border-[3px] border-brand-500/10 border-t-brand-500 rounded-full animate-spin" />
-                  <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.3em] animate-pulse">
+                  <p className="text-xs font-normal text-slate-600 uppercase tracking-normal animate-pulse">
                     Loading...
                   </p>
                 </div>
@@ -301,6 +306,8 @@ const App: React.FC = () => {
   }
 
   return (
+    <>
+    <AppToaster />
     <HotelProvider>
       <ConfirmationProvider>
         <HousekeepingProvider>
@@ -308,6 +315,7 @@ const App: React.FC = () => {
         </HousekeepingProvider>
       </ConfirmationProvider>
     </HotelProvider>
+    </>
   );
 };
 

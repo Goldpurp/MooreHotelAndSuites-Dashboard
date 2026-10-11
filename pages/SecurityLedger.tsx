@@ -92,19 +92,19 @@ const SecurityLedger: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
-            <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em]">Activity</p>
+            <p className="text-xs text-emerald-400 font-normal uppercase tracking-normal">Activity</p>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Activity Log</h1>
-          <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-1">History</p>
+          <h1 className="text-3xl font-semibold text-white tracking-tight uppercase">Activity Log</h1>
+          <p className="text-slate-500 text-xs font-normal uppercase tracking-normal mt-1">History</p>
         </div>
         <div className="flex gap-2">
            <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}>
              <RefreshCw size={16} />
            </button>
-           <button onClick={handlePrint} className="bg-white/5 border border-white/5 text-slate-400 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-dash hover:text-white transition-all">
+           <button onClick={handlePrint} className="bg-white/5 border border-white/5 text-slate-400 px-4 py-2.5 rounded-xl text-xs font-medium uppercase tracking-normal hover:text-white transition-all">
              <Printer size={14} className="mr-2 inline" /> Print Log
            </button>
-           <button onClick={handleExportLogs} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-emerald-500/20 active:scale-95">
+           <button onClick={handleExportLogs} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-medium uppercase tracking-normal flex items-center gap-2 transition-all shadow-xl shadow-emerald-500/20 active:scale-95">
              <Download size={16}/> Download Log
            </button>
         </div>
@@ -113,8 +113,8 @@ const SecurityLedger: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="glass-card p-6 rounded-2xl border border-white/5 flex items-center justify-between">
            <div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Check-ins Today</p>
-              <h4 className="text-2xl font-black text-white">{visitHistory.filter(v => v.action === VisitAction.CHECK_IN && new Date(v.timestamp).toDateString() === new Date().toDateString()).length}</h4>
+              <p className="text-xs text-slate-500 font-normal uppercase tracking-normal mb-1">Check-ins Today</p>
+              <h4 className="text-2xl font-semibold text-white">{visitHistory.filter(v => v.action === VisitAction.CHECK_IN && new Date(v.timestamp).toDateString() === new Date().toDateString()).length}</h4>
            </div>
            <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400">
               <Zap size={20} />
@@ -122,8 +122,8 @@ const SecurityLedger: React.FC = () => {
         </div>
         <div className="glass-card p-6 rounded-2xl border border-white/5 flex items-center justify-between">
            <div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Check-outs Today</p>
-              <h4 className="text-2xl font-black text-white">{visitHistory.filter(v => v.action === VisitAction.CHECK_OUT && new Date(v.timestamp).toDateString() === new Date().toDateString()).length}</h4>
+              <p className="text-xs text-slate-500 font-normal uppercase tracking-normal mb-1">Check-outs Today</p>
+              <h4 className="text-2xl font-semibold text-white">{visitHistory.filter(v => v.action === VisitAction.CHECK_OUT && new Date(v.timestamp).toDateString() === new Date().toDateString()).length}</h4>
            </div>
            <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20 text-amber-400">
               <LogOut size={20} />
@@ -131,8 +131,8 @@ const SecurityLedger: React.FC = () => {
         </div>
         <div className="glass-card p-6 rounded-2xl border border-white/5 flex items-center justify-between">
            <div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Total Actions</p>
-              <h4 className="text-2xl font-black text-blue-400">{visitHistory.length}</h4>
+              <p className="text-xs text-slate-500 font-normal uppercase tracking-normal mb-1">Total Actions</p>
+              <h4 className="text-2xl font-semibold text-blue-400">{visitHistory.length}</h4>
            </div>
            <div className="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20 text-blue-400">
               <ShieldCheck size={20} />
@@ -156,7 +156,7 @@ const SecurityLedger: React.FC = () => {
              <select 
                value={filterAction}
                onChange={e => setFilterAction(e.target.value)}
-               className="bg-black/40 border border-white/10 rounded-xl py-3 px-6 text-[11px] font-black text-slate-500 uppercase tracking-widest outline-none appearance-none cursor-pointer hover:border-white/20 transition-all"
+               className="bg-black/40 border border-white/10 rounded-xl py-3 px-6 text-xs font-normal text-slate-500 uppercase tracking-normal outline-none appearance-none cursor-pointer hover:border-white/20 transition-all"
              >
                <option value="All Actions">Show All</option>
                <option value={VisitAction.CHECK_IN}>Check-ins</option>
@@ -171,7 +171,7 @@ const SecurityLedger: React.FC = () => {
         <div className="overflow-x-auto overflow-y-auto max-h-[600px] custom-scrollbar">
           <table className="mobile-card-table w-full text-left">
             <thead className="sticky top-0 bg-slate-950/80 backdrop-blur-md z-10 border-b border-white/10">
-              <tr className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+              <tr className="text-slate-500 text-xs font-normal uppercase tracking-normal">
                 <th className="px-8 py-5">Time</th>
                 <th className="px-8 py-5">Guest Name</th>
                 <th className="px-8 py-5">Action</th>
@@ -184,7 +184,7 @@ const SecurityLedger: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="py-24 text-center opacity-30">
                     <ShieldAlert size={48} className="mx-auto mb-4 text-slate-700" />
-                    <p className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-600">No records found</p>
+                    <p className="text-[12px] font-normal uppercase tracking-normal text-slate-600">No records found</p>
                   </td>
                 </tr>
               ) : (
@@ -196,19 +196,19 @@ const SecurityLedger: React.FC = () => {
                           <Clock size={16} />
                         </div>
                         <div>
-                          <p className="text-[14px] font-black text-white">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
-                          <p className="text-[9px] text-slate-600 font-black uppercase mt-0.5">{new Date(log.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          <p className="text-[14px] font-normal text-white">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+                          <p className="text-xs text-slate-600 font-normal uppercase mt-0.5">{new Date(log.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                         </div>
                       </div>
                     </td>
                     <td data-label="Guest" className="px-8 py-6">
                        <div>
-                          <p className="text-[15px] font-black text-white group-hover:text-blue-400 transition-colors">{log.guestName}</p>
-                          <p className="mt-0.5 break-all text-[9px] font-black uppercase tracking-wider text-slate-500">Ref: {log.bookingCode}</p>
+                          <p className="text-[15px] font-normal text-white group-hover:text-blue-400 transition-colors">{log.guestName}</p>
+                          <p className="mt-0.5 break-all text-xs font-normal uppercase tracking-normal text-slate-500">Ref: {log.bookingCode}</p>
                        </div>
                     </td>
                     <td data-label="Action" className="px-8 py-6">
-                       <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border flex items-center gap-2 w-fit transition-all ${getActionStyles(log.action)}`}>
+                       <span className={`px-4 py-1.5 rounded-xl text-xs font-normal uppercase tracking-normal border flex items-center gap-2 w-fit transition-all ${getActionStyles(log.action)}`}>
                          {getActionIcon(log.action)}
                          {log.action}
                        </span>
@@ -219,15 +219,15 @@ const SecurityLedger: React.FC = () => {
                              <Bed size={16} />
                           </div>
                           <div>
-                            <p className="text-[14px] font-black text-white leading-none">{log.roomNumber}</p>
-                            <p className="text-[9px] text-slate-600 font-black uppercase mt-1 tracking-dash">Room</p>
+                            <p className="text-[14px] font-normal text-white leading-none">{log.roomNumber}</p>
+                            <p className="text-xs text-slate-600 font-normal uppercase mt-1 tracking-normal">Room</p>
                           </div>
                        </div>
                     </td>
                     <td data-label="Staff" className="px-8 py-6 text-right">
                        <div>
-                         <p className="text-[13px] font-black text-slate-200">{log.authorizedBy}</p>
-                         <p className="text-[8px] text-emerald-500 font-black uppercase tracking-dash mt-0.5">Staff</p>
+                         <p className="text-[13px] font-normal text-slate-200">{log.authorizedBy}</p>
+                         <p className="text-xs text-emerald-500 font-normal uppercase tracking-normal mt-0.5">Staff</p>
                        </div>
                     </td>
                   </tr>
@@ -238,7 +238,7 @@ const SecurityLedger: React.FC = () => {
         </div>
 
         <div className="px-8 py-4 border-t border-white/5 bg-slate-950/40 flex items-center justify-between">
-           <p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.3em]">Activity Log</p>
+           <p className="text-xs text-slate-700 font-normal uppercase tracking-normal">Activity Log</p>
            <div className="flex gap-2">
               <button aria-label="Previous page" className="p-2 text-slate-600 hover:text-white transition-all"><ChevronLeft size={16}/></button>
               <button aria-label="Next page" className="p-2 text-slate-600 hover:text-white transition-all"><ChevronRight size={16}/></button>

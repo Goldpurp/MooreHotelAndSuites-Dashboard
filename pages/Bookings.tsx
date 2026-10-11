@@ -312,11 +312,11 @@ const Bookings: React.FC<BookingsProps> = ({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
-              <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">
+              <p className="adaptive-text-xs text-brand-400 font-normal uppercase tracking-normal leading-none">
                 Bookings
               </p>
             </div>
-            <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">
+            <h1 className="adaptive-text-2xl font-semibold text-white tracking-tight uppercase leading-none">
               Bookings
             </h1>
           </div>
@@ -357,7 +357,7 @@ const Bookings: React.FC<BookingsProps> = ({
                 setIsWalkIn(true);
                 setIsBookingModalOpen(true);
               }}
-              className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all whitespace-nowrap"
+              className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl adaptive-text-xs font-medium uppercase flex items-center gap-2 transition-all whitespace-nowrap"
             >
               <Zap size={14} fill="currentColor" />{" "}
               <span className="hidden lg:inline">Walk-In</span>
@@ -371,7 +371,7 @@ const Bookings: React.FC<BookingsProps> = ({
                 setIsWalkIn(false);
                 setIsBookingModalOpen(true);
               }}
-              className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all whitespace-nowrap"
+              className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl adaptive-text-xs font-medium uppercase flex items-center gap-2 transition-all whitespace-nowrap"
             >
               <Plus size={14} strokeWidth={3} />{" "}
               <span className="hidden lg:inline">New Booking</span>
@@ -394,7 +394,7 @@ const Bookings: React.FC<BookingsProps> = ({
                 <button
                   key={f}
                   onClick={() => { setFilter(f); setCurrentPage(1); }}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f ? (f === "CheckedIn" ? "bg-emerald-600 text-white" : f === "Cancelled" ? "bg-rose-600 text-white" : "bg-brand-600 text-white shadow-lg") : "text-slate-600 hover:text-slate-300"}`}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-medium uppercase tracking-normal transition-all whitespace-nowrap ${filter === f ? (f === "CheckedIn" ? "bg-emerald-600 text-white" : f === "Cancelled" ? "bg-rose-600 text-white" : "bg-brand-600 text-white shadow-lg") : "text-slate-600 hover:text-slate-300"}`}
                 >
                   {f === "CheckedIn"
                     ? "IN-HOUSE"
@@ -413,7 +413,7 @@ const Bookings: React.FC<BookingsProps> = ({
           <div aria-busy={pageLoading} className="scroll-pane min-h-0 flex-1 overflow-auto">
             <table className="mobile-card-table w-full text-left min-w-[600px]">
               <thead className="sticky top-0 bg-slate-950/90 z-10 border-b border-white/10">
-                <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
+                <tr className="text-slate-500 adaptive-text-xs font-normal uppercase tracking-normal">
                   <th className="responsive-table-padding">Guest Details</th>
                   <th className="responsive-table-padding col-priority-med">
                     Dates
@@ -434,7 +434,7 @@ const Bookings: React.FC<BookingsProps> = ({
                   <tr>
                     <td
                       colSpan={5}
-                      className="py-32 text-center text-slate-700 font-black uppercase adaptive-text-sm"
+                      className="py-32 text-center text-slate-700 font-normal uppercase adaptive-text-sm"
                     >
                       No records found in current view
                     </td>
@@ -463,10 +463,10 @@ const Bookings: React.FC<BookingsProps> = ({
                               <User size={18} />
                             </div>
                             <div className="min-w-0">
-                              <p className="adaptive-text-sm font-black text-white group-hover:text-brand-400 transition-colors uppercase truncate leading-none mb-1.5">
+                              <p className="adaptive-text-sm font-normal text-white group-hover:text-brand-400 transition-colors uppercase truncate leading-none mb-1.5">
                                 {guestName}
                               </p>
-                              <p className="break-all text-[9px] font-black uppercase tracking-wider text-slate-500">
+                              <p className="break-all text-xs font-normal uppercase tracking-normal text-slate-500">
                                 Booking: {b.bookingCode}
                               </p>
                             </div>
@@ -475,11 +475,11 @@ const Bookings: React.FC<BookingsProps> = ({
                         <td data-label="Stay" className="responsive-table-padding col-priority-med">
                           <div className="flex flex-col gap-1">
                             <span
-                              className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border w-fit flex items-center gap-1.5 ${cfg.bg} ${cfg.text} ${cfg.border}`}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-normal uppercase border w-fit flex items-center gap-1.5 ${cfg.bg} ${cfg.text} ${cfg.border}`}
                             >
                               {cfg.icon} {cfg.label}
                             </span>
-                            <p className="text-[10px] font-bold text-slate-500 mt-1">
+                            <p className="text-xs font-normal text-slate-500 mt-1">
                               {new Date(b.checkIn).toLocaleDateString("en-GB", {
                                 day: "2-digit",
                                 month: "short",
@@ -493,22 +493,22 @@ const Bookings: React.FC<BookingsProps> = ({
                           </div>
                         </td>
                         <td data-label="Room" className="responsive-table-padding text-center col-priority-low">
-                          <p className="adaptive-text-sm font-black text-slate-300 uppercase leading-none mb-1.5">
+                          <p className="adaptive-text-sm font-normal text-slate-300 uppercase leading-none mb-1.5">
                             {room?.name || "---"}
                           </p>
-                          <p className="text-[8px] text-slate-700 font-bold uppercase">
+                          <p className="text-xs text-slate-700 font-normal uppercase">
                             {room?.category}
                           </p>
                         </td>
                         <td data-label="Status" className="responsive-table-padding text-right">
                           <div className="flex flex-col items-end">
                             <p
-                              className={`adaptive-text-sm font-black tracking-tighter ${isPaid ? "text-white" : "text-rose-400"}`}
+                              className={`adaptive-text-sm font-normal tracking-tighter ${isPaid ? "text-white" : "text-rose-400"}`}
                             >
                               ₦{b.amount.toLocaleString()}
                             </p>
                             <p
-                              className={`text-[8px] font-black uppercase mt-1 ${isPaid ? "text-emerald-500" : "text-rose-500 animate-pulse"}`}
+                              className={`text-xs font-normal uppercase mt-1 ${isPaid ? "text-emerald-500" : "text-rose-500 animate-pulse"}`}
                             >
                               {getPaymentStatusLabel(b.paymentStatus)}
                             </p>
@@ -569,7 +569,7 @@ const Bookings: React.FC<BookingsProps> = ({
           </div>
 
           <div className="px-8 py-4 border-t border-white/10 bg-slate-950/60 flex items-center justify-between">
-            <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+            <span className="text-xs text-slate-600 font-normal uppercase tracking-normal">
               {totalRecords} Total Records
             </span>
             <div className="flex gap-2">
@@ -581,7 +581,7 @@ const Bookings: React.FC<BookingsProps> = ({
                 <ChevronLeft size={18} />
               </button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5">
-                <span className="text-[11px] font-black text-white">
+                <span className="text-xs font-normal text-white">
                   {currentPage} / {totalPages || 1}
                 </span>
               </div>
@@ -616,12 +616,12 @@ const Bookings: React.FC<BookingsProps> = ({
             className="fixed inset-x-3 top-3 bottom-[5.75rem] z-50 flex min-w-0 max-w-none flex-col gap-4 overflow-hidden animate-in slide-in-from-right-4 duration-300 lg:static lg:inset-auto lg:z-auto lg:h-full lg:min-w-[350px] lg:max-w-[480px] lg:flex-[1.3] lg:duration-500"
           >
           <div className="glass-card rounded-2xl p-5 sm:p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] relative shadow-2xl shadow-black/60">
-            <div className="flex justify-between items-start mb-6 sm:mb-10">
+            <div className="flex justify-between items-start mb-6 sm:mb-6">
               <div className="space-y-1">
-                <h3 id="booking-details-title" className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">
+                <h3 id="booking-details-title" className="adaptive-text-xl font-semibold text-white tracking-tighter uppercase leading-none">
                   Booking Details
                 </h3>
-                <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">
+                <p className="text-xs text-brand-500 font-normal tracking-normal uppercase">
                   Options
                 </p>
               </div>
@@ -637,7 +637,7 @@ const Bookings: React.FC<BookingsProps> = ({
 
             <div className="scroll-pane min-h-0 space-y-8 flex-1 overflow-y-auto pr-1">
               <div className="flex flex-col items-center text-center p-5 sm:p-8 bg-[#161d2b] rounded-3xl border border-white/5 shadow-inner">
-                <div className="w-20 h-20 rounded-2xl bg-[#05080f] flex items-center justify-center font-black text-white text-4xl mb-4 border border-white/5 shadow-2xl relative overflow-hidden ring-4 ring-white/5">
+                <div className="w-20 h-20 rounded-2xl bg-[#05080f] flex items-center justify-center font-normal text-white text-4xl mb-4 border border-white/5 shadow-2xl relative overflow-hidden ring-4 ring-white/5">
                   <img
                     src="/avatar-placeholder.svg"
                     className="absolute inset-0 w-full h-full object-cover opacity-60"
@@ -645,10 +645,10 @@ const Bookings: React.FC<BookingsProps> = ({
                   />
                   {/* {resolveGuestName(selectedBooking).charAt(0)} */}
                 </div>
-                <h4 className="adaptive-text-lg font-black text-white uppercase tracking-tighter mb-1 truncate w-full">
+                <h4 className="adaptive-text-lg font-semibold text-white uppercase tracking-tighter mb-1 truncate w-full">
                   {resolveGuestName(selectedBooking)}
                 </h4>
-                <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">
+                <p className="text-xs text-slate-600 font-normal uppercase tracking-normal">
                   Guest
                 </p>
               </div>
@@ -657,11 +657,11 @@ const Bookings: React.FC<BookingsProps> = ({
                 <div
                   className={`px-5 py-3.5 rounded-2xl border flex items-center justify-between transition-all ${getStatusConfig(getBookingStatus(selectedBooking)).bg} ${getStatusConfig(getBookingStatus(selectedBooking)).border}`}
                 >
-                  <span className="text-[9px] text-slate-500 font-black uppercase">
+                  <span className="text-xs text-slate-500 font-normal uppercase">
                     Status
                   </span>
                   <span
-                    className={`adaptive-text-xs font-black uppercase ${getStatusConfig(getBookingStatus(selectedBooking)).text}`}
+                    className={`adaptive-text-xs font-normal uppercase ${getStatusConfig(getBookingStatus(selectedBooking)).text}`}
                   >
                     {getStatusConfig(getBookingStatus(selectedBooking)).label}
                   </span>
@@ -669,7 +669,7 @@ const Bookings: React.FC<BookingsProps> = ({
                 <div
                   className={`px-5 py-3.5 rounded-2xl border flex items-center justify-between transition-all ${(selectedBooking.paymentStatus || "").toLowerCase() === "paid" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-rose-500/10 border-rose-500/20 text-rose-400"}`}
                 >
-                  <span className="text-[9px] opacity-70 font-black uppercase">
+                  <span className="text-xs opacity-70 font-normal uppercase">
                     Payment
                   </span>
                   <div className="flex items-center gap-2">
@@ -679,7 +679,7 @@ const Bookings: React.FC<BookingsProps> = ({
                     ) : (
                       <AlertCircle size={14} />
                     )}
-                    <span className="adaptive-text-xs font-black uppercase">
+                    <span className="adaptive-text-xs font-normal uppercase">
                       {getPaymentStatusLabel(selectedBooking.paymentStatus, true)}
                     </span>
                   </div>
@@ -687,28 +687,28 @@ const Bookings: React.FC<BookingsProps> = ({
               </div>
 
               <div className="rounded-2xl border border-brand-500/15 bg-brand-500/[0.055] px-5 py-4">
-                <span className="mb-1 block text-[9px] font-black uppercase tracking-widest text-slate-500">
+                <span className="mb-1 block text-xs font-normal uppercase tracking-normal text-slate-500">
                   Booking Reference
                 </span>
-                <span className="block break-all text-sm font-black tracking-wide text-white">
+                <span className="block break-all text-sm font-normal tracking-normal text-white">
                   {selectedBooking.bookingCode || "Not available"}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="bg-[#0d131f] px-5 py-4 rounded-2xl border border-white/5">
-                  <span className="text-[9px] text-slate-600 font-black uppercase block mb-1">
+                  <span className="text-xs text-slate-600 font-normal uppercase block mb-1">
                     Room No.
                   </span>
-                  <span className="adaptive-text-base font-black text-brand-500 tracking-tighter whitespace-nowrap">
+                  <span className="adaptive-text-base font-normal text-brand-500 tracking-tighter whitespace-nowrap">
                     {selectedRoom?.name || "---"}
                   </span>
                 </div>
                 <div className="bg-[#0d131f] px-5 py-4 rounded-2xl border border-white/5">
-                  <span className="text-[9px] text-slate-600 font-black uppercase block mb-1">
+                  <span className="text-xs text-slate-600 font-normal uppercase block mb-1">
                     Stay
                   </span>
-                  <span className="adaptive-text-base font-black text-white tracking-tighter whitespace-nowrap">
+                  <span className="adaptive-text-base font-normal text-white tracking-tighter whitespace-nowrap">
                     ₦{selectedBooking.amount.toLocaleString()}
                   </span>
                 </div>
@@ -719,7 +719,7 @@ const Bookings: React.FC<BookingsProps> = ({
                   <div className="p-2 bg-black rounded-xl border border-white/5 text-slate-600 shrink-0">
                     <Mail size={14} />
                   </div>
-                  <span className="adaptive-text-sm font-bold truncate flex-1 leading-none">
+                  <span className="adaptive-text-sm font-normal truncate flex-1 leading-none">
                     {selectedBooking.guestEmail || "No Email"}
                   </span>
                 </div>
@@ -727,7 +727,7 @@ const Bookings: React.FC<BookingsProps> = ({
                   <div className="p-2 bg-black rounded-xl border border-white/5 text-slate-600 shrink-0">
                     <Phone size={14} />
                   </div>
-                  <span className="adaptive-text-sm font-bold leading-none">
+                  <span className="adaptive-text-sm font-normal leading-none">
                     {selectedBooking.guestPhone || "No Phone"}
                   </span>
                 </div>
@@ -744,7 +744,7 @@ const Bookings: React.FC<BookingsProps> = ({
                     (selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || 
                     getBookingStatus(selectedBooking) === "NoShow"
                   }
-                  className={`w-full ${(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || getBookingStatus(selectedBooking) === "NoShow" ? "bg-slate-900 text-slate-700 cursor-not-allowed" : "bg-[#10b981] hover:bg-[#059669] text-white shadow-xl shadow-emerald-950/60"} font-black py-5 rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3`}
+                  className={`w-full ${(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || getBookingStatus(selectedBooking) === "NoShow" ? "bg-slate-900 text-slate-700 cursor-not-allowed" : "bg-[#10b981] hover:bg-[#059669] text-white shadow-xl shadow-emerald-950/60"} font-medium py-5 rounded-2xl adaptive-text-sm uppercase tracking-normal transition-all active:scale-95 flex items-center justify-center gap-3`}
                 >
                   {(selectedBooking.paymentStatus || "").toLowerCase() !== "paid" || getBookingStatus(selectedBooking) === "NoShow" ? (
                     <Lock size={20} />
@@ -761,14 +761,14 @@ const Bookings: React.FC<BookingsProps> = ({
                 selectedBooking.status?.toLowerCase() === "inhouse" ? (
                 <button
                   onClick={() => navigateToGuestStay(selectedBooking.guestId)}
-                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-black py-5 rounded-2xl adaptive-text-sm uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 shadow-xl"
+                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-5 rounded-2xl adaptive-text-sm uppercase tracking-normal transition-all active:scale-95 flex items-center justify-center gap-3 shadow-xl"
                 >
                   <ShieldCheck size={20} /> MANAGE STAY
                 </button>
               ) : (
                 <button
                   disabled
-                  className="w-full bg-slate-900 text-slate-800 font-black py-5 rounded-2xl adaptive-text-sm uppercase tracking-widest border border-white/5 cursor-not-allowed"
+                  className="w-full bg-slate-900 text-slate-800 font-medium py-5 rounded-2xl adaptive-text-sm uppercase tracking-normal border border-white/5 cursor-not-allowed"
                 >
                   <Lock size={20} /> CLOSED
                 </button>

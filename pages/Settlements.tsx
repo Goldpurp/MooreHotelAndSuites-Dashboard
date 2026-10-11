@@ -1,3 +1,4 @@
+import ModalPortal from '../components/ModalPortal';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { PaymentStatus, Booking, BookingStatus, UserRole, PaymentMethod } from '../types';
@@ -211,15 +212,15 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-8 h-[2px] bg-brand-500 rounded-full"></span>
-            <p className="adaptive-text-xs text-brand-400 font-black uppercase tracking-widest leading-none">Payments</p>
+            <p className="adaptive-text-xs text-brand-400 font-normal uppercase tracking-normal leading-none">Payments</p>
           </div>
-          <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase italic leading-none">Payments</h1>
+          <h1 className="adaptive-text-2xl font-semibold text-white tracking-tight uppercase italic leading-none">Payments</h1>
         </div>
         <div className="flex items-center gap-2">
            <button aria-label="Refresh data" onClick={handleManualRefresh} className={`p-2.5 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
              <div className="bg-slate-900 border border-amber-500/20 rounded-xl px-4 py-2 flex items-center gap-3">
-               <span className="text-[9px] text-slate-500 font-black uppercase">Tasks</span>
-              <span className="text-sm font-black text-amber-500 leading-none">
+               <span className="text-xs text-slate-500 font-normal uppercase">Tasks</span>
+              <span className="text-sm font-normal text-amber-500 leading-none">
                 {paymentTaskCount}
               </span>
            </div>
@@ -227,25 +228,25 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
       </div>
 
       <div className="flex border-b border-white/5 gap-6 overflow-x-auto no-scrollbar">
-          <button onClick={() => setActiveTab('queue')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'queue' ? 'text-brand-400' : 'text-slate-600'}`}>Pending {activeTab === 'queue' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500"></div>}</button>
+          <button onClick={() => setActiveTab('queue')} className={`pb-3 adaptive-text-xs font-medium uppercase tracking-normal transition-all relative shrink-0 ${activeTab === 'queue' ? 'text-brand-400' : 'text-slate-600'}`}>Pending {activeTab === 'queue' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500"></div>}</button>
           
-          <button onClick={() => setActiveTab('refunds')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'refunds' ? 'text-rose-400' : 'text-slate-600'}`}>Refunds {activeTab === 'refunds' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"></div>}</button>
+          <button onClick={() => setActiveTab('refunds')} className={`pb-3 adaptive-text-xs font-medium uppercase tracking-normal transition-all relative shrink-0 ${activeTab === 'refunds' ? 'text-rose-400' : 'text-slate-600'}`}>Refunds {activeTab === 'refunds' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"></div>}</button>
           
-          <button onClick={() => setActiveTab('history')} className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative shrink-0 ${activeTab === 'history' ? 'text-emerald-400' : 'text-slate-600'}`}>History {activeTab === 'history' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"></div>}</button>
+          <button onClick={() => setActiveTab('history')} className={`pb-3 adaptive-text-xs font-medium uppercase tracking-normal transition-all relative shrink-0 ${activeTab === 'history' ? 'text-emerald-400' : 'text-slate-600'}`}>History {activeTab === 'history' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"></div>}</button>
       </div>
 
       <div className="glass-card min-h-0 flex-1 rounded-2xl border border-white/5 overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-white/5 bg-slate-950/40">
            <div className="relative group max-w-lg">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
-              <input type="text" placeholder="Search by guest or code..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none font-bold placeholder:text-slate-700" />
+              <input type="text" placeholder="Search by guest or code..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none font-normal placeholder:text-slate-700" />
            </div>
         </div>
 
         <div className="scroll-pane min-h-0 flex-1 overflow-auto">
           <table className="mobile-card-table w-full text-left min-w-[800px]">
             <thead>
-              <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/20">
+              <tr className="text-slate-500 text-xs font-normal uppercase tracking-normal border-b border-white/5 bg-slate-900/20">
                 <th className="responsive-table-padding">Date</th>
                 <th className="responsive-table-padding">Guest Name</th>
                 <th className="responsive-table-padding col-priority-med">Booking / Transaction ID</th>
@@ -256,7 +257,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
             </thead>
             <tbody className="divide-y divide-white/5">
               {paginatedData.length === 0 ? (
-                <tr><td colSpan={6} className="py-32 text-center text-slate-700 adaptive-text-base font-black uppercase italic tracking-widest">No payments found</td></tr>
+                <tr><td colSpan={6} className="py-32 text-center text-slate-700 adaptive-text-base font-normal uppercase italic tracking-normal">No payments found</td></tr>
               ) : (
                 paginatedData.map((folio) => {
                   const isPaid = folio.paymentStatus === PaymentStatus.Paid;
@@ -268,19 +269,19 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                     <tr key={folio.id} className="hover:bg-white/[0.02] transition-all border-l-4 border-transparent">
                       <td data-label="Date" className="responsive-table-padding">
                         <div>
-                          <p className="adaptive-text-sm font-black text-white italic">{new Date(folio.createdAt).toLocaleDateString('en-GB')}</p>
-                          <p className="text-[8px] text-slate-600 font-bold uppercase mt-1">{new Date(folio.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                          <p className="adaptive-text-sm font-normal text-white italic">{new Date(folio.createdAt).toLocaleDateString('en-GB')}</p>
+                          <p className="text-xs text-slate-600 font-normal uppercase mt-1">{new Date(folio.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </td>
                       <td data-label="Guest" className="responsive-table-padding">
                         <div className="min-w-0">
-                          <p className="adaptive-text-sm font-black text-slate-300 uppercase italic truncate leading-none mb-1">{resolveGuestName(folio)}</p>
-                          <p className="text-[8px] text-slate-600 font-black uppercase truncate">{folio.guestEmail || 'Contact details restricted'}</p>
+                          <p className="adaptive-text-sm font-normal text-slate-300 uppercase italic truncate leading-none mb-1">{resolveGuestName(folio)}</p>
+                          <p className="text-xs text-slate-600 font-normal uppercase truncate">{folio.guestEmail || 'Contact details restricted'}</p>
                         </div>
                       </td>
                       <td data-label="Booking / Transaction ID" className="responsive-table-padding col-priority-med">
-                        <p className="break-all text-xs font-black uppercase text-slate-300">{folio.bookingCode}</p>
-                        <p className="mt-2 text-[8px] font-black uppercase tracking-wider text-slate-600">Bank transaction reference</p>
+                        <p className="break-all text-xs font-normal uppercase text-slate-300">{folio.bookingCode}</p>
+                        <p className="mt-2 text-xs font-normal uppercase tracking-normal text-slate-600">Bank transaction reference</p>
                         <button
                           type="button"
                           disabled={!paymentTransactionId}
@@ -289,7 +290,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                           title={paymentTransactionId ? "Copy bank transaction reference" : "Bank transaction reference was not recorded"}
                           aria-label={paymentTransactionId ? `Copy bank transaction reference ${paymentTransactionId}` : 'Bank transaction reference not recorded'}
                         >
-                          <span className="truncate font-mono text-[10px] italic select-all">
+                          <span className="truncate font-mono text-xs italic select-all">
                             {paymentTransactionId || (folio.transactionReference?.toUpperCase().startsWith('MANUAL-') ? 'INTERNAL REFERENCE ONLY' : 'NOT RECORDED')}
                           </span>
                           {paymentTransactionId && (
@@ -298,10 +299,10 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                         </button>
                       </td>
                       <td data-label="Amount" className="responsive-table-padding text-right">
-                         <p className={`adaptive-text-sm font-black italic ${isPaid ? 'text-white' : isRefunded || isRefundPending ? 'text-rose-400' : 'text-emerald-400'}`}>₦{folio.amount.toLocaleString()}</p>
+                         <p className={`adaptive-text-sm font-normal italic ${isPaid ? 'text-white' : isRefunded || isRefundPending ? 'text-rose-400' : 'text-emerald-400'}`}>₦{folio.amount.toLocaleString()}</p>
                       </td>
                       <td data-label="Status" className="responsive-table-padding text-center">
-                         <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase border inline-flex items-center gap-1.5 ${
+                         <span className={`px-3 py-1 rounded-lg text-xs font-normal uppercase border inline-flex items-center gap-1.5 ${
                            isPaid ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                            isRefunded ? 'bg-slate-800 text-slate-500 border-white/5' :
                            isRefundPending ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse' :
@@ -313,13 +314,13 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                       </td>
                       <td data-label="Actions" className="responsive-table-padding text-right">
                          {(isPaid || isRefunded) ? (
-                           <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-[8px] font-black uppercase">Completed</span></div>
+                           <div className="flex items-center justify-end gap-2 text-slate-800 opacity-20 italic pr-2"><Lock size={14} /><span className="text-xs font-normal uppercase">Completed</span></div>
                          ) : !isRefundPending && folio.paymentMethod !== PaymentMethod.Monnify ? (
                            canReviewTransfers ? (
                              <button
                                type="button"
                                onClick={() => onReviewTransfer(folio)}
-                               className="ml-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 text-xs font-black uppercase tracking-wider text-amber-200 transition-colors hover:bg-amber-400/20 hover:text-white"
+                               className="ml-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 text-xs font-medium uppercase tracking-normal text-amber-200 transition-colors hover:bg-amber-400/20 hover:text-white"
                              >
                                <ShieldCheck size={14} /> Review transfer
                              </button>
@@ -331,7 +332,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                          ) : !canReviewTransfers ? (
                            <span className="text-xs text-slate-400">Manager review required</span>
                          ) : (
-                           <button onClick={() => { setSelectedBooking(folio); setValidationError(false); setIsConfirmModalOpen(true); if (isRefundPending) { setRefundAmount(String(folio.refundApprovedAmount ?? folio.refundAmount ?? folio.amount)); setRefundChannel('BankTransfer'); } }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
+                           <button onClick={() => { setSelectedBooking(folio); setValidationError(false); setIsConfirmModalOpen(true); if (isRefundPending) { setRefundAmount(String(folio.refundApprovedAmount ?? folio.refundAmount ?? folio.amount)); setRefundChannel('BankTransfer'); } }} className={`px-4 py-2 rounded-xl adaptive-text-xs font-medium uppercase tracking-normal transition-all shadow-lg active:scale-95 disabled:opacity-20 whitespace-nowrap italic flex items-center justify-center ml-auto ${isRefundPending ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}>
                              {isRefundPending ? <RotateCcw size={12} className="inline mr-1.5" /> : folio.paymentMethod === PaymentMethod.Monnify ? <ShieldCheck size={12} className="inline mr-1.5" /> : <ShieldCheck size={12} className="inline mr-1.5" />}
                              {isRefundPending ? 'Refund' : folio.paymentMethod === PaymentMethod.Monnify ? 'Verify' : 'Confirm'}
                            </button>
@@ -346,35 +347,35 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
         </div>
 
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
-           <div className="text-[9px] text-slate-600 font-black uppercase italic tracking-widest">All Records Sorted • {filteredHistory.length} Records</div>
+           <div className="text-xs text-slate-600 font-normal uppercase italic tracking-normal">All Records Sorted • {filteredHistory.length} Records</div>
            <div className="flex gap-2">
               <button aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
-              <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
+              <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-xs font-normal text-white">{currentPage} / {totalPages || 1}</span></div>
               <button aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
            </div>
         </div>
       </div>
 
       {isConfirmModalOpen && (
-        <div ref={paymentModalRef} role="alertdialog" aria-modal="true" aria-label={activeTab === 'refunds' ? 'Confirm refund' : 'Confirm payment'} tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#020617]/90 backdrop-blur-md animate-in fade-in duration-300">
+        <ModalPortal><div ref={paymentModalRef} role="alertdialog" aria-modal="true" aria-label={activeTab === 'refunds' ? 'Confirm refund' : 'Confirm payment'} tabIndex={-1} className="modal-backdrop fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#020617]/90 backdrop-blur-md animate-in fade-in duration-300">
           <div className="w-full max-w-sm bg-[#0a0f1d] border border-white/10 rounded-[2.5rem] p-8 shadow-3xl text-center overflow-hidden">
               {verificationState === 'success' ? (
                 <div className="py-6 animate-in zoom-in-95 duration-500 flex flex-col items-center">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center border mb-6 shadow-xl ${activeTab === 'refunds' ? 'bg-rose-500/10 border-rose-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
                     {activeTab === 'refunds' ? <RotateCcw size={32} className="text-rose-500" /> : <ShieldCheck size={32} className="text-emerald-500" />}
                   </div>
-                  <h3 className="text-xl font-black text-white uppercase italic mb-1">{activeTab === 'refunds' ? 'Refunded' : 'Paid'}</h3>
-                  <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${activeTab === 'refunds' ? 'text-rose-400' : 'text-emerald-400'}`}>Record Updated</p>
+                  <h3 className="text-xl font-semibold text-white uppercase italic mb-1">{activeTab === 'refunds' ? 'Refunded' : 'Paid'}</h3>
+                  <p className={`text-xs font-normal uppercase tracking-normal ${activeTab === 'refunds' ? 'text-rose-400' : 'text-emerald-400'}`}>Record Updated</p>
                 </div>
               ) : (
                 <>
                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 border ${activeTab === 'refunds' ? 'bg-rose-500/10 border-rose-500/20' : 'bg-brand-500/10 border-brand-500/20'}`}>
                     {verificationState === 'committing' ? <Loader2 size={32} className={`${activeTab === 'refunds' ? 'text-rose-500' : 'text-brand-500'} animate-spin`} /> : activeTab === 'refunds' ? <RotateCcw size={32} className="text-rose-500" /> : <Wallet size={32} className="text-brand-500" />}
                   </div>
-                  <h3 className="text-xl font-black text-white uppercase italic mb-2 tracking-tighter">
+                  <h3 className="text-xl font-semibold text-white uppercase italic mb-2 tracking-tighter">
                     {verificationState === 'committing' ? 'Processing...' : activeTab === 'refunds' ? 'Confirm Refund?' : 'Confirm Payment?'}
                   </h3>
-                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed mb-6">
+                  <p className="text-xs text-slate-500 font-normal uppercase tracking-normal leading-relaxed mb-6">
                     {verificationState === 'committing' 
                       ? 'Updating the system...' 
                       : activeTab === 'refunds' 
@@ -387,20 +388,20 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                     <div className="mb-6 rounded-2xl border border-white/5 bg-white/[0.035] px-4 py-3 text-left">
                       {activeTab === 'refunds' && (
                         <div>
-                          <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Booking / Transaction ID</p>
+                          <p className="text-xs font-normal uppercase tracking-normal text-slate-600">Booking / Transaction ID</p>
                           <button type="button" onClick={() => handleCopy(getBookingOrTransactionId(selectedBooking))} className="group mt-1 flex min-h-9 w-full items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/20 px-3 text-left text-brand-300 transition-colors hover:border-brand-500/30" aria-label={`Copy booking or transaction ID ${getBookingOrTransactionId(selectedBooking)}`}>
-                            <span className="truncate font-mono text-[11px] font-bold select-all">{getBookingOrTransactionId(selectedBooking)}</span>
+                            <span className="truncate font-mono text-xs font-normal select-all">{getBookingOrTransactionId(selectedBooking)}</span>
                             <Copy size={14} className="shrink-0" />
                           </button>
-                          <p className="mt-2 text-[9px] font-semibold leading-relaxed text-slate-500">
+                          <p className="mt-2 text-xs font-normal leading-relaxed text-slate-500">
                             {getPaymentTransactionId(selectedBooking) ? 'Recorded bank transaction reference' : 'Booking reference used because no bank transaction reference was recorded'}
                           </p>
                         </div>
                       )}
                       {activeTab !== 'refunds' && (
                         <>
-                          <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Booking Reference</p>
-                          <p className="mt-1 break-all text-[11px] font-black uppercase tracking-wide text-white">{selectedBooking.bookingCode}</p>
+                          <p className="text-xs font-normal uppercase tracking-normal text-slate-600">Booking Reference</p>
+                          <p className="mt-1 break-all text-xs font-normal uppercase tracking-normal text-white">{selectedBooking.bookingCode}</p>
                         </>
                       )}
                     </div>
@@ -411,27 +412,27 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                   {verificationState === 'idle' && activeTab === 'refunds' && (
                     <div className="space-y-3 mb-8 text-left">
                        <div className="flex justify-between items-center px-1">
-                          <label htmlFor="refund-transaction-id" className="text-[9px] text-slate-600 font-black uppercase tracking-widest flex items-center gap-2"><Hash size={12}/> Refund Transaction ID</label>
-                          {validationError && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                          <label htmlFor="refund-transaction-id" className="text-xs text-slate-600 font-medium uppercase tracking-normal flex items-center gap-2"><Hash size={12}/> Refund Transaction ID</label>
+                          {validationError && <p className="text-[7px] text-rose-500 font-normal uppercase tracking-normal animate-in fade-in slide-in-from-bottom-1">Required</p>}
                        </div>
                        <input 
                          id="refund-transaction-id"
                          value={refundRef}
                          onChange={(e) => { setRefundRef(e.target.value); setValidationError(false); }}
                          placeholder="Enter the completed refund reference"
-                         className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all italic font-bold focus:border-rose-500/40`}
+                         className={`w-full bg-black/40 border ${validationError ? 'border-rose-500 bg-rose-500/5' : 'border-white/10'} rounded-xl py-4 px-5 text-sm text-white outline-none transition-all italic font-normal focus:border-rose-500/40`}
                        />
                        <div className="grid grid-cols-2 gap-3">
-                         <label className="space-y-2"><span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Amount (₦)</span><input type="number" min="0.01" step="0.01" value={refundAmount} onChange={(e) => { setRefundAmount(e.target.value); setValidationError(false); }} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40" /></label>
-                         <label className="space-y-2"><span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Channel</span><select value={refundChannel} onChange={(e) => setRefundChannel(e.target.value as 'BankTransfer' | 'Cash')} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40"><option value="BankTransfer">Bank transfer</option><option value="Cash">Cash</option></select></label>
+                         <label className="space-y-2"><span className="text-xs text-slate-600 font-normal uppercase tracking-normal">Amount (₦)</span><input type="number" min="0.01" step="0.01" value={refundAmount} onChange={(e) => { setRefundAmount(e.target.value); setValidationError(false); }} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40" /></label>
+                         <label className="space-y-2"><span className="text-xs text-slate-600 font-normal uppercase tracking-normal">Channel</span><select value={refundChannel} onChange={(e) => setRefundChannel(e.target.value as 'BankTransfer' | 'Cash')} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40"><option value="BankTransfer">Bank transfer</option><option value="Cash">Cash</option></select></label>
                        </div>
-                       <label className="space-y-2 block"><span className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Evidence notes (optional)</span><textarea maxLength={500} value={refundNotes} onChange={(e) => setRefundNotes(e.target.value)} className="w-full min-h-20 resize-none bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40" placeholder="Bank statement, provider receipt, or cash voucher details" /></label>
+                       <label className="space-y-2 block"><span className="text-xs text-slate-600 font-normal uppercase tracking-normal">Evidence notes (optional)</span><textarea maxLength={500} value={refundNotes} onChange={(e) => setRefundNotes(e.target.value)} className="w-full min-h-20 resize-none bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-rose-500/40" placeholder="Bank statement, provider receipt, or cash voucher details" /></label>
                     </div>
                   )}
 
                   {verificationState === 'idle' && selectedBooking?.paymentMethod === PaymentMethod.Monnify && activeTab !== 'refunds' && (
                     <div className="mb-8 rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.06] p-4 text-left">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-indigo-300 leading-relaxed">
+                      <p className="text-xs font-normal uppercase tracking-normal text-indigo-300 leading-relaxed">
                         The server will use its saved payment reference and verify the status, amount, currency, booking, and guest directly with Monnify. No reference input is accepted.
                       </p>
                     </div>
@@ -439,11 +440,11 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                   
                   {verificationState === 'idle' && (
                     <div className="grid grid-cols-2 gap-3">
-                      <button type="button" data-modal-cancel onClick={closeConfirmation} className="py-4 rounded-2xl adaptive-text-xs font-black uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Cancel</button>
+                      <button type="button" data-modal-cancel onClick={closeConfirmation} className="py-4 rounded-2xl adaptive-text-xs font-medium uppercase text-slate-600 hover:text-white border border-white/5 transition-all italic">Cancel</button>
                       <button 
                         onClick={executeAction} 
                         disabled={!canReviewTransfers}
-                        className={`py-4 rounded-2xl font-black adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg italic transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:active:scale-100 ${activeTab === 'refunds' ? 'bg-rose-600 hover:bg-rose-700 text-white' : selectedBooking?.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}
+                        className={`py-4 rounded-2xl font-medium adaptive-text-xs uppercase flex items-center justify-center gap-2 shadow-lg italic transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:active:scale-100 ${activeTab === 'refunds' ? 'bg-rose-600 hover:bg-rose-700 text-white' : selectedBooking?.paymentMethod === PaymentMethod.Monnify ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'}`}
                       >
                         {selectedBooking?.paymentMethod === PaymentMethod.Monnify && activeTab !== 'refunds' ? 'Verify' : 'Confirm'}
                       </button>
@@ -452,7 +453,7 @@ const Settlements: React.FC<SettlementsProps> = ({ onReviewTransfer }) => {
                 </>
               )}
           </div>
-        </div>
+        </div></ModalPortal>
       )}
     </div>
   );

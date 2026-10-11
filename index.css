@@ -28,6 +28,8 @@ body,
   background-color: #020617;
   color: #f8fafc;
   font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 html,
@@ -123,9 +125,9 @@ textarea {
   .mobile-card-table tbody td:not([colspan])::before {
     content: attr(data-label);
     color: #64748b;
-    font-size: 0.625rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: normal;
     line-height: 1.2;
     text-transform: uppercase;
   }
@@ -296,7 +298,7 @@ textarea {
 
 @media (min-width: 768px) {
   .workspace-viewport {
-    padding-bottom: clamp(1rem, 2vw, 2.5rem);
+    padding-bottom: clamp(0.75rem, 1.5vw, 1.5rem);
   }
 }
 
@@ -344,64 +346,34 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Radiant Sileo Overrides */
-[data-sileo-toast] {
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  background: rgba(4, 4, 4, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    0 0 20px rgba(59, 130, 246, 0.1) !important;
-  z-index: 10000 !important;
-}
+/* Notification feedback stays legible above operational dialogs. */
+[data-sileo-viewport] { z-index: 1000 !important; }
+[data-sileo-title] { color: #f8fafc !important; font-weight: 600 !important; }
+[data-sileo-description] { color: #cbd5e1 !important; font-weight: 400 !important; line-height: 1.5 !important; }
+.tracking-dash { letter-spacing: normal; font-size: 0.75rem; font-weight: 400; }
 
-[data-sileo-title] {
-  color: #030303 !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.025em !important;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2) !important;
+/* Dialogs are portalled to body so page cards cannot clip or resize them. */
+.modal-backdrop {
+  z-index: 200;
+  padding: 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
-
-[data-sileo-description] {
-  color: rgba(10, 9, 9, 0.9) !important;
-  font-weight: 500 !important;
-  line-height: 1.4 !important;
+.modal-backdrop > :is(div, section, form) {
+  max-height: calc(100dvh - 2rem);
+  min-height: 0;
+  margin-block: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
-
-/* Radiant Status Indicators */
-[data-sileo-toast][data-state="success"] {
-  border-left: 3px solid #10b981 !important;
-  box-shadow: 0 0 25px rgba(16, 185, 129, 0.15) !important;
-}
-
-[data-sileo-toast][data-state="error"] {
-  border-left: 3px solid #ef4444 !important;
-  box-shadow: 0 0 25px rgba(239, 68, 68, 0.15) !important;
-}
-
-[data-sileo-toast][data-state="warning"] {
-  border-left: 3px solid #f59e0b !important;
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.15) !important;
-}
-
-[data-sileo-toast][data-state="info"] {
-  border-left: 3px solid #3b82f6 !important;
-  box-shadow: 0 0 25px rgba(59, 130, 246, 0.15) !important;
-}
-
-.tracking-dash {
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  font-weight: 800;
-}
+.modal-backdrop :is(input, select, textarea) { min-width: 0; }
+.modal-backdrop :is(h1, h2, h3, p, label, button) { overflow-wrap: anywhere; }
+.auth-error { background: transparent; border: 0; padding: 0; }
 
 /* Utilities for requested layout updates */
 @layer utilities {
   .fluid-padding {
-    padding: clamp(1rem, 2vw, 2.5rem);
+    padding: clamp(0.75rem, 1.5vw, 1.5rem);
   }
 
   .adaptive-text-xs {

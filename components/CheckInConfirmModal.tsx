@@ -1,3 +1,4 @@
+import ModalPortal from './ModalPortal';
 import React, { useMemo, useState } from 'react';
 import {
   X, ShieldCheck, Zap, AlertCircle, Loader2, CreditCard, Clock, Lock, ExternalLink, Brush, CalendarClock, History
@@ -148,7 +149,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
     error === "Access Denied: This booking is in the past.";
 
   return (
-    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label="Confirm guest check-in" tabIndex={-1} className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+    <ModalPortal><div ref={modalRef} role="alertdialog" aria-modal="true" aria-label="Confirm guest check-in" tabIndex={-1} className="modal-backdrop fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className={`glass-card w-full max-w-md rounded-[2rem] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 shadow-3xl ring-1 ${
         display.color === 'rose' ? 'shadow-rose-950/20 ring-rose-500/20' :
         display.color === 'amber' ? 'shadow-amber-900/20 ring-amber-500/20' : 'shadow-emerald-900/20 ring-emerald-500/20'
@@ -165,8 +166,8 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                   {display.icon}
                 </div>
                 <div>
-                  <h2 className="text-base font-black text-white tracking-tight uppercase">{display.title}</h2>
-                  <p className={`text-[8px] font-black uppercase tracking-[0.1em] ${
+                  <h2 className="text-base font-semibold text-white tracking-tight uppercase">{display.title}</h2>
+                  <p className={`text-xs font-normal uppercase tracking-normal ${
                     display.color === 'rose' ? 'text-rose-400' :
                     display.color === 'amber' ? 'text-amber-400' : 'text-emerald-400'
                   }`}>{display.sub}</p>
@@ -177,8 +178,8 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
 
             <div className="p-8 space-y-6">
               <div className="rounded-2xl border border-white/5 bg-white/[0.035] px-4 py-3">
-                <p className="text-[8px] font-black uppercase tracking-widest text-slate-600">Booking Reference</p>
-                <p className="mt-1 break-all text-[11px] font-black uppercase tracking-wide text-white">
+                <p className="text-xs font-normal uppercase tracking-normal text-slate-600">Booking Reference</p>
+                <p className="mt-1 break-all text-xs font-normal uppercase tracking-normal text-white">
                   {booking.bookingCode || "Not available"}
                 </p>
               </div>
@@ -186,37 +187,37 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                 <div className="text-center space-y-4">
                   <div className="p-6 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex flex-col items-center gap-4">
                     <CreditCard size={40} className="text-rose-500" />
-                    <h3 className="text-lg font-black text-white uppercase">PENDING PAYMENT</h3>
-                    <p className="text-[10px] text-rose-300 font-bold uppercase tracking-widest leading-relaxed">Property protocol forbids check-in for unpaid folios.</p>
+                    <h3 className="text-lg font-semibold text-white uppercase">PENDING PAYMENT</h3>
+                    <p className="text-xs text-rose-300 font-normal uppercase tracking-normal leading-relaxed">Property protocol forbids check-in for unpaid folios.</p>
                   </div>
-                  <button onClick={handleNavigateToSettlements} className="w-full bg-white/5 hover:bg-white/10 text-white px-4 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 flex items-center justify-center gap-2 transition-all">Go to Settlement Page <ExternalLink size={14}/></button>
+                  <button onClick={handleNavigateToSettlements} className="w-full bg-white/5 hover:bg-white/10 text-white px-4 py-5 rounded-2xl text-xs font-medium uppercase tracking-normal border border-white/10 flex items-center justify-center gap-2 transition-all">Go to Settlement Page <ExternalLink size={14}/></button>
                 </div>
               ) : isCleaning ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex flex-col items-center gap-4">
                     <Brush size={40} className="text-rose-500" />
-                    <h3 className="text-lg font-black text-white uppercase">ROOM BEING CLEANED</h3>
-                    <p className="text-[10px] text-rose-300 font-bold uppercase tracking-widest leading-relaxed">Guest should wait till room is cleaned and available.</p>
+                    <h3 className="text-lg font-semibold text-white uppercase">ROOM BEING CLEANED</h3>
+                    <p className="text-xs text-rose-300 font-normal uppercase tracking-normal leading-relaxed">Guest should wait till room is cleaned and available.</p>
                   </div>
                 </div>
               ) : arrivalState === 'past' ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex flex-col items-center gap-4">
                     <History size={40} className="text-rose-500 rotate-180" />
-                    <h3 className="text-lg font-black text-white uppercase">PAST BOOKING</h3>
-                    <p className="text-[10px] text-rose-300 font-bold uppercase tracking-widest leading-relaxed">This booking is in the past. Check-in is not allowed.</p>
+                    <h3 className="text-lg font-semibold text-white uppercase">PAST BOOKING</h3>
+                    <p className="text-xs text-rose-300 font-normal uppercase tracking-normal leading-relaxed">This booking is in the past. Check-in is not allowed.</p>
                   </div>
                 </div>
               ) : arrivalState === 'future' ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 bg-amber-500/10 rounded-2xl border border-amber-500/20 flex flex-col items-center gap-4">
                     <CalendarClock size={40} className="text-amber-500" />
-                    <h3 className="text-lg font-black text-white uppercase">FUTURE BOOKING</h3>
-                    <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest leading-relaxed">Booking is for a future date. Check-in is not allowed.</p>
+                    <h3 className="text-lg font-semibold text-white uppercase">FUTURE BOOKING</h3>
+                    <p className="text-xs text-amber-500 font-normal uppercase tracking-normal leading-relaxed">Booking is for a future date. Check-in is not allowed.</p>
                   </div>
                   <button
                     onClick={() => onCancelAndWalkIn(booking)}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white px-4 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-amber-500/20 flex items-center justify-center gap-2 transition-all"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white px-4 py-5 rounded-2xl text-xs font-medium uppercase tracking-normal border border-amber-500/20 flex items-center justify-center gap-2 transition-all"
                   >
                     Cancel & Walk-In Instead
                   </button>
@@ -224,8 +225,8 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
               ) : (
                 <>
                   <div className="text-center space-y-3">
-                    <h3 className="text-xl font-black text-white leading-tight uppercase">{arrivalState === 'early-today' ? 'POLICY OVERRIDE' : 'AUTHORIZE ENTRY'}</h3>
-                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+                    <h3 className="text-xl font-semibold text-white leading-tight uppercase">{arrivalState === 'early-today' ? 'POLICY OVERRIDE' : 'AUTHORIZE ENTRY'}</h3>
+                    <p className="text-xs text-slate-400 font-normal uppercase tracking-normal leading-relaxed">
                       {arrivalState === 'early-today'
                         ? `Standard check-in starts at 14:00. Authorize early access protocol?`
                         : `Authorize digital folio activation for ${guest.firstName} ${guest.lastName}?`}
@@ -233,25 +234,25 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                   </div>
                   <div className="bg-white/5 p-6 rounded-2xl border border-white/5 space-y-4 shadow-inner">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Asset Unit</span>
-                      <span className="text-sm font-black text-white uppercase tracking-tighter">{room.name}</span>
+                      <span className="text-xs text-slate-500 font-normal uppercase tracking-normal">Asset Unit</span>
+                      <span className="text-sm font-normal text-white uppercase tracking-tighter">{room.name}</span>
                     </div>
                     <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                      <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Scheduled Arrival</span>
-                      <span className="text-[11px] font-black uppercase tracking-widest text-blue-400">{new Date(booking.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                      <span className="text-xs text-slate-500 font-normal uppercase tracking-normal">Scheduled Arrival</span>
+                      <span className="text-xs font-normal uppercase tracking-normal text-blue-400">{new Date(booking.checkIn).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
                     </div>
                   </div>
                 </>
               )}
 
-              {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-3 text-rose-400 animate-in shake"><AlertCircle size={16} className="shrink-0 mt-0.5" /><p className="text-[10px] font-black uppercase leading-tight">{error}</p></div>}
+              {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-3 text-rose-400 animate-in shake"><AlertCircle size={16} className="shrink-0 mt-0.5" /><p className="text-xs font-normal uppercase leading-tight">{error}</p></div>}
             </div>
 
             <div className="px-8 py-6 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
               <button
                 onClick={handleAuthorizedConfirm}
                 disabled={isCheckInDisabled}
-                className={`w-full py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all ${
+                className={`w-full py-5 rounded-2xl font-medium text-xs uppercase tracking-normal shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all ${
                   isCheckInDisabled
                     ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
                     : display.color === 'amber'
@@ -287,11 +288,11 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
                   </>
                 )}
               </button>
-              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">Abort Protocol</button>
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-4 rounded-2xl text-xs font-medium uppercase tracking-normal text-slate-500 hover:text-white transition-all border border-white/5">Abort Protocol</button>
             </div>
           </>
       </div>
-    </div>
+    </div></ModalPortal>
   );
 };
 

@@ -29,7 +29,7 @@ const PasswordControl = ({
   disabled: boolean;
 }) => (
   <label className="block space-y-2" htmlFor={id}>
-    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</span>
+    <span className="text-xs font-normal uppercase tracking-normal text-slate-400">{label}</span>
     <span className="relative block min-w-0">
       <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
       <input
@@ -109,15 +109,15 @@ const StaffSetupPassword: React.FC = () => {
   };
 
   return (
-    <main className="grid min-h-[100dvh] place-items-center overflow-x-hidden bg-slate-950 px-4 py-10 text-slate-50 sm:px-6">
-      <section className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-10">
+    <main className="grid min-h-[100dvh] place-items-center overflow-x-hidden bg-slate-950 px-4 py-6 text-slate-50 sm:px-6">
+      <section className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl shadow-black/30 backdrop-blur sm:p-6">
         <div className="mb-8 flex justify-center"><Logo /></div>
         <div className="mb-8 text-center">
           <span className="mx-auto grid size-14 place-items-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400">
             {completed ? <CheckCircle2 size={26} /> : <KeyRound size={26} />}
           </span>
-          <p className="mt-5 text-[10px] font-black uppercase tracking-[0.24em] text-blue-400">Staff account setup</p>
-          <h1 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl">
+          <p className="mt-5 text-xs font-normal uppercase tracking-normal text-blue-400">Staff account setup</p>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {completed ? "Your password is ready" : "Create your staff password"}
           </h1>
           <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-400">
@@ -131,7 +131,7 @@ const StaffSetupPassword: React.FC = () => {
           <button
             type="button"
             onClick={() => window.location.replace("/")}
-            className="w-full rounded-2xl bg-blue-600 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-white transition-colors hover:bg-blue-500 active:scale-[0.98]"
+            className="w-full rounded-2xl bg-blue-600 py-4 text-xs font-medium uppercase tracking-normal text-white transition-colors hover:bg-blue-500 active:scale-[0.98]"
           >
             Continue to staff sign in
           </button>
@@ -150,7 +150,7 @@ const StaffSetupPassword: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-white transition-colors hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 active:scale-[0.98]"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 text-xs font-medium uppercase tracking-normal text-white transition-colors hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 active:scale-[0.98]"
             >
               {loading && <Loader2 className="animate-spin" size={18} />}
               {loading ? "Creating password" : "Create password"}
