@@ -1099,7 +1099,7 @@ const updateRoom = async (id: string, updates: Partial<Room>) => {
     selectedAuditLogId,
     setSelectedAuditLogId,
     setActiveTab,
-    toggleSidebar: () => setIsSidebarCollapsed(!isSidebarCollapsed),
+    toggleSidebar: () => setIsSidebarCollapsed(collapsed => !collapsed),
     login,
     logout,
     setUserRole,

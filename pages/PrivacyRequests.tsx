@@ -1,3 +1,4 @@
+import DetailPanel from "../components/DetailPanel";
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import { CheckCircle2, RefreshCw, ShieldCheck, ChevronLeft, ChevronRight, X, Eye } from "lucide-react";
 import { api } from "../lib/api";
@@ -136,9 +137,9 @@ const PrivacyRequests: React.FC = () => {
             </tbody>
           </table>
         </div>
-        <nav aria-label="Privacy request pages" className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
+        <nav aria-label="Privacy request pages" className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between pagination-footer">
           <div className="text-xs text-slate-700 font-normal uppercase tracking-normal">{loading ? 'Loading requests…' : error ? 'Privacy requests unavailable' : `Total requests • ${totalCount}`}</div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 pagination-controls">
             <button type="button" aria-label="Previous page" disabled={page === 1 || loading || saving !== null} onClick={() => { setSelectedId(null); setPage((current) => current - 1); }} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
             <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-xs font-normal text-white">{page} / {Math.max(1, Math.ceil(totalCount / pageSize))}</span></div>
             <button type="button" aria-label="Next page" disabled={page * pageSize >= totalCount || loading || saving !== null || Boolean(error)} onClick={() => { setSelectedId(null); setPage((current) => current + 1); }} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
@@ -146,7 +147,7 @@ const PrivacyRequests: React.FC = () => {
         </nav>
       </div>
       </div>
-      {selectedId && <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
+      {selectedId && <DetailPanel label="Privacy request details" onClose={() => setSelectedId(null)}>
         {requests.filter((request) => request.id === selectedId).map((request) => {
           const draft = drafts[request.id] || emptyDraft(request);
           const closed = privacyRequestClosed(request.status);
@@ -164,7 +165,7 @@ const PrivacyRequests: React.FC = () => {
             {closed && request.resolutionNotes && <p className="mt-4 rounded-xl border border-white/5 bg-black/20 p-4 text-sm text-slate-400">{request.resolutionNotes}</p>}
           </article>;
         })}
-      </div>}
+      </DetailPanel>}
     </div>
   );
 };

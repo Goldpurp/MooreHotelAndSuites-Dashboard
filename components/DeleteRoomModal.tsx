@@ -58,7 +58,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
 
             <div className="p-8 space-y-6">
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-4">
-                <img src={room.images[0]} className="w-16 h-12 rounded-xl object-cover ring-2 ring-white/10 shadow-lg" alt="" />
+                {room.images[0] ? <img src={room.images[0]} className="w-16 h-12 rounded-xl object-cover ring-2 ring-white/10 shadow-lg" alt="" /> : <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-400"><Trash size={22} /></div>}
                 <div className="min-w-0">
                   <p className="text-xs text-slate-500 font-normal uppercase tracking-normal mb-1">Target Asset</p>
                   <p className="text-sm font-normal text-white uppercase truncate">{room.name}</p>

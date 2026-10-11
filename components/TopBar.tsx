@@ -225,7 +225,7 @@ const TopBar: React.FC = () => {
 
   return (
     <header className="relative z-40 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/5 bg-slate-900/60 px-3 backdrop-blur-xl sm:h-20 sm:px-6">
-      <div className="relative w-full max-w-2xl">
+      <div className="w-full min-w-0 max-w-2xl">
         <div className="relative group">
           <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchQuery ? 'text-brand-500' : 'text-slate-500'}`} size={16} />
           <input
@@ -267,9 +267,9 @@ const TopBar: React.FC = () => {
           <div
             ref={resultsRef}
             id="global-search-results"
-            className="fixed left-3 right-3 top-16 z-[160] mt-2 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/98 shadow-2xl backdrop-blur-3xl animate-in fade-in slide-in-from-top-2 sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-3 sm:w-[min(42rem,calc(100vw-5rem))]"
+            className="absolute inset-x-3 top-full z-[160] mt-2 flex max-h-[calc(100dvh-7rem)] flex-col overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/98 shadow-2xl backdrop-blur-3xl animate-in fade-in slide-in-from-top-2 sm:inset-x-6 max-w-2xl"
           >
-            <div className="flex items-center justify-between gap-4 border-b border-white/5 bg-slate-950/55 px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-white/5 bg-slate-950/55 px-4 py-3">
               <div className="min-w-0">
                 <p className="text-xs font-normal uppercase tracking-normal text-white">Search all hotel data</p>
                 <p className="mt-0.5 text-xs font-normal text-slate-600">Results are limited by your access level.</p>
@@ -284,7 +284,7 @@ const TopBar: React.FC = () => {
                 <p className="mt-2 text-xs font-normal text-slate-700">Try a guest name, room, date, status, phone, email, amount, or reference.</p>
               </div>
             ) : (
-              <div role="listbox" aria-label="Global search results" className="scroll-pane max-h-[min(68vh,34rem)] overflow-y-auto p-2">
+              <div role="listbox" aria-label="Global search results" className="scroll-pane min-h-0 flex-1 max-h-[34rem] overflow-y-auto p-2">
                 {searchGroups.map((group) => (
                   <section key={group.kind} aria-label={group.label} className="mb-2 last:mb-0">
                     <div className="flex items-center justify-between px-3 pb-1.5 pt-2">
@@ -347,7 +347,7 @@ const TopBar: React.FC = () => {
           </button>
         )}
 
-        <div className="relative" ref={notificationRef}>
+        <div ref={notificationRef}>
           <button aria-label="Notifications" aria-expanded={showNotifications} onClick={() => setShowNotifications(!showNotifications)} className={`p-2.5 rounded-xl border transition-all duration-300 relative shadow-sm ${showNotifications ? 'bg-brand-600 text-white border-brand-500 shadow-xl' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
             <Bell size={18} />
             {unreadCount > 0 && (
@@ -358,14 +358,14 @@ const TopBar: React.FC = () => {
           </button>
 
           {showNotifications && (
-            <div className="fixed left-3 right-3 top-16 mt-2 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-96 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 flex flex-col overflow-hidden">
+            <div className="absolute left-3 right-3 top-full mt-2 max-h-[calc(100dvh-7rem)] sm:left-auto sm:right-6 sm:w-96 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 flex flex-col overflow-hidden">
               <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
                  <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-white">Notifications</h3>
                  {unreadCount > 0 && (
                    <button onClick={() => markAllNotificationsRead()} className="text-xs text-brand-400 font-medium uppercase tracking-normal hover:text-brand-300 transition-colors">Clear All</button>
                  )}
               </div>
-              <div className="max-h-[450px] overflow-y-auto custom-scrollbar p-2 space-y-1">
+              <div className="min-h-0 max-h-[450px] flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                  {unreadCount === 0 ? (
                    <div className="py-6 text-center">
                       <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 border border-white/5">

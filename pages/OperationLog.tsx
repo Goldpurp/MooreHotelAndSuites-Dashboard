@@ -140,7 +140,7 @@ const OperationLog: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
               <input type="text" placeholder="Search logs..." value={localSearch} onChange={(e) => setLocalSearch(e.target.value)} className="w-full bg-black/60 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 adaptive-text-xs text-white outline-none font-normal" />
            </div>
-           <div className="flex items-center gap-1.5 p-1.5 bg-black/40 rounded-xl border border-white/5 overflow-x-auto no-scrollbar">
+           <div className="flex w-full min-w-0 max-w-full md:w-auto items-center gap-1.5 p-1.5 bg-black/40 rounded-xl border border-white/5 overflow-x-auto">
               {(['All', VisitAction.RESERVATION, VisitAction.CHECK_IN, VisitAction.CHECK_OUT, VisitAction.VOID] as const).map((p) => (
                 <button key={p} onClick={() => setActiveProtocol(p)} className={`px-4 py-1.5 rounded-lg text-xs font-medium uppercase tracking-normal transition-all whitespace-nowrap ${activeProtocol === p ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300'}`}>{p === 'All' ? 'ALL' : p.toUpperCase()}</button>
               ))}
@@ -209,9 +209,9 @@ const OperationLog: React.FC = () => {
           </table>
         </div>
 
-        <div className="px-8 py-4 bg-slate-950/80 border-t border-white/5 flex items-center justify-between">
+        <div className="px-8 py-4 bg-slate-950/80 border-t border-white/5 flex items-center justify-between pagination-footer">
            <div className="text-xs text-slate-600 font-normal uppercase tracking-normal">Ready • {filteredLogs.length} Records</div>
-           <div className="flex gap-2">
+           <div className="flex gap-2 pagination-controls">
               <button aria-label="Previous page" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={18} /></button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-xs font-normal text-white">{currentPage} / {totalPages || 1}</span></div>
               <button aria-label="Next page" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={18} /></button>

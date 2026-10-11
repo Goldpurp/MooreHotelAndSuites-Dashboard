@@ -1,3 +1,4 @@
+import DetailPanel from "../components/DetailPanel";
 import React, { useState, useMemo, useEffect } from "react";
 import { useHotel } from "../store/HotelContext";
 import { Guest, Booking, Room } from "../types";
@@ -176,9 +177,8 @@ const Guests: React.FC = () => {
       if (target) {
         setLocalActiveTab(target.activeStay ? "in-house" : "history");
         setLocalSelectedId(target.id);
+        setSelectedGuestId(null);
       }
-    } else if (filteredResidents.length > 0 && !localSelectedId) {
-      setLocalSelectedId(filteredResidents[0].id);
     }
   }, [selectedGuestId, filteredResidents, unifiedResidentList]);
 
@@ -445,11 +445,11 @@ const Guests: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <div className="px-8 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
+          <div className="px-8 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between pagination-footer">
             <span className="text-xs text-slate-600 font-normal uppercase tracking-normal">
               {filteredResidents.length} Guests
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-2 pagination-controls">
               <button aria-label="Previous page"
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
@@ -477,7 +477,7 @@ const Guests: React.FC = () => {
       </div>
 
       {selectedResident && (
-        <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
+        <DetailPanel label="Guest details" onClose={() => { setLocalSelectedId(null); setSelectedGuestId(null); }}>
           <div className="glass-card scroll-pane rounded-2xl p-8 flex flex-col border border-white/10 bg-[#0a0f1a] shadow-2xl h-full overflow-y-auto">
             <div className="flex justify-between items-start mb-3">
               <div className="space-y-1">
@@ -489,7 +489,7 @@ const Guests: React.FC = () => {
                 </p>
               </div>
               <button aria-label="Close details"
-                onClick={() => setSelectedGuestId(null)}
+                onClick={() => { setLocalSelectedId(null); setSelectedGuestId(null); }}
                 className="p-2 bg-white/5 rounded-xl text-slate-600 hover:text-rose-500 transition-all"
               >
                 <X size={18} />
@@ -720,7 +720,7 @@ const Guests: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </DetailPanel>
       )}
 
       <CheckOutModal

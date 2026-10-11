@@ -43,7 +43,6 @@ const AppContent: React.FC = () => {
     dataLoadError,
     isDataRefreshing,
     retrySession,
-    isSidebarCollapsed,
     activeTab,
     setActiveTab,
     currentUser,
@@ -249,9 +248,7 @@ const AppContent: React.FC = () => {
 
 
       <div
-        className={`h-full min-h-0 flex-1 flex flex-col min-w-0 transition-[margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
-        }`}
+        className="h-full min-h-0 flex-1 flex flex-col min-w-0"
       >
         <TopBar />
         {dataLoadError && <div role="alert" className="mx-4 mt-3 flex shrink-0 items-center justify-between gap-4 rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 py-3 text-sm text-rose-300">

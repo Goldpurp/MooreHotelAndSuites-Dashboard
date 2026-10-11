@@ -1,3 +1,4 @@
+import DetailPanel from "../components/DetailPanel";
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { 
@@ -15,7 +16,7 @@ const ClientManagement: React.FC = () => {
   const { toggleStaffStatus, currentUser, setBookingGuestRequest, setActiveTab, selectedProfileId, setSelectedProfileId } = useHotel();
   const [isSuspensionOpen, setIsSuspensionOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState<StaffUser | null>(null);
-  const [selectedStaffId, setSelectedStaffId] = useState<string | null | undefined>(undefined);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Suspended'>('All');
   const [clients, setClients] = useState<StaffUser[]>([]);
@@ -33,7 +34,7 @@ const ClientManagement: React.FC = () => {
       const result = parseClientAccounts(await api.get<unknown>('/api/admin/management/clients'));
       if (sequence !== requestSequence.current) return false;
       setClients(result);
-      setSelectedStaffId(current => current === undefined ? result[0]?.id ?? null : result.some(client => client.id === current) ? current : null);
+      setSelectedStaffId(current => result.some(client => client.id === current) ? current : null);
       return true;
     } catch (error) {
       if (sequence === requestSequence.current) setLoadError(error instanceof Error ? error.message : 'Client accounts could not be loaded.');
@@ -86,7 +87,7 @@ const ClientManagement: React.FC = () => {
   useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
   useEffect(() => {
-    if (selectedStaffId && paginatedClients.length > 0 && !paginatedClients.some(item => item.id === selectedStaffId)) setSelectedStaffId(paginatedClients[0].id);
+    if (selectedStaffId && paginatedClients.length > 0 && !paginatedClients.some(item => item.id === selectedStaffId)) setSelectedStaffId(null);
   }, [paginatedClients, selectedStaffId]);
 
   const selectedClient = useMemo(() => paginatedClients.find(s => s.id === selectedStaffId), [paginatedClients, selectedStaffId]);
@@ -106,8 +107,8 @@ const ClientManagement: React.FC = () => {
         </div>
 
         <div className="glass-card rounded-2xl flex-1 flex flex-col overflow-hidden border border-white/5 bg-slate-900/40">
-          <div className="px-6 py-4 border-b border-white/5 bg-slate-950/60 flex items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md group">
+          <div className="px-6 py-4 border-b border-white/5 bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="relative w-full sm:flex-1 max-w-md group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-emerald-500 transition-colors" size={14} />
               <input type="text" placeholder="Search for clients..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-10 pr-4 adaptive-text-xs text-white outline-none font-normal placeholder:text-slate-800" />
             </div>
@@ -141,7 +142,7 @@ const ClientManagement: React.FC = () => {
                   paginatedClients.map((client) => {
                     const isActive = String(client.status).toLowerCase() === 'active';
                     return (
-                      <tr key={client.id} onClick={() => setSelectedStaffId(client.id)} className={`hover:bg-white/[0.02] transition-all group border-l-4 ${selectedStaffId === client.id ? 'bg-white/[0.04] border-emerald-500' : 'border-transparent'} cursor-pointer`}>
+                      <tr key={client.id} tabIndex={0} aria-label={`Open client details for ${client.name}`} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setSelectedStaffId(client.id); } }} onClick={() => setSelectedStaffId(client.id)} className={`hover:bg-white/[0.02] transition-all group border-l-4 ${selectedStaffId === client.id ? 'bg-white/[0.04] border-emerald-500' : 'border-transparent'} cursor-pointer`}>
                         <td data-label="Guest" className="responsive-table-padding">
                           <div className="flex items-center gap-4">
                             <div className="relative shrink-0">
@@ -174,9 +175,9 @@ const ClientManagement: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <div className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
+          <div className="px-6 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between pagination-footer">
              <div className="text-xs text-slate-700 font-normal uppercase tracking-normal">{isRefreshing ? 'Loading accounts…' : loadError ? 'Client accounts unavailable' : `Client accounts • ${filteredClients.length}`}</div>
-             <div className="flex gap-2">
+             <div className="flex gap-2 pagination-controls">
                 <button aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
                 <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-xs font-normal text-white">{currentPage} / {totalPages || 1}</span></div>
                 <button aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
@@ -186,7 +187,7 @@ const ClientManagement: React.FC = () => {
       </div>
 
       {selectedClient && (
-        <div className="split-side flex flex-col gap-4 animate-in slide-in-from-right-4 duration-500 h-full overflow-hidden shrink-0">
+        <DetailPanel label="Client details" onClose={() => setSelectedStaffId(null)}>
           <div className="glass-card scroll-pane rounded-2xl p-8 flex flex-col h-full border border-white/10 bg-[#0a0f1a] shadow-2xl overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <div className="space-y-1">
@@ -227,7 +228,7 @@ const ClientManagement: React.FC = () => {
               <button onClick={() => { setBookingGuestRequest({ guestFirstName: selectedClient.name.split(' ')[0] || '', guestLastName: selectedClient.name.split(' ').slice(1).join(' '), guestEmail: selectedClient.email, guestPhone: selectedClient.phone || '' }); setActiveTab('bookings'); }} className="w-full py-5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-2xl adaptive-text-sm uppercase tracking-normal transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3"><UserPlus size={20} strokeWidth={3}/> NEW BOOKING</button>
             </div>
           </div>
-        </div>
+        </DetailPanel>
       )}
 
       <StaffSuspensionModal
