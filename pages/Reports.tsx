@@ -335,9 +335,9 @@ const Reports: React.FC = () => {
                    )) : <p className="text-xs text-slate-400">No displayable field changes were recorded for this event.</p>}
                  </section>
               </div>
-              <div className="px-5 sm:px-7 py-4 bg-slate-950/60 border-t border-white/5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="dialog-actions px-5 sm:px-7 py-4 bg-slate-950/60 border-t border-white/5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
                  <p className="flex items-center gap-2 text-xs font-normal text-slate-600"><ShieldCheck size={14}/> Only approved audit fields are displayed.</p>
-                 <button type="button" data-modal-close onClick={() => setInspectingLog(null)} className="px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-medium text-xs uppercase tracking-normal rounded-xl shadow-xl transition-all active:scale-95">Close</button>
+                 <button type="button" data-modal-close onClick={() => setInspectingLog(null)} className="whitespace-nowrap px-6 sm:px-8 py-2 sm:py-3 bg-brand-600 text-white font-medium text-xs uppercase tracking-normal rounded-xl shadow-xl transition-all active:scale-95">Close</button>
               </div>
            </div>
         </div></ModalPortal>

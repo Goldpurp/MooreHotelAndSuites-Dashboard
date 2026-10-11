@@ -102,7 +102,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ isOpen, onClose, on
               )}
             </div>
 
-            <div className="px-8 py-6 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
+            <div className="dialog-actions px-8 py-6 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
               <button aria-label="Room maintenance"
                 onClick={handleConfirm}
                 disabled={isSubmitting}

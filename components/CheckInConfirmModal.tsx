@@ -248,7 +248,7 @@ const CheckInConfirmModal: React.FC<CheckInConfirmModalProps> = ({
               {error && <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-3 text-rose-400 animate-in shake"><AlertCircle size={16} className="shrink-0 mt-0.5" /><p className="text-xs font-normal uppercase leading-tight">{error}</p></div>}
             </div>
 
-            <div className="px-8 py-6 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
+            <div className="dialog-actions px-8 py-6 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
               <button
                 onClick={handleAuthorizedConfirm}
                 disabled={isCheckInDisabled}

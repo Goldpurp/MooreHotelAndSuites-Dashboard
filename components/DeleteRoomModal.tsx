@@ -74,7 +74,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
               </div>
             </div>
 
-            <div className="px-8 py-6 border-t border-white/5 flex gap-3 bg-slate-950/40">
+            <div className="dialog-actions px-8 py-6 border-t border-white/5 flex gap-3 bg-slate-950/40">
               <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-xl text-xs font-medium uppercase tracking-normal text-slate-500 hover:text-white transition-all border border-white/5">
                 Abort Protocol
               </button>

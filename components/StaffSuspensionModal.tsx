@@ -107,7 +107,7 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
               )}
             </div>
 
-            <div className="px-8 md:px-6 py-6 md:py-8 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
+            <div className="dialog-actions px-8 md:px-6 py-6 md:py-8 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
               <button onClick={handleConfirm} disabled={isSubmitting} className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-xs md:text-xs font-medium uppercase tracking-normal shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 ${isActive ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-950/40' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-950/40'}`}>
                 {isSubmitting ? (
                   <>
