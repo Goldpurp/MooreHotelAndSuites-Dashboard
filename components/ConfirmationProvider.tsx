@@ -1,3 +1,4 @@
+import ModalPortal from './ModalPortal';
 import React, { createContext, useCallback, useContext, useState } from 'react';
 import { AlertTriangle, ShieldCheck, X } from 'lucide-react';
 import { useAccessibleModal } from '../hooks/useAccessibleModal';
@@ -55,8 +56,8 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     <ConfirmationContext.Provider value={confirm}>
       {children}
       {pending && (
-        <div
-          className="fixed inset-0 z-[220] flex items-center justify-center overflow-y-auto bg-slate-950/90 p-3 backdrop-blur-xl sm:p-6"
+        <ModalPortal><div
+          className="modal-backdrop fixed inset-0 z-[220] flex items-center justify-center overflow-y-auto bg-slate-950/90 p-3 backdrop-blur-xl sm:p-6"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) settle(false);
@@ -85,7 +86,7 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               </button>
             </div>
 
-            <h2 id="confirmation-title" className="mt-6 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+            <h2 id="confirmation-title" className="mt-6 text-xl font-semibold tracking-tight text-white sm:text-2xl">
               {pending.title}
             </h2>
             <p id="confirmation-message" className="mt-3 text-sm leading-6 text-slate-400">
@@ -97,14 +98,14 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 type="button"
                 data-modal-cancel
                 onClick={() => settle(false)}
-                className="min-h-12 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-bold text-slate-200 transition hover:bg-white/10"
+                className="min-h-12 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-slate-200 transition hover:bg-white/10"
               >
                 {pending.cancelLabel ?? 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={() => settle(true)}
-                className={`min-h-12 rounded-xl px-4 text-sm font-bold text-white transition active:scale-[0.98] ${
+                className={`min-h-12 rounded-xl px-4 text-sm font-medium text-white transition active:scale-[0.98] ${
                   tone === 'danger'
                     ? 'bg-rose-600 hover:bg-rose-500'
                     : tone === 'secure'
@@ -116,7 +117,7 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               </button>
             </div>
           </section>
-        </div>
+        </div></ModalPortal>
       )}
     </ConfirmationContext.Provider>
   );

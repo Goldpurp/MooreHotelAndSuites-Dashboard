@@ -111,21 +111,21 @@ const Rooms: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
-            <p className="adaptive-text-xs text-blue-400 font-black uppercase tracking-widest leading-none">Rooms</p>
+            <p className="adaptive-text-xs text-blue-400 font-normal uppercase tracking-normal leading-none">Rooms</p>
           </div>
-          <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">Rooms</h1>
+          <h1 className="adaptive-text-2xl font-semibold text-white tracking-tight uppercase leading-none">Rooms</h1>
         </div>
         
         <PermissionWrapper allowedRoles={[UserRole.Admin, UserRole.Manager]}>
-          <button onClick={() => { setEditingRoom(null); setIsModalOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-black uppercase flex items-center gap-2 transition-all shadow-lg"><Plus size={16}/> Add Room</button>
+          <button onClick={() => { setEditingRoom(null); setIsModalOpen(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl adaptive-text-xs font-medium uppercase flex items-center gap-2 transition-all shadow-lg"><Plus size={16}/> Add Room</button>
         </PermissionWrapper>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <div key={s.label} className="glass-card p-5 rounded-2xl border border-white/5">
-            <span className="text-slate-600 text-[10px] font-black uppercase tracking-widest block mb-1.5">{s.label}</span>
-            <h4 className={`text-2xl font-black ${s.color}`}>{s.value}</h4>
+            <span className="text-slate-600 text-xs font-normal uppercase tracking-normal block mb-1.5">{s.label}</span>
+            <h4 className={`text-2xl font-semibold ${s.color}`}>{s.value}</h4>
           </div>
         ))}
       </div>
@@ -152,7 +152,7 @@ const Rooms: React.FC = () => {
                 <button 
                   key={cat} 
                   onClick={() => setCategoryFilter(cat)}
-                  className={`px-4 py-1.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${categoryFilter === cat ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300'}`}
+                  className={`px-4 py-1.5 rounded-sm text-xs font-medium uppercase tracking-normal transition-all whitespace-nowrap ${categoryFilter === cat ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300'}`}
                 >
                   {cat === 'All' ? 'All Types' : cat}
                 </button>
@@ -168,13 +168,13 @@ const Rooms: React.FC = () => {
 
         <div className="scroll-pane min-h-0 overflow-auto p-4 flex-1">
           {paginatedRooms.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 opacity-20"><SearchX size={64} className="mb-4 text-slate-700" /><p className="adaptive-text-lg font-black uppercase text-slate-500">No rooms found</p></div>
+            <div className="flex flex-col items-center justify-center py-32 opacity-20"><SearchX size={64} className="mb-4 text-slate-700" /><p className="adaptive-text-lg font-normal uppercase text-slate-500">No rooms found</p></div>
           ) : (
             viewMode === 'list' ? (
               <div className="overflow-x-auto h-full">
                 <table className="mobile-card-table w-full text-left min-w-[700px]">
                   <thead>
-                    <tr className="text-slate-600 text-[9px] font-black uppercase tracking-widest border-b border-white/5 bg-slate-900/10">
+                    <tr className="text-slate-600 text-xs font-normal uppercase tracking-normal border-b border-white/5 bg-slate-900/10">
                       <th className="responsive-table-padding">Room</th>
                       <th className="responsive-table-padding col-priority-med">Category</th>
                       <th className="responsive-table-padding text-center">Status</th>
@@ -189,20 +189,20 @@ const Rooms: React.FC = () => {
                           <div className="flex items-center gap-4">
                             <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=100'} className="w-12 h-10 rounded-lg object-cover ring-1 ring-white/5 shadow-lg shrink-0" alt=""/>
                             <div className="min-w-0">
-                               <p className="adaptive-text-sm font-black text-white leading-none mb-1.5 uppercase truncate">{room.name}</p>
-                               <div className="flex items-center gap-2"><p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest truncate">{room.isOnline ? "Published" : "Offline"}</p>{room.isOnline && <Globe size={10} className="text-emerald-500" />}</div>
+                               <p className="adaptive-text-sm font-normal text-white leading-none mb-1.5 uppercase truncate">{room.name}</p>
+                               <div className="flex items-center gap-2"><p className="text-xs text-slate-600 font-normal uppercase tracking-normal truncate">{room.isOnline ? "Published" : "Offline"}</p>{room.isOnline && <Globe size={10} className="text-emerald-500" />}</div>
                             </div>
                           </div>
                         </td>
                         <td data-label="Category" className="responsive-table-padding col-priority-med">
-                            <p className="adaptive-text-sm font-black text-slate-300 uppercase truncate">{room.category}</p>
-                            <p className="text-[8px] text-slate-700 font-bold uppercase mt-1">{room.floor.replace(/(?!^)([A-Z])/g, ' $1')}</p>
+                            <p className="adaptive-text-sm font-normal text-slate-300 uppercase truncate">{room.category}</p>
+                            <p className="text-xs text-slate-700 font-normal uppercase mt-1">{room.floor.replace(/(?!^)([A-Z])/g, ' $1')}</p>
                         </td>
                         <td data-label="Status" className="responsive-table-padding text-center">
-                            <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border whitespace-nowrap ${getStatusClasses(room.status)}`}>{room.status}</span>
+                            <span className={`px-3 py-1 rounded-lg text-xs font-normal uppercase tracking-normal border whitespace-nowrap ${getStatusClasses(room.status)}`}>{room.status}</span>
                         </td>
                         <td data-label="Price" className="responsive-table-padding col-priority-low">
-                          <p className="adaptive-text-sm font-black text-white">₦{room.pricePerNight.toLocaleString()}</p>
+                          <p className="adaptive-text-sm font-normal text-white">₦{room.pricePerNight.toLocaleString()}</p>
                         </td>
                         <td data-label="Actions" className="responsive-table-padding text-right">
                             <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
@@ -225,17 +225,17 @@ const Rooms: React.FC = () => {
                   <div key={room.id} onClick={() => { setViewingRoom(room); setIsDetailOpen(true); }} className="group glass-card rounded-2xl overflow-hidden hover:border-blue-500/40 transition-all cursor-pointer shadow-lg border border-white/5 flex flex-col h-full">
                     <div className="aspect-[4/3] relative overflow-hidden shrink-0">
                       <img src={room.images[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=600'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt=""/>
-                      <div className="absolute top-3 right-3"><span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border backdrop-blur-md ${getStatusClasses(room.status)}`}>{room.status}</span></div>
+                      <div className="absolute top-3 right-3"><span className={`px-2 py-1 rounded-lg text-xs font-normal uppercase tracking-normal border backdrop-blur-md ${getStatusClasses(room.status)}`}>{room.status}</span></div>
                     </div>
                     <div className="p-4 flex justify-between items-start flex-1 bg-slate-900/20">
                       <div className="min-w-0 pr-2">
-                         <p className="adaptive-text-base font-black text-white uppercase leading-none mb-1 group-hover:text-blue-400 truncate">{room.name}</p>
-                         <p className="text-[9px] text-slate-600 font-bold uppercase truncate">{room.category}</p>
-                         {SHOW_ROOM_SIZES && room.size && <div className="flex items-center gap-1.5 mt-3 text-slate-700"><Square size={8} /><span className="text-[8px] font-black uppercase tracking-widest">{room.size}</span></div>}
+                         <p className="adaptive-text-base font-normal text-white uppercase leading-none mb-1 group-hover:text-blue-400 truncate">{room.name}</p>
+                         <p className="text-xs text-slate-600 font-normal uppercase truncate">{room.category}</p>
+                         {SHOW_ROOM_SIZES && room.size && <div className="flex items-center gap-1.5 mt-3 text-slate-700"><Square size={8} /><span className="text-xs font-normal uppercase tracking-normal">{room.size}</span></div>}
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="adaptive-text-base font-black text-white">₦{(room.pricePerNight/1000).toFixed(0)}k</p>
-                        <p className="text-[8px] text-slate-700 font-bold uppercase">Price</p>
+                        <p className="adaptive-text-base font-normal text-white">₦{(room.pricePerNight/1000).toFixed(0)}k</p>
+                        <p className="text-xs text-slate-700 font-normal uppercase">Price</p>
                       </div>
                     </div>
                   </div>
@@ -246,10 +246,10 @@ const Rooms: React.FC = () => {
         </div>
 
         <div className="px-6 py-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between">
-           <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Total Rooms • {filteredRooms.length}</div>
+           <div className="text-xs text-slate-600 font-normal uppercase tracking-normal">Total Rooms • {filteredRooms.length}</div>
            <div className="flex gap-2">
               <button aria-label="Previous page" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronLeft size={16} /></button>
-              <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-[10px] font-black text-white">{currentPage} / {totalPages || 1}</span></div>
+              <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5"><span className="text-xs font-normal text-white">{currentPage} / {totalPages || 1}</span></div>
               <button aria-label="Next page" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 border border-white/10 rounded-xl text-slate-500 hover:text-white transition-all disabled:opacity-10 bg-white/5"><ChevronRight size={16} /></button>
            </div>
         </div>

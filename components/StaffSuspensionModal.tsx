@@ -1,3 +1,4 @@
+import ModalPortal from './ModalPortal';
 import React, { useState } from 'react';
 import { X, Lock, Activity, Loader2, ShieldOff, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { sileo } from 'sileo';
@@ -42,12 +43,12 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
   };
 
   return (
-    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label={isActive ? 'Suspend account access' : 'Restore account access'} tabIndex={-1} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-300">
+    <ModalPortal><div ref={modalRef} role="alertdialog" aria-modal="true" aria-label={isActive ? 'Suspend account access' : 'Restore account access'} tabIndex={-1} className="modal-backdrop fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-300">
       <div className={`glass-card w-full max-w-md rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300 shadow-3xl ${
         isActive ? 'shadow-rose-950/20' : 'shadow-emerald-950/20'
       }`}>
           <>
-            <div className={`px-8 md:px-10 py-6 md:py-8 border-b border-white/5 flex items-center justify-between ${
+            <div className={`px-8 md:px-6 py-6 md:py-8 border-b border-white/5 flex items-center justify-between ${
               isActive ? 'bg-rose-500/5' : 'bg-emerald-500/5'
             }`}>
               <div className="flex items-center gap-3 md:gap-4">
@@ -55,10 +56,10 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                   {isActive ? <ShieldOff size={24} /> : <ShieldCheck size={24} />}
                 </div>
                 <div>
-                  <h2 className="text-lg md:text-xl font-black text-white tracking-tight uppercase leading-none">
+                  <h2 className="text-lg md:text-xl font-semibold text-white tracking-tight uppercase leading-none">
                     {isActive ? 'Deactivate' : 'Activate'}
                   </h2>
-                  <p className={`text-[8px] font-black uppercase tracking-[0.2em] mt-1.5 ${isActive ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  <p className={`text-xs font-normal uppercase tracking-normal mt-1.5 ${isActive ? 'text-rose-400' : 'text-emerald-400'}`}>
                     Account access confirmation
                   </p>
                 </div>
@@ -68,12 +69,12 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
               </button>
             </div>
 
-            <div className="p-8 md:p-10 space-y-6 md:space-y-8">
+            <div className="p-8 md:p-6 space-y-6 md:space-y-8">
               <div className="text-center space-y-3">
-                <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter">
+                <h3 className="text-xl md:text-2xl font-semibold text-white uppercase tracking-tighter">
                   {isActive ? 'Confirm Deactivation?' : 'Confirm Activation?'}
                 </h3>
-                <p className="text-[10px] md:text-[11px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+                <p className="text-xs md:text-xs text-slate-400 font-normal uppercase tracking-normal leading-relaxed">
                   {isActive 
                     ? `You are about to revoke account access for ${user.name}. All active sessions will be invalidated.`
                     : `You are restoring account access for ${user.name}. Their credentials will be valid immediately.`
@@ -85,28 +86,28 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                  <div className="flex items-center gap-4">
                     <img src={user.avatarUrl || "/avatar-placeholder.svg"} className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/10" alt="" />
                     <div className="min-w-0">
-                       <p className="text-sm md:text-[14px] font-black text-white uppercase tracking-tight truncate">{user.name}</p>
-                       <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase">{user.role}</p>
-                       <p className="text-[8px] md:text-[9px] text-slate-400 font-bold tracking-widest uppercase">{user.department}</p>
+                       <p className="text-sm md:text-[14px] font-normal text-white uppercase tracking-tight truncate">{user.name}</p>
+                       <p className="text-xs md:text-xs text-slate-400 font-normal tracking-normal uppercase">{user.role}</p>
+                       <p className="text-xs md:text-xs text-slate-400 font-normal tracking-normal uppercase">{user.department}</p>
                     </div>
                  </div>
                  <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                    <span className="text-[9px] text-slate-600 font-black uppercase">Identity Status</span>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <span className="text-xs text-slate-600 font-normal uppercase">Identity Status</span>
+                    <span className={`text-xs font-normal uppercase tracking-normal ${isActive ? 'text-emerald-400' : 'text-rose-400'}`}>
                        {isActive ? 'Active' : 'Suspended / Locked'}
                     </span>
                  </div>
               </div>
 
               {error && (
-                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl md:rounded-2xl text-rose-400 text-[10px] font-black uppercase tracking-tight flex items-center gap-3 animate-in shake">
+                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl md:rounded-2xl text-rose-400 text-xs font-normal uppercase tracking-tight flex items-center gap-3 animate-in shake">
                    <ShieldAlert size={16} /> {error}
                 </div>
               )}
             </div>
 
-            <div className="px-8 md:px-10 py-6 md:py-8 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
-              <button onClick={handleConfirm} disabled={isSubmitting} className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 ${isActive ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-950/40' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-950/40'}`}>
+            <div className="px-8 md:px-6 py-6 md:py-8 border-t border-white/5 flex flex-col gap-3 bg-slate-950/40">
+              <button onClick={handleConfirm} disabled={isSubmitting} className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-xs md:text-xs font-medium uppercase tracking-normal shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 ${isActive ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-950/40' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-950/40'}`}>
                 {isSubmitting ? (
                   <>
                     <Loader2 size={18} className="animate-spin" /> 
@@ -119,11 +120,11 @@ const StaffSuspensionModal: React.FC<StaffSuspensionModalProps> = ({ isOpen, onC
                   </>
                 )}
               </button>
-              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition-all">Cancel</button>
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="w-full py-3 md:py-4 text-xs font-medium uppercase tracking-normal text-slate-600 hover:text-white transition-all">Cancel</button>
             </div>
           </>
       </div>
-    </div>
+    </div></ModalPortal>
   );
 };
 

@@ -1,3 +1,4 @@
+import ModalPortal from './ModalPortal';
 import React, { useState } from 'react';
 import { X, AlertTriangle, ShieldAlert, Loader2, Trash } from 'lucide-react';
 import { sileo } from 'sileo';
@@ -37,7 +38,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
   };
 
   return (
-    <div ref={modalRef} role="alertdialog" aria-modal="true" aria-label="Delete room permanently" tabIndex={-1} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+    <ModalPortal><div ref={modalRef} role="alertdialog" aria-modal="true" aria-label="Delete room permanently" tabIndex={-1} className="modal-backdrop fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
       <div className="glass-card w-full max-w-md rounded-[2rem] shadow-[0_0_50px_rgba(244,63,94,0.15)] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300">
           <>
             <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-rose-500/5">
@@ -46,8 +47,8 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
                   <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white tracking-tight uppercase">Liquidate Asset</h2>
-                  <p className="text-[8px] text-rose-400 font-black uppercase tracking-[0.15em]">Protocol: Physical Removal</p>
+                  <h2 className="text-lg font-semibold text-white tracking-tight uppercase">Liquidate Asset</h2>
+                  <p className="text-xs text-rose-400 font-normal uppercase tracking-normal">Protocol: Physical Removal</p>
                 </div>
               </div>
               <button type="button" data-modal-close aria-label="Close delete room confirmation" onClick={onClose} disabled={isSubmitting} className="p-2 hover:bg-white/5 text-slate-500 hover:text-white rounded-xl transition-all">
@@ -59,28 +60,28 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-4">
                 <img src={room.images[0]} className="w-16 h-12 rounded-xl object-cover ring-2 ring-white/10 shadow-lg" alt="" />
                 <div className="min-w-0">
-                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Target Asset</p>
-                  <p className="text-sm font-black text-white uppercase truncate">{room.name}</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 truncate">{room.category}</p>
+                  <p className="text-xs text-slate-500 font-normal uppercase tracking-normal mb-1">Target Asset</p>
+                  <p className="text-sm font-normal text-white uppercase truncate">{room.name}</p>
+                  <p className="text-xs text-slate-400 font-normal uppercase tracking-normal mt-0.5 truncate">{room.category}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4 p-2">
                 <AlertTriangle size={24} className="text-rose-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-400 leading-relaxed font-bold uppercase tracking-tight">
-                  Permanent removal will <span className="text-rose-400 font-black">invalidate all current folio references</span> to {room.name} in the ledger history.
+                <p className="text-xs text-slate-400 leading-relaxed font-normal uppercase tracking-tight">
+                  Permanent removal will <span className="text-rose-400 font-normal">invalidate all current folio references</span> to {room.name} in the ledger history.
                 </p>
               </div>
             </div>
 
             <div className="px-8 py-6 border-t border-white/5 flex gap-3 bg-slate-950/40">
-              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all border border-white/5">
+              <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 px-4 py-4 rounded-xl text-xs font-medium uppercase tracking-normal text-slate-500 hover:text-white transition-all border border-white/5">
                 Abort Protocol
               </button>
               <button 
                 onClick={handleConfirm} 
                 disabled={isSubmitting}
-                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
+                className="flex-[2] bg-rose-600 hover:bg-rose-700 text-white px-4 py-4 rounded-xl text-xs font-medium uppercase tracking-normal shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -94,7 +95,7 @@ const DeleteRoomModal: React.FC<DeleteRoomModalProps> = ({ isOpen, onClose, onCo
             </div>
           </>
       </div>
-    </div>
+    </div></ModalPortal>
   );
 };
 

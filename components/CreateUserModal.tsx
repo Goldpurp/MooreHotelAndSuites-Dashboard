@@ -1,3 +1,4 @@
+import ModalPortal from './ModalPortal';
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Save, Loader2, Fingerprint, Mail, ShieldCheck, Activity, User, KeyRound, Building2, Phone, ShieldAlert } from 'lucide-react';
 import { sileo } from 'sileo';
@@ -83,9 +84,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
 
   const getRoleDescription = (role: UserRole) => {
     switch(role) {
-      case UserRole.Admin: return "Full system root access. Can modify staff, revenue protocols, and property architecture.";
-      case UserRole.Manager: return "Operational oversight. Access to analytics, reports, and junior registry management.";
-      case UserRole.Staff: return "Standard desk protocol. Can manage bookings, residents, and asset status.";
+      case UserRole.Admin: return "Manages hotel settings, staff, payments, and room operations.";
+      case UserRole.Manager: return "Manages hotel operations, staff, payments, cleaning approvals, and reports.";
+      case UserRole.Staff: return "Access follows the selected department. Housekeepers can view and start cleaning; managers confirm completion.";
       default: return "Limited read-only access to assigned assets.";
     }
   };
@@ -105,86 +106,86 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
   const isStaffRole = formData.role === UserRole.Staff || formData.role === UserRole.Manager;
 
   return (
-    <div ref={modalRef} role="dialog" aria-modal="true" aria-label={editingUser ? 'Edit staff member' : 'Add staff member'} tabIndex={-1} className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
+    <ModalPortal><div ref={modalRef} role="dialog" aria-modal="true" aria-label={editingUser ? 'Edit staff member' : 'Add staff member'} tabIndex={-1} className="modal-backdrop fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-[#020617]/95 backdrop-blur-2xl animate-in fade-in duration-500 overflow-y-auto custom-scrollbar">
       <div className="w-full max-w-5xl flex flex-col lg:flex-row glass-card rounded-[1.5rem] sm:rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(59,130,246,0.15)] animate-in zoom-in-95 duration-300 min-h-[500px] lg:h-[720px] my-4 sm:my-8 max-h-[95vh] sm:max-h-[92vh]">
           <>
             {/* Left Visual Sidebar */}
-            <div className={`flex lg:w-80 bg-gradient-to-br p-6 sm:p-10 lg:p-12 flex-col justify-between shrink-0 ${editingUser ? 'from-indigo-600 to-blue-900' : 'from-brand-600 to-emerald-900'}`}>
-               <div className="space-y-4 sm:space-y-12">
-                  <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white shadow-2xl backdrop-blur-md">
+            <div className={`flex lg:w-80 bg-gradient-to-br p-6 sm:p-6 lg:p-6 flex-col justify-between shrink-0 ${editingUser ? 'from-indigo-600 to-blue-900' : 'from-brand-600 to-emerald-900'}`}>
+               <div className="space-y-4 sm:space-y-6">
+                  <div className="hidden lg:flex w-12 h-12 rounded-xl sm:rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white shadow-2xl backdrop-blur-md">
                     {editingUser ? <Activity size={24}/> : <Fingerprint size={24}/>}
                   </div>
                   <div className="space-y-2 sm:space-y-3">
-                    <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white uppercase leading-[0.85] tracking-tighter">
+                    <h2 className="text-2xl lg:text-3xl font-semibold text-white uppercase leading-[0.85] tracking-tighter">
                       {editingUser ? 'EDIT\nSTAFF' : 'ADD\nSTAFF'}
                     </h2>
                     <div className="flex items-center gap-2 px-3 py-1 bg-black/20 rounded-lg border border-white/10 w-fit">
                        <KeyRound size={12} className="text-white/60" />
-                       <span className="text-[8px] font-black uppercase tracking-widest text-white/70">Auth: {currentUser?.role}</span>
+                       <span className="text-xs font-normal uppercase tracking-normal text-white/70">Auth: {currentUser?.role}</span>
                     </div>
                   </div>
                </div>
 
-                <div className="bg-black/30 p-5 sm:p-8 rounded-xl sm:rounded-[2rem] border border-white/15 space-y-2 sm:space-y-4 backdrop-blur-md mt-6 lg:mt-0 shadow-2xl">
-                  <p className="text-[9px] text-white/50 font-black uppercase tracking-[0.2em]">What they can do</p>
+                <div className="hidden lg:block bg-black/30 p-5 rounded-xl sm:rounded-[2rem] border border-white/15 space-y-2 sm:space-y-4 backdrop-blur-md mt-6 lg:mt-0 shadow-2xl">
+                  <p className="text-xs text-white/50 font-normal uppercase tracking-normal">What they can do</p>
                   <div className="flex items-center gap-2 sm:gap-3">
                      <ShieldCheck size={16} className="text-white" />
-                     <span className="text-[10px] sm:text-[11px] text-white font-black uppercase tracking-widest">{formData.role} Level</span>
+                     <span className="text-xs sm:text-xs text-white font-normal uppercase tracking-normal">{formData.role} Level</span>
                   </div>
-                  <p className="text-[8px] leading-relaxed text-white/60 font-bold uppercase tracking-tight">
+                  <p className="text-xs leading-relaxed text-white/60 font-normal uppercase tracking-tight">
                     {getRoleDescription(formData.role)}
                   </p>
                 </div>
              </div>
 
             {/* Form Content */}
-            <form onSubmit={handleSubmit} className="flex-1 bg-[#05080f] p-6 sm:p-10 lg:p-12 flex flex-col overflow-y-auto custom-scrollbar">
-               <div className="flex justify-between items-center mb-6 sm:mb-12">
+            <form onSubmit={handleSubmit} className="min-h-0 flex-1 bg-[#05080f] p-6 sm:p-6 lg:p-6 flex flex-col overflow-y-auto custom-scrollbar">
+               <div className="flex justify-between items-center mb-6 sm:mb-6">
                   <div className="flex items-center gap-3">
                      <span className="w-6 h-[1.5px] bg-brand-500 hidden sm:block"></span>
-                     <span className="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">Adding new staff</span>
+                     <span className="text-xs sm:text-xs font-normal text-slate-500 uppercase tracking-normal">{editingUser ? 'Editing staff' : 'Adding new staff'}</span>
                   </div>
                   <button data-modal-close aria-label="Close staff form" onClick={onClose} disabled={isSubmitting} type="button" className="p-2 sm:p-3 hover:bg-white/5 rounded-xl sm:rounded-2xl text-slate-600 transition-all active:scale-90"><X size={20}/></button>
                </div>
 
-               <div className="flex-1 space-y-6 sm:space-y-10">
+               <div className="flex-1 space-y-6 sm:space-y-6">
                   <div className="space-y-4 sm:space-y-6">
-                      <h4 className="text-[10px] font-black text-brand-500 uppercase tracking-widest flex items-center gap-2">
+                      <h4 className="text-xs font-semibold text-brand-500 uppercase tracking-widest flex items-center gap-2">
                         <User size={14} /> Staff Details
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Name</label>
-                          {validationFields.includes('name') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                          <label className="text-xs text-slate-600 font-medium uppercase tracking-normal">Name</label>
+                          {validationFields.includes('name') && <p className="text-[7px] text-rose-500 font-normal uppercase tracking-normal animate-in fade-in slide-in-from-bottom-1">Required</p>}
                         </div>
-                          <input required value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); setValidationFields(prev => prev.filter(f => f !== 'name')); }} className={`w-full bg-white/5 border ${validationFields.includes('name') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 px-4 sm:px-6 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold`} placeholder="John Doe" />
+                          <input required value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); setValidationFields(prev => prev.filter(f => f !== 'name')); }} className={`w-full bg-white/5 border ${validationFields.includes('name') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 px-4 sm:px-6 text-sm text-white focus:bg-white/10 transition-all outline-none font-normal`} placeholder="John Doe" />
 
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between items-center px-1">
-                             <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest">Email</label>
-                             {validationFields.includes('email') && <p className="text-[7px] text-rose-500 font-black uppercase tracking-widest animate-in fade-in slide-in-from-bottom-1">Required</p>}
+                             <label className="text-xs text-slate-600 font-medium uppercase tracking-normal">Email</label>
+                             {validationFields.includes('email') && <p className="text-[7px] text-rose-500 font-normal uppercase tracking-normal animate-in fade-in slide-in-from-bottom-1">Required</p>}
                           </div>
                           <div className="relative">
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
-                            <input required value={formData.email} onChange={e => { setFormData({...formData, email: e.target.value}); setValidationFields(prev => prev.filter(f => f !== 'email')); }} type="email" className={`w-full bg-white/5 border ${validationFields.includes('email') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold`} placeholder="name@moorehotels.com" />
+                            <input required value={formData.email} onChange={e => { setFormData({...formData, email: e.target.value}); setValidationFields(prev => prev.filter(f => f !== 'email')); }} type="email" className={`w-full bg-white/5 border ${validationFields.includes('email') ? 'border-rose-500/50 bg-rose-500/5' : 'border-white/10'} rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-normal`} placeholder="name@moorehotels.com" />
                           </div>
 
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Phone</label>
+                          <label className="text-xs text-slate-600 font-medium uppercase tracking-normal ml-1">Phone</label>
                           <div className="relative">
                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
-                            <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} type="tel" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-bold" placeholder="+234..." />
+                            <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} type="tel" className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none font-normal" placeholder="+234..." />
                           </div>
                         </div>
                         {isStaffRole && (
                           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Department</label>
+                            <label className="text-xs text-slate-600 font-medium uppercase tracking-normal ml-1">Department</label>
                             <div className="relative">
                               <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" size={16} />
-                              <select required={isStaffRole} value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none appearance-none cursor-pointer font-bold">
+                              <select required={isStaffRole} value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 transition-all outline-none appearance-none cursor-pointer font-normal">
                                 <option value="" disabled className="bg-[#0a0f1d]">Select Department</option>
                                 <option value="Housekeeping" className="bg-[#0a0f1d]">Housekeeping</option>
                                 <option value="Reception" className="bg-[#0a0f1d]">Reception</option>
@@ -198,38 +199,38 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
                   </div>
 
                   {!editingUser && (
-                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-[10px] font-bold leading-relaxed text-amber-100/80">
+                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs font-normal leading-relaxed text-amber-100/80">
                       A secure, single-use password setup link will be emailed to this staff member. Administrators never see or send staff passwords.
                     </div>
                   )}
 
                   <div className="space-y-4 sm:space-y-6">
-                    <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
+                    <h4 className="text-xs font-semibold text-indigo-500 uppercase tracking-widest flex items-center gap-2">
                       <ShieldAlert size={14} /> Permissions
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-2">
-                        <label className="text-[8px] text-slate-600 font-black uppercase tracking-widest ml-1">Role</label>
-                        <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as UserRole})} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-indigo-400 font-black uppercase tracking-widest outline-none appearance-none cursor-pointer hover:bg-white/10 transition-all">
+                        <label className="text-xs text-slate-600 font-medium uppercase tracking-normal ml-1">Role</label>
+                        <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as UserRole})} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-indigo-400 font-normal uppercase tracking-normal outline-none appearance-none cursor-pointer hover:bg-white/10 transition-all">
                           {allowedRoles.map(role => (
                             <option key={role} value={role}>{role}</option>
                           ))}
                         </select>
                       </div>
                       <div className="flex flex-col justify-center bg-white/5 p-4 rounded-xl border border-white/5">
-                         <p className="text-[7px] text-slate-500 font-black uppercase mb-1">Status</p>
-                         <p className="text-[9px] text-slate-400 font-bold">Managed by the system.</p>
+                         <p className="text-[7px] text-slate-500 font-normal uppercase mb-1">Status</p>
+                         <p className="text-xs text-slate-400 font-normal">Managed by the system.</p>
                       </div>
                     </div>
                   </div>
                </div>
 
-               <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/5 flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 sm:py-5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:text-white transition-all border border-white/5">Cancel</button>
+               <div className="mt-8 sm:mt-6 pt-6 sm:pt-8 border-t border-white/5 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <button type="button" data-modal-cancel onClick={onClose} disabled={isSubmitting} className="flex-1 py-3 sm:py-5 rounded-xl text-xs font-medium uppercase tracking-normal text-slate-600 hover:text-white transition-all border border-white/5">Cancel</button>
                   <button 
                     type="submit" 
                     disabled={isSubmitting} 
-                    className="flex-[2] bg-brand-600 hover:bg-brand-700 text-white font-black py-3 sm:py-5 rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-3xl flex items-center justify-center gap-3 active:scale-95"
+                    className="flex-[2] bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 sm:py-5 rounded-xl sm:rounded-2xl text-xs font-medium uppercase tracking-normal transition-all shadow-3xl flex items-center justify-center gap-3 active:scale-95"
                   >
                     {isSubmitting ? (
                       <>
@@ -247,7 +248,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, edit
             </form>
           </>
       </div>
-    </div>
+    </div></ModalPortal>
   );
 };
 

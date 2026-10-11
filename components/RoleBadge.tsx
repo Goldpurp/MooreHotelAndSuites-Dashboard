@@ -1,10 +1,12 @@
 import React from 'react';
+import { staffLabel } from '../lib/staffLabel';
 
 interface RoleBadgeProps {
   role: string | undefined | null;
+  department?: string | null;
 }
 
-const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
+const RoleBadge: React.FC<RoleBadgeProps> = ({ role, department }) => {
   const normalizedRole = (role?.toLowerCase() || 'staff') as string;
 
   const config: Record<string, { label: string; classes: string }> = {
@@ -17,8 +19,8 @@ const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
   const activeConfig = config[normalizedRole] || config.staff;
 
   return (
-    <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border transition-all ${activeConfig.classes}`}>
-      {activeConfig.label}
+    <span className={`px-4 py-1.5 rounded-xl text-xs font-normal uppercase tracking-normal border transition-all ${activeConfig.classes}`}>
+      {staffLabel({ role, department })}
     </span>
   );
 };

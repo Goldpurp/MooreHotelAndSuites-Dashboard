@@ -20,14 +20,14 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, growth, icon: Icon, c
       
       <div className="flex items-center justify-between relative z-10">
         <div>
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-dash mb-1.5 opacity-80">{label}</p>
-          <h3 className="text-2xl font-black text-white mb-1.5 tracking-tight">{value}</h3>
+          <p className="text-slate-500 text-xs font-normal uppercase tracking-normal mb-1.5 opacity-80">{label}</p>
+          <h3 className="text-2xl font-semibold text-white mb-1.5 tracking-tight">{value}</h3>
           {growth !== null && Number.isFinite(growth) && <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.5 rounded ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+            <div className={`flex items-center gap-0.5 text-xs font-normal px-1.5 py-0.5 rounded ${isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
               {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
               <span>{Math.abs(growth)}%</span>
             </div>
-            <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter">vs prev.</span>
+            <span className="text-xs text-slate-600 font-normal uppercase tracking-tighter">vs prev.</span>
           </div>}
         </div>
         <div className={`p-3 rounded-xl shadow-lg transition-transform group-hover:scale-105 duration-300 ${color}`}>

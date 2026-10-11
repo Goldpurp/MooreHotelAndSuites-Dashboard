@@ -1,3 +1,4 @@
+import ModalPortal from './ModalPortal';
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, RotateCcw, ShieldCheck, X } from 'lucide-react';
 import { sileo } from 'sileo';
@@ -94,7 +95,10 @@ export default function PaymentReviewQueue({
   }, [currentUser?.id]);
 
   useEffect(() => {
-    if (!allowed || !requestedBooking) return;
+    if (!allowed || !requestedBooking) {
+      setOpen(false);
+      return;
+    }
     setDecision(null);
     setBankReference('');
     setAmount(String(requestedBooking.amount));
@@ -133,7 +137,7 @@ export default function PaymentReviewQueue({
   );
   const evidenceValid = !evidenceRequired || (
     statementChecked &&
-    normalizedBankReference.length >= 6 &&
+    (decision === 'Confirm' && !normalizedBankReference || normalizedBankReference.length >= 6) &&
     !bankReferenceIsBookingCode &&
     Number.isFinite(Number(amount)) &&
     Number(amount) > 0
@@ -214,13 +218,13 @@ export default function PaymentReviewQueue({
       type="button"
       onClick={onOpenSettlements}
       aria-label={`Open payment reviews. ${items.length} waiting.`}
-      className={`mx-3 mb-2 self-end shrink-0 rounded-xl border px-4 py-3 text-sm font-bold shadow-xl transition-colors ${overdue || queueError ? 'border-amber-400/50 bg-amber-950 text-amber-100' : 'border-slate-600 bg-slate-900 text-white'}`}
+      className={`mx-3 mb-2 self-end shrink-0 rounded-xl border px-4 py-3 text-sm font-medium shadow-xl transition-colors ${overdue || queueError ? 'border-amber-400/50 bg-amber-950 text-amber-100' : 'border-slate-600 bg-slate-900 text-white'}`}
     >
       {loading ? 'Loading payment reviews' : queueError ? 'Payment review unavailable' : `Reported transfers (${items.length})${overdue ? `, ${overdue} overdue` : ''}`}
     </button>
 
     {open && requestedBooking && review ? (
-      <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/90 p-3 backdrop-blur-md sm:p-6">
+      <ModalPortal><div className="modal-backdrop fixed inset-0 z-[220] flex items-center justify-center bg-black/90 p-3 backdrop-blur-md sm:p-6">
         <div
           ref={modalRef}
           role="dialog"
@@ -233,8 +237,8 @@ export default function PaymentReviewQueue({
             <div className="flex min-w-0 items-center gap-3">
               <span className="rounded-xl bg-amber-500/15 p-2.5 text-amber-400"><ShieldCheck size={20} /></span>
               <div className="min-w-0">
-                <h2 id="payment-review-title" className="truncate text-lg font-black text-white">Review bank transfer</h2>
-                <p className="text-xs font-semibold text-amber-300">{review.bookingCode}</p>
+                <h2 id="payment-review-title" className="truncate text-lg font-semibold text-white">Review bank transfer</h2>
+                <p className="text-xs font-normal text-amber-300">{review.bookingCode}</p>
               </div>
             </div>
             <button type="button" data-modal-close aria-label="Close payment review" disabled={busy} onClick={() => setOpen(false)} className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50"><X size={18} /></button>
@@ -243,24 +247,24 @@ export default function PaymentReviewQueue({
           <form onSubmit={submit} className="space-y-5 p-5 sm:p-7">
             <section aria-label="Transfer details" className="grid grid-cols-2 gap-3 rounded-2xl border border-white/5 bg-white/[0.035] p-4 text-sm">
               <div className="col-span-2">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Guest</p>
-                <p className="mt-1 font-bold text-white">{review.guestName}</p>
+                <p className="text-xs font-normal uppercase tracking-normal text-slate-500">Guest</p>
+                <p className="mt-1 font-normal text-white">{review.guestName}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Amount reported</p>
-                <p className="mt-1 font-black text-emerald-400">{review.currency} {review.amount.toLocaleString()}</p>
+                <p className="text-xs font-normal uppercase tracking-normal text-slate-500">Amount reported</p>
+                <p className="mt-1 font-normal text-emerald-400">{review.currency} {review.amount.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Reported</p>
-                <p className="mt-1 font-semibold text-slate-200">{new Date(review.reportedAtUtc).toLocaleString()}</p>
+                <p className="text-xs font-normal uppercase tracking-normal text-slate-500">Reported</p>
+                <p className="mt-1 font-normal text-slate-200">{new Date(review.reportedAtUtc).toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Stay</p>
-                <p className="mt-1 font-semibold text-slate-200">{new Date(requestedBooking.checkIn).toLocaleDateString()} to {new Date(requestedBooking.checkOut).toLocaleDateString()}</p>
+                <p className="text-xs font-normal uppercase tracking-normal text-slate-500">Stay</p>
+                <p className="mt-1 font-normal text-slate-200">{new Date(requestedBooking.checkIn).toLocaleDateString()} to {new Date(requestedBooking.checkOut).toLocaleDateString()}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Room status</p>
-                <p className={`mt-1 font-bold ${review.roomHeld ? 'text-emerald-400' : 'text-amber-300'}`}>{review.roomHeld ? 'Room still held' : 'Room released'}</p>
+                <p className="text-xs font-normal uppercase tracking-normal text-slate-500">Room status</p>
+                <p className={`mt-1 font-normal ${review.roomHeld ? 'text-emerald-400' : 'text-amber-300'}`}>{review.roomHeld ? 'Room still held' : 'Room released'}</p>
               </div>
             </section>
 
@@ -272,30 +276,30 @@ export default function PaymentReviewQueue({
             ) : null}
 
             <fieldset disabled={busy} className="space-y-3 disabled:opacity-60">
-              <legend className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">Choose the review result</legend>
+              <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Choose the review result</legend>
               <div className="grid gap-2 sm:grid-cols-3">
-                <button type="button" onClick={() => chooseDecision('Confirm')} className={`rounded-xl border p-3 text-left text-xs font-bold transition-colors ${decision === 'Confirm' ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'}`}><CheckCircle2 size={17} className="mb-2" />Payment arrived</button>
-                <button type="button" onClick={() => chooseDecision('Refund')} className={`rounded-xl border p-3 text-left text-xs font-bold transition-colors ${decision === 'Refund' ? 'border-amber-400/60 bg-amber-500/15 text-amber-100' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'}`}><RotateCcw size={17} className="mb-2" />Queue refund</button>
-                <button type="button" onClick={() => chooseDecision('Reject')} className={`rounded-xl border p-3 text-left text-xs font-bold transition-colors ${decision === 'Reject' ? 'border-rose-400/60 bg-rose-500/15 text-rose-100' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'}`}><X size={17} className="mb-2" />Payment not found</button>
+                <button type="button" onClick={() => chooseDecision('Confirm')} className={`rounded-xl border p-3 text-left text-xs font-medium transition-colors ${decision === 'Confirm' ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'}`}><CheckCircle2 size={17} className="mb-2" />Payment arrived</button>
+                <button type="button" onClick={() => chooseDecision('Refund')} className={`rounded-xl border p-3 text-left text-xs font-medium transition-colors ${decision === 'Refund' ? 'border-amber-400/60 bg-amber-500/15 text-amber-100' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'}`}><RotateCcw size={17} className="mb-2" />Queue refund</button>
+                <button type="button" onClick={() => chooseDecision('Reject')} className={`rounded-xl border p-3 text-left text-xs font-medium transition-colors ${decision === 'Reject' ? 'border-rose-400/60 bg-rose-500/15 text-rose-100' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'}`}><X size={17} className="mb-2" />Payment not found</button>
               </div>
             </fieldset>
 
             {decision ? (
               <fieldset disabled={busy} className="space-y-4 disabled:opacity-60">
                 {evidenceRequired ? <>
-                  <label className="block text-xs font-bold text-slate-300">Bank transaction ID
-                    <input required minLength={6} maxLength={120} value={bankReference} onChange={event => setBankReference(event.target.value)} autoComplete="off" aria-invalid={bankReferenceIsBookingCode} placeholder="Enter the unique ID from the bank statement" className={`mt-2 block w-full rounded-xl border bg-black/30 px-4 py-3 text-sm text-white outline-none ${bankReferenceIsBookingCode ? 'border-rose-500/60' : 'border-white/10 focus:border-amber-400/50'}`} />
-                    <span className={`mt-2 block text-[10px] font-semibold leading-relaxed ${bankReferenceIsBookingCode ? 'text-rose-300' : 'text-slate-500'}`}>{bankReferenceIsBookingCode ? 'Use the bank reference, not a booking or internal confirmation reference.' : 'Use the unique transfer or credit reference shown on the hotel bank statement.'}</span>
+                  <label className="block text-xs font-medium text-slate-300">{decision === 'Confirm' ? 'Bank transaction ID (optional)' : 'Bank transaction ID'}
+                    <input required={decision === 'Refund'} minLength={6} maxLength={120} value={bankReference} onChange={event => setBankReference(event.target.value)} autoComplete="off" aria-invalid={bankReferenceIsBookingCode} placeholder="Enter the unique ID from the bank statement" className={`mt-2 block w-full rounded-xl border bg-black/30 px-4 py-3 text-sm text-white outline-none ${bankReferenceIsBookingCode ? 'border-rose-500/60' : 'border-white/10 focus:border-amber-400/50'}`} />
+                    <span className={`mt-2 block text-xs font-normal leading-relaxed ${bankReferenceIsBookingCode ? 'text-rose-300' : 'text-slate-500'}`}>{bankReferenceIsBookingCode ? 'Use the bank reference, not a booking or internal confirmation reference.' : decision === 'Confirm' ? 'You can confirm the received payment without a transaction ID.' : 'Use the transfer reference shown on the hotel bank statement.'}</span>
                   </label>
-                  <label className="block text-xs font-bold text-slate-300">Exact amount received (NGN)
+                  <label className="block text-xs font-medium text-slate-300">Exact amount received (NGN)
                     <input required type="number" inputMode="decimal" min="0.01" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} className="mt-2 block w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-amber-400/50" />
                   </label>
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs font-semibold leading-relaxed text-slate-300">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs font-medium leading-relaxed text-slate-300">
                     <input type="checkbox" checked={statementChecked} onChange={event => setStatementChecked(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-amber-500" />
                     <span>I checked the hotel bank statement and confirmed this credit is present and has not been used for another booking.</span>
                   </label>
                 </> : null}
-                <label className="block text-xs font-bold text-slate-300">Review notes
+                <label className="block text-xs font-medium text-slate-300">Review notes
                   <textarea required minLength={10} maxLength={500} value={reason} onChange={event => setReason(event.target.value)} className="mt-2 block min-h-24 w-full resize-y rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-amber-400/50" />
                 </label>
               </fieldset>
@@ -306,14 +310,14 @@ export default function PaymentReviewQueue({
             {message ? <p role="alert" className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-200">{message}</p> : null}
 
             <div className="flex flex-col-reverse gap-3 border-t border-white/5 pt-5 sm:flex-row sm:justify-end">
-              <button type="button" data-modal-cancel disabled={busy} onClick={() => setOpen(false)} className="rounded-xl border border-white/10 px-5 py-3 text-xs font-bold text-slate-300 transition-colors hover:bg-white/5">Cancel</button>
-              <button type="submit" disabled={busy || !canSubmit} className="inline-flex min-w-44 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-xs font-black text-slate-950 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40">
+              <button type="button" data-modal-cancel disabled={busy} onClick={() => setOpen(false)} className="rounded-xl border border-white/10 px-5 py-3 text-xs font-medium text-slate-300 transition-colors hover:bg-white/5">Cancel</button>
+              <button type="submit" disabled={busy || !canSubmit} className="inline-flex min-w-44 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-xs font-medium text-slate-950 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40">
                 {busy ? <><Loader2 size={16} className="animate-spin" />Checking...</> : decision === 'Confirm' && !review.roomHeld ? <>Choose a room <ArrowRight size={16} /></> : decision === 'Refund' ? <><RotateCcw size={16} />Queue refund</> : decision === 'Reject' ? <>Reject report</> : <><CheckCircle2 size={16} />Confirm payment</>}
               </button>
             </div>
           </form>
         </div>
-      </div>
+      </div></ModalPortal>
     ) : null}
   </>;
 }

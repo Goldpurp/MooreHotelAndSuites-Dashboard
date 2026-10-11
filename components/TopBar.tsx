@@ -1,3 +1,4 @@
+import { staffLabel } from '../lib/staffLabel';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Search, Bell, Bed, Users, Calendar, CheckCircle, 
@@ -219,7 +220,7 @@ const TopBar: React.FC = () => {
   const unreadCount = unreadNotifications.length;
   const currentUserDisplayName = getStaffDisplayName(
     currentUser?.name,
-    currentUser?.role ? `Hotel ${String(currentUser.role).toLowerCase()}` : 'Hotel staff',
+    currentUser?.role ? `Hotel ${staffLabel(currentUser).toLowerCase()}` : 'Hotel staff',
   );
 
   return (
@@ -258,7 +259,7 @@ const TopBar: React.FC = () => {
               <X size={16} />
             </button>
           ) : (
-            <span className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-black text-slate-600 lg:block">⌘ K</span>
+            <span className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs font-normal text-slate-600 lg:block">⌘ K</span>
           )}
         </div>
 
@@ -270,25 +271,25 @@ const TopBar: React.FC = () => {
           >
             <div className="flex items-center justify-between gap-4 border-b border-white/5 bg-slate-950/55 px-4 py-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white">Search all hotel data</p>
-                <p className="mt-0.5 text-[9px] font-bold text-slate-600">Results are limited by your access level.</p>
+                <p className="text-xs font-normal uppercase tracking-normal text-white">Search all hotel data</p>
+                <p className="mt-0.5 text-xs font-normal text-slate-600">Results are limited by your access level.</p>
               </div>
-              <span className="shrink-0 rounded-lg border border-white/5 bg-white/[0.03] px-2.5 py-1 text-[9px] font-black text-slate-500">{flatSearchResults.length} found</span>
+              <span className="shrink-0 rounded-lg border border-white/5 bg-white/[0.03] px-2.5 py-1 text-xs font-normal text-slate-500">{flatSearchResults.length} found</span>
             </div>
 
             {flatSearchResults.length === 0 ? (
-              <div className="p-10 text-center">
+              <div className="p-6 text-center">
                 <Search size={24} className="mx-auto mb-3 text-slate-700" />
-                <p className="text-[11px] font-black uppercase tracking-dash text-slate-500">No matching hotel data</p>
-                <p className="mt-2 text-[10px] font-medium text-slate-700">Try a guest name, room, date, status, phone, email, amount, or reference.</p>
+                <p className="text-xs font-normal uppercase tracking-normal text-slate-500">No matching hotel data</p>
+                <p className="mt-2 text-xs font-normal text-slate-700">Try a guest name, room, date, status, phone, email, amount, or reference.</p>
               </div>
             ) : (
               <div role="listbox" aria-label="Global search results" className="scroll-pane max-h-[min(68vh,34rem)] overflow-y-auto p-2">
                 {searchGroups.map((group) => (
                   <section key={group.kind} aria-label={group.label} className="mb-2 last:mb-0">
                     <div className="flex items-center justify-between px-3 pb-1.5 pt-2">
-                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-600">{group.label}</p>
-                      <span className="text-[8px] font-black text-slate-700">{group.results.length}</span>
+                      <p className="text-xs font-normal uppercase tracking-normal text-slate-600">{group.label}</p>
+                      <span className="text-xs font-normal text-slate-700">{group.results.length}</span>
                     </div>
                     <div className="space-y-1">
                       {group.results.map((result) => {
@@ -311,10 +312,10 @@ const TopBar: React.FC = () => {
                               <Icon size={16} />
                             </span>
                             <span className="min-w-0 flex-1">
-                              <span className="block truncate text-[12px] font-black text-white">{result.title}</span>
-                              <span className="mt-0.5 block break-words text-[10px] font-medium leading-4 text-slate-500">{result.description}</span>
+                              <span className="block truncate text-[12px] font-normal text-white">{result.title}</span>
+                              <span className="mt-0.5 block break-words text-xs font-normal leading-4 text-slate-500">{result.description}</span>
                             </span>
-                            {result.meta && <span className="max-w-28 shrink-0 truncate text-right text-[8px] font-black uppercase tracking-wider text-slate-600">{result.meta}</span>}
+                            {result.meta && <span className="max-w-28 shrink-0 truncate text-right text-xs font-normal uppercase tracking-normal text-slate-600">{result.meta}</span>}
                             <ArrowRight size={14} className={`shrink-0 transition-transform ${isActive ? 'translate-x-0 text-brand-400' : '-translate-x-1 text-slate-700'}`} />
                           </button>
                         );
@@ -325,7 +326,7 @@ const TopBar: React.FC = () => {
               </div>
             )}
 
-            <div className="hidden items-center gap-4 border-t border-white/5 bg-slate-950/55 px-4 py-2.5 text-[8px] font-bold text-slate-700 sm:flex">
+            <div className="hidden items-center gap-4 border-t border-white/5 bg-slate-950/55 px-4 py-2.5 text-xs font-normal text-slate-700 sm:flex">
               <span>↑↓ Navigate</span>
               <span>↵ Open</span>
               <span>Esc Close</span>
@@ -342,7 +343,7 @@ const TopBar: React.FC = () => {
             className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 transition-all animate-pulse shadow-lg shadow-rose-950/20"
           >
             <ShieldAlert size={16} />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline">{criticalTasksCount} Overdue</span>
+            <span className="text-xs font-normal uppercase tracking-normal hidden lg:inline">{criticalTasksCount} Overdue</span>
           </button>
         )}
 
@@ -350,7 +351,7 @@ const TopBar: React.FC = () => {
           <button aria-label="Notifications" aria-expanded={showNotifications} onClick={() => setShowNotifications(!showNotifications)} className={`p-2.5 rounded-xl border transition-all duration-300 relative shadow-sm ${showNotifications ? 'bg-brand-600 text-white border-brand-500 shadow-xl' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-slate-950">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white text-xs font-normal rounded-full flex items-center justify-center border-2 border-slate-950">
                 {unreadCount}
               </span>
             )}
@@ -359,18 +360,18 @@ const TopBar: React.FC = () => {
           {showNotifications && (
             <div className="fixed left-3 right-3 top-16 mt-2 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-96 bg-slate-900/98 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 flex flex-col overflow-hidden">
               <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
-                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white">Notifications</h3>
+                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-white">Notifications</h3>
                  {unreadCount > 0 && (
-                   <button onClick={() => markAllNotificationsRead()} className="text-[9px] text-brand-400 font-black uppercase tracking-dash hover:text-brand-300 transition-colors">Clear All</button>
+                   <button onClick={() => markAllNotificationsRead()} className="text-xs text-brand-400 font-medium uppercase tracking-normal hover:text-brand-300 transition-colors">Clear All</button>
                  )}
               </div>
               <div className="max-h-[450px] overflow-y-auto custom-scrollbar p-2 space-y-1">
                  {unreadCount === 0 ? (
-                   <div className="py-12 text-center">
+                   <div className="py-6 text-center">
                       <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 border border-white/5">
                         <CheckCircle size={24} className="text-slate-700 opacity-40" />
                       </div>
-                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-dash">No notifications</p>
+                      <p className="text-xs text-slate-600 font-normal uppercase tracking-normal">No notifications</p>
                    </div>
                  ) : (
                    unreadNotifications.map((n) => (
@@ -393,12 +394,12 @@ const TopBar: React.FC = () => {
                            </div>
                            <div className="flex-1 min-w-0">
                              <div className="flex justify-between items-start gap-2">
-                               <p className="text-[12px] font-black uppercase tracking-tight truncate text-white">{n.title}</p>
-                               <span className="text-[8px] text-slate-600 font-black whitespace-nowrap mt-0.5">{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                               <p className="text-[12px] font-normal uppercase tracking-tight truncate text-white">{n.title}</p>
+                               <span className="text-xs text-slate-600 font-normal whitespace-nowrap mt-0.5">{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                              </div>
-                             <p className="text-[11px] leading-relaxed mt-1.5 font-medium whitespace-pre-line text-slate-400">{n.message}</p>
+                             <p className="text-xs leading-relaxed mt-1.5 font-normal whitespace-pre-line text-slate-400">{n.message}</p>
                              <div className="flex items-center gap-1.5 mt-3 text-brand-400">
-                               <span className="text-[8px] font-black uppercase tracking-dash">View Details</span>
+                               <span className="text-xs font-normal uppercase tracking-normal">View Details</span>
                                <Check size={8}/>
                              </div>
                            </div>
@@ -409,7 +410,7 @@ const TopBar: React.FC = () => {
               </div>
               {unreadCount > 0 && (
                 <div className="p-3 border-t border-white/5 bg-slate-950/40 text-center">
-                    <p className="text-[8px] text-slate-700 font-black uppercase tracking-[0.3em]">Moore Hotel Management</p>
+                    <p className="text-xs text-slate-700 font-normal uppercase tracking-normal">Moore Hotel Management</p>
                 </div>
               )}
             </div>
@@ -418,8 +419,8 @@ const TopBar: React.FC = () => {
 
         <div className="hidden min-[420px]:flex items-center gap-3 pl-2 sm:pl-4 border-l border-white/10">
           <div className="text-right hidden sm:block">
-            <p className="text-[13px] font-black text-white leading-tight">{currentUserDisplayName}</p>
-            <p className="text-[9px] font-black uppercase text-slate-500 tracking-dash">{(currentUser?.role || 'staff').toUpperCase()}</p>
+            <p className="text-[13px] font-normal text-white leading-tight">{currentUserDisplayName}</p>
+            <p className="text-xs font-normal uppercase text-slate-500 tracking-normal">{staffLabel(currentUser)}</p>
           </div>
           <img src={currentUser?.avatarUrl || '/avatar-placeholder.svg'} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10" alt="" />
         </div>

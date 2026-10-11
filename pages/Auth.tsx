@@ -58,10 +58,6 @@ const Auth: React.FC = () => {
         description: 'You have successfully logged in.'
       });
     } catch (err: any) {
-      sileo.error({
-        title: 'Login Failed',
-        description: err.message || "Check your details and try again."
-      });
       setError(err.message || "Wrong email or password.");
     } finally {
       setIsLoading(false);
@@ -150,10 +146,6 @@ const Auth: React.FC = () => {
       );
       setResetEmail("");
     } catch (err: any) {
-      sileo.error({
-        title: 'Error',
-        description: err.message || "Something went wrong. Please try again."
-      });
       setError(
         err.message || "Could not reset password.",
       );
@@ -163,46 +155,42 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-slate-950 p-3 sm:p-6 font-sans text-slate-50">
-      <div className="flex min-h-[560px] w-full max-w-6xl overflow-hidden rounded-3xl glass-card shadow-2xl animate-in zoom-in-95 duration-700 sm:rounded-[3rem] lg:min-h-[700px]">
-        <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-550 to-indigo-900 p-16 flex-col justify-between relative border-r border-white/5">
+    <div className="h-[100dvh] overflow-y-auto flex items-start lg:items-center justify-center bg-slate-950 p-3 sm:p-6 font-sans text-slate-50">
+      <div className="flex my-auto w-full max-w-6xl overflow-hidden rounded-3xl glass-card shadow-2xl animate-in zoom-in-95 duration-700 sm:rounded-[3rem] lg:min-h-[560px]">
+        <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-550 to-indigo-900 p-6 flex-col justify-between relative border-r border-white/5">
           <div className="relative z-10">
             <Logo size="2xl" className="mb-8" />
-            <h1 className="text-4xl font-black text-white tracking-tight leading-tight uppercase">
+            <h1 className="text-4xl font-semibold text-white tracking-tight leading-tight uppercase">
               Moore Hotels <br /> & Suites
             </h1>
-            <p className="text-blue-100/80 text-md mt-6 font-medium max-w-sm leading-relaxed">
+            <p className="text-blue-100/80 text-md mt-6 font-normal max-w-sm leading-relaxed">
               Log in to your account.
             </p>
           </div>
           <div className="relative z-10">
             <div className="max-w-fit flex items-center gap-4 p-4 bg-black/20 rounded-2xl border border-white/10 backdrop-blur-md">
-              <p className="text-blue-200 text-xs font-black uppercase tracking-widest leading-relaxed">
+              <p className="text-blue-200 text-xs font-normal uppercase tracking-normal leading-relaxed">
                 Welcome to Moore Hotels.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 bg-slate-900/40 p-5 sm:p-10 lg:p-20 flex flex-col justify-center">
+        <div className="flex-1 bg-slate-900/40 p-5 sm:p-6 lg:p-20 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
             {securityStep === "two-factor" ? (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400">
                   <ShieldCheck size={26} />
                 </div>
-                <h2 className="mb-2 text-3xl font-black uppercase tracking-tight text-white">Confirm sign in</h2>
-                <p className="mb-8 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                <h2 className="mb-2 text-3xl font-semibold uppercase tracking-tight text-white">Confirm sign in</h2>
+                <p className="mb-8 text-xs font-normal uppercase tracking-normal text-slate-500">
                   Enter the current code from your authenticator app
                 </p>
-                {error && (
-                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-rose-400">
-                    <AlertCircle size={18} /><p className="text-[11px] font-black uppercase">{error}</p>
-                  </div>
-                )}
+                {error && <p role="alert" className="auth-error text-sm leading-relaxed text-rose-300">{error}</p>}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <label className="ml-1 text-xs font-medium uppercase tracking-normal text-slate-500">
                       {useRecoveryCode ? "Recovery code" : "Authenticator code"}
                     </label>
                     <input
@@ -213,17 +201,17 @@ const Auth: React.FC = () => {
                       maxLength={32}
                       value={twoFactorCode}
                       onChange={(e) => setTwoFactorCode(e.target.value)}
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-mono text-sm tracking-widest text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-mono text-sm tracking-normal text-white outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
-                  <label className="flex min-h-11 cursor-pointer items-center gap-3 text-xs font-bold text-slate-400">
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3 text-xs font-medium text-slate-400">
                     <input type="checkbox" checked={useRecoveryCode} onChange={(e) => setUseRecoveryCode(e.target.checked)} className="h-4 w-4 accent-blue-600" />
                     Use a one-time recovery code
                   </label>
-                  <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-blue-700 disabled:opacity-50">
+                  <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 text-xs font-medium uppercase tracking-normal text-white transition-all hover:bg-blue-700 disabled:opacity-50">
                     {isLoading ? <Loader2 className="animate-spin" size={18} /> : <><ShieldCheck size={18} /> Verify and sign in</>}
                   </button>
-                  <button type="button" onClick={returnToPasswordLogin} className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white">Back to password sign in</button>
+                  <button type="button" onClick={returnToPasswordLogin} className="w-full py-3 text-xs font-medium uppercase tracking-normal text-slate-500 hover:text-white">Back to password sign in</button>
                 </form>
               </div>
             ) : securityStep === "mfa-setup" ? (
@@ -231,17 +219,13 @@ const Auth: React.FC = () => {
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
                   <KeyRound size={26} />
                 </div>
-                <h2 className="mb-2 text-3xl font-black uppercase tracking-tight text-white">Protect your account</h2>
-                <p className="mb-8 text-[10px] font-black uppercase leading-relaxed tracking-widest text-slate-500">
+                <h2 className="mb-2 text-3xl font-semibold uppercase tracking-tight text-white">Protect your account</h2>
+                <p className="mb-8 text-xs font-normal uppercase leading-relaxed tracking-normal text-slate-500">
                   Staff accounts require an authenticator before the dashboard opens
                 </p>
-                {error && (
-                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-rose-400">
-                    <AlertCircle size={18} /><p className="text-[11px] font-black uppercase">{error}</p>
-                  </div>
-                )}
+                {error && <p role="alert" className="auth-error text-sm leading-relaxed text-rose-300">{error}</p>}
                 {!mfaKey ? (
-                  <button type="button" onClick={handleCreateMfaKey} disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-emerald-700 disabled:opacity-50">
+                  <button type="button" onClick={handleCreateMfaKey} disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 py-4 text-xs font-medium uppercase tracking-normal text-white hover:bg-emerald-700 disabled:opacity-50">
                     {isLoading ? <Loader2 className="animate-spin" size={18} /> : <><KeyRound size={18} /> Create authenticator key</>}
                   </button>
                 ) : (
@@ -256,55 +240,48 @@ const Auth: React.FC = () => {
                           className="mx-auto h-56 w-56 sm:h-64 sm:w-64"
                         />
                       )}
-                      <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-slate-700">
+                      <p className="mt-3 text-xs font-normal uppercase tracking-normal text-slate-700">
                         Scan with your authenticator app
                       </p>
                     </div>
                     <p className="text-xs leading-relaxed text-slate-400">Open Google Authenticator, Microsoft Authenticator, or another TOTP app and scan the code. Then enter the current six-digit code below.</p>
                     <details className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                      <summary className="cursor-pointer text-[9px] font-black uppercase tracking-widest text-slate-400">Cannot scan? Enter a setup key</summary>
-                      <p className="mt-4 break-all text-xs font-bold text-white">{formData.email}</p>
-                      <code className="mt-3 block break-all rounded-xl bg-black/40 p-4 font-mono text-sm tracking-wider text-emerald-300">{mfaKey}</code>
+                      <summary className="cursor-pointer text-xs font-medium uppercase tracking-normal text-slate-400">Cannot scan? Enter a setup key</summary>
+                      <p className="mt-4 break-all text-xs font-normal text-white">{formData.email}</p>
+                      <code className="mt-3 block break-all rounded-xl bg-black/40 p-4 font-mono text-sm tracking-normal text-emerald-300">{mfaKey}</code>
                     </details>
-                    <input required inputMode="numeric" autoComplete="one-time-code" maxLength={16} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="6-digit code" className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-center font-mono text-lg tracking-[0.35em] text-white outline-none focus:ring-2 focus:ring-emerald-500/20" />
-                    <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-emerald-700 disabled:opacity-50">
+                    <input required inputMode="numeric" autoComplete="one-time-code" maxLength={16} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="6-digit code" className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-center font-mono text-lg tracking-normal text-white outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                    <button type="submit" disabled={isLoading} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-emerald-600 py-4 text-xs font-medium uppercase tracking-normal text-white hover:bg-emerald-700 disabled:opacity-50">
                       {isLoading ? <Loader2 className="animate-spin" size={18} /> : <><ShieldCheck size={18} /> Enable authenticator</>}
                     </button>
                   </form>
                 )}
-                <button type="button" onClick={returnToPasswordLogin} className="mt-4 w-full py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white">Sign out</button>
+                <button type="button" onClick={returnToPasswordLogin} className="mt-4 w-full py-3 text-xs font-medium uppercase tracking-normal text-slate-500 hover:text-white">Sign out</button>
               </div>
             ) : securityStep === "recovery" ? (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400"><CheckCircle2 size={26} /></div>
-                <h2 className="mb-2 text-3xl font-black uppercase tracking-tight text-white">Save recovery codes</h2>
+                <h2 className="mb-2 text-3xl font-semibold uppercase tracking-tight text-white">Save recovery codes</h2>
                 <p className="mb-6 text-xs leading-relaxed text-slate-400">Store these one-time codes in a password manager or another secure offline location. They will not be shown again.</p>
                 <textarea readOnly rows={10} value={recoveryCodes.join("\n")} className="w-full resize-none rounded-2xl border border-white/10 bg-black/40 p-5 font-mono text-sm leading-7 text-emerald-300 outline-none" aria-label="MFA recovery codes" />
-                <button type="button" onClick={returnToPasswordLogin} className="mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white hover:bg-blue-700">
+                <button type="button" onClick={returnToPasswordLogin} className="mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 text-xs font-medium uppercase tracking-normal text-white hover:bg-blue-700">
                   I saved the codes — return to sign in
                 </button>
               </div>
             ) : mode === "login" ? (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase mb-2">
+                <h2 className="text-3xl font-semibold text-white tracking-tight uppercase mb-2">
                   Log In
                 </h2>
-                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-10">
+                <p className="text-slate-500 text-xs font-normal uppercase tracking-normal mb-6">
                   Enter your email and password
                 </p>
-                
-                {error && (
-                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 mb-6 animate-in shake">
-                    <AlertCircle size={18} />
-                    <p className="text-[11px] font-black uppercase tracking-tight leading-snug">
-                      {error}
-                    </p>
-                  </div>
-                )}
+
+
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">
+                    <label className="text-xs text-slate-500 font-medium uppercase tracking-normal ml-1">
                       Email Address
                     </label>
                     <div className="relative">
@@ -328,13 +305,13 @@ const Auth: React.FC = () => {
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center px-1">
-                      <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                      <label className="text-xs text-slate-500 font-medium uppercase tracking-normal">
                         Password
                       </label>
                       <button
                         type="button"
-                        onClick={() => setMode("reset")}
-                        className="text-[9px] text-blue-400 font-black uppercase tracking-widest hover:text-blue-300 transition-colors"
+                        onClick={() => { setMode("reset"); setError(null); setSuccess(null); }}
+                        className="text-xs text-blue-400 font-medium uppercase tracking-normal hover:text-blue-300 transition-colors"
                       >
                         Forgot Password?
                       </button>
@@ -353,7 +330,7 @@ const Auth: React.FC = () => {
                         onChange={(e) =>
                           setFormData({ ...formData, password: e.target.value })
                         }
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono tracking-widest"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm text-white outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono tracking-normal"
                       />
                       <button aria-label={showPassword ? "Hide password" : "Show password"}
                         type="button"
@@ -365,19 +342,12 @@ const Auth: React.FC = () => {
                     </div>
                   </div>
 
-                  {error && (
-                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400">
-                      <AlertCircle size={18} />
-                      <p className="text-[11px] font-black uppercase tracking-tight leading-snug">
-                        {error}
-                      </p>
-                    </div>
-                  )}
+                  {error && <p role="alert" className="auth-error text-sm leading-relaxed text-rose-300">{error}</p>}
 
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-800 disabled:text-slate-500 text-white font-black py-4 rounded-2xl text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 mt-10 shadow-2xl active:scale-95"
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium py-4 rounded-2xl text-xs uppercase tracking-normal transition-all flex items-center justify-center gap-3 mt-6 shadow-2xl active:scale-95"
                   >
                     {isLoading ? (
                       <Loader2 className="animate-spin" size={18} />
@@ -397,30 +367,23 @@ const Auth: React.FC = () => {
                     setError(null);
                     setSuccess(null);
                   }}
-                  className="flex items-center gap-2 text-slate-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest mb-8"
+                  className="flex items-center gap-2 text-slate-500 hover:text-white transition-all text-xs font-medium uppercase tracking-normal mb-8"
                 >
                   <ChevronLeft size={16} /> Back to Login
                 </button>
 
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase mb-2">
+                <h2 className="text-3xl font-semibold text-white tracking-tight uppercase mb-2">
                   Reset Password
                 </h2>
-                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-10">
+                <p className="text-slate-500 text-xs font-normal uppercase tracking-normal mb-6">
                   Enter your email below.
                 </p>
 
-                {error && (
-                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 mb-6 animate-in shake">
-                    <AlertCircle size={18} />
-                    <p className="text-[11px] font-black uppercase tracking-tight leading-snug">
-                      {error}
-                    </p>
-                  </div>
-                )}
+
 
                 <form onSubmit={handleResetPassword} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">
+                    <label className="text-xs text-slate-500 font-medium uppercase tracking-normal ml-1">
                       Email Address
                     </label>
                     <div className="relative">
@@ -442,25 +405,18 @@ const Auth: React.FC = () => {
                   {success && (
                     <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3 text-emerald-400">
                       <CheckCircle2 size={18} />
-                      <p className="text-[11px] font-black uppercase tracking-tight leading-snug">
+                      <p className="text-xs font-normal uppercase tracking-tight leading-snug">
                         {success}
                       </p>
                     </div>
                   )}
 
-                  {error && (
-                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400">
-                      <AlertCircle size={18} />
-                      <p className="text-[11px] font-black uppercase tracking-tight leading-snug">
-                        {error}
-                      </p>
-                    </div>
-                  )}
+                  {error && <p role="alert" className="auth-error text-sm leading-relaxed text-rose-300">{error}</p>}
 
-                  <button aria-label="Refresh data"
+                  <button
                     type="submit"
                     disabled={isLoading || !!success}
-                    className="w-full bg-white text-slate-950 hover:bg-slate-200 disabled:bg-slate-800 disabled:text-slate-500 font-black py-4 rounded-2xl text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 mt-10 shadow-2xl active:scale-95"
+                    className="w-full bg-white text-slate-950 hover:bg-slate-200 disabled:bg-slate-800 disabled:text-slate-500 font-medium py-4 rounded-2xl text-xs uppercase tracking-normal transition-all flex items-center justify-center gap-3 mt-6 shadow-2xl active:scale-95"
                   >
                     {isLoading ? (
                       <Loader2 className="animate-spin" size={18} />

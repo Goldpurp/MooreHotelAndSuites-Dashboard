@@ -1,3 +1,4 @@
+import ModalPortal from './ModalPortal';
 import React, { useState } from 'react';
 import {
   Bed,
@@ -64,7 +65,7 @@ const MobileNav: React.FC = () => {
   return (
     <>
       {moreOpen && (
-        <div className="mobile-nav-backdrop fixed inset-0 z-[145] bg-slate-950/70 backdrop-blur-sm md:hidden" onClick={() => setMoreOpen(false)}>
+        <ModalPortal><div className="mobile-nav-backdrop modal-backdrop fixed inset-0 z-[145] bg-slate-950/70 backdrop-blur-sm md:hidden" onClick={() => setMoreOpen(false)}>
           <div
             ref={moreSheetRef}
             className="mobile-nav-sheet absolute inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] rounded-3xl border border-white/10 bg-slate-900 p-4 shadow-2xl"
@@ -75,7 +76,7 @@ const MobileNav: React.FC = () => {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between px-1">
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">More</p>
+              <p className="text-xs font-normal uppercase tracking-normal text-slate-400">More</p>
               <button type="button" data-modal-close onClick={() => setMoreOpen(false)} aria-label="Close more navigation" className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-white">
                 <X size={20} />
               </button>
@@ -86,7 +87,7 @@ const MobileNav: React.FC = () => {
                   key={item.id}
                   type="button"
                   onClick={() => navigate(item.id)}
-                  className={`flex min-h-14 items-center gap-3 rounded-2xl border px-4 text-left text-xs font-bold ${
+                  className={`flex min-h-14 items-center gap-3 rounded-2xl border px-4 text-left text-xs font-medium ${
                     activeTab === item.id
                       ? 'border-brand-500/30 bg-brand-500/15 text-white'
                       : 'border-white/5 bg-white/[0.03] text-slate-400'
@@ -96,11 +97,11 @@ const MobileNav: React.FC = () => {
                 </button>
               ))}
             </div>
-            <button type="button" onClick={handleLogout} className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-rose-500/10 text-xs font-extrabold uppercase tracking-wider text-rose-400">
+            <button type="button" onClick={handleLogout} className="mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-rose-500/10 text-xs font-medium uppercase tracking-normal text-rose-400">
               <LogOut size={18} /> Log out
             </button>
           </div>
-        </div>
+        </div></ModalPortal>
       )}
 
       <nav className="fixed inset-x-0 bottom-0 z-[150] border-t border-white/10 bg-slate-950/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-2xl md:hidden" aria-label="Primary navigation">
@@ -110,7 +111,7 @@ const MobileNav: React.FC = () => {
               key={item.id}
               type="button"
               onClick={() => navigate(item.id)}
-              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[9px] font-bold ${
+              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium ${
                 activeTab === item.id ? 'bg-brand-500/15 text-brand-400' : 'text-slate-500'
               }`}
             >
@@ -122,7 +123,7 @@ const MobileNav: React.FC = () => {
             type="button"
             onClick={() => setMoreOpen(true)}
             aria-expanded={moreOpen}
-            className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[9px] font-bold text-slate-500"
+            className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium text-slate-500"
           >
             <Menu size={19} /> <span>More</span>
           </button>

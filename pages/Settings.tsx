@@ -1,3 +1,4 @@
+import { staffLabel } from '../lib/staffLabel';
 import React, { useEffect, useState, useRef } from 'react';
 import { useHotel } from '../store/HotelContext';
 import { Shield, Key, Mail, User, AlertCircle, ShieldCheck, Camera, Loader2, CheckCircle2, Eye, EyeOff, BellRing, Volume2, VolumeX, Play } from 'lucide-react';
@@ -181,7 +182,7 @@ const Settings: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Loader2 className="animate-spin text-blue-500" size={32} />
-        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Loading...</p>
+        <p className="text-xs text-slate-500 font-normal uppercase tracking-normal">Loading...</p>
       </div>
     );
   }
@@ -192,17 +193,17 @@ const Settings: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="w-8 h-[2px] bg-blue-500 rounded-full"></span>
-            <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em]">Settings</p>
+            <p className="text-xs text-blue-400 font-normal uppercase tracking-normal">Settings</p>
           </div>
-          <h1 className="adaptive-text-3xl font-black text-white tracking-tight uppercase leading-none">Settings</h1>
-          <p className="text-slate-400 text-[11px] font-medium uppercase tracking-widest mt-1 opacity-70">Manage your profile, alerts, and password</p>
+          <h1 className="adaptive-text-3xl font-semibold text-white tracking-tight uppercase leading-none">Settings</h1>
+          <p className="text-slate-400 text-xs font-normal uppercase tracking-normal mt-1 opacity-70">Manage your profile, alerts, and password</p>
         </div>
 
         <div className="flex bg-black/40 p-1.5 rounded-xl border border-white/10 gap-1.5 shadow-2xl">
            {roles.map(r => (
              <div
                key={r}
-               className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${
+               className={`px-4 py-1.5 rounded-lg text-xs font-normal uppercase tracking-normal transition-all duration-500 ${
                  userRole === r
                    ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] ring-1 ring-blue-500/50'
                    : 'text-slate-600 opacity-40'
@@ -217,7 +218,7 @@ const Settings: React.FC = () => {
       <div className="flex w-full gap-1 rounded-xl border border-white/5 bg-black/20 p-1 sm:w-fit">
         <button
           onClick={() => setActiveSubTab('profile')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all sm:flex-none sm:px-6 ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-medium uppercase tracking-normal transition-all sm:flex-none sm:px-6 ${
             activeSubTab === 'profile' ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
@@ -225,7 +226,7 @@ const Settings: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveSubTab('notifications')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all sm:flex-none sm:px-6 ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-medium uppercase tracking-normal transition-all sm:flex-none sm:px-6 ${
             activeSubTab === 'notifications' ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
@@ -233,7 +234,7 @@ const Settings: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveSubTab('security')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all sm:flex-none sm:px-6 ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-medium uppercase tracking-normal transition-all sm:flex-none sm:px-6 ${
             activeSubTab === 'security' ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
           }`}
         >
@@ -247,10 +248,10 @@ const Settings: React.FC = () => {
             <div className="flex items-center gap-6">
               <div
                 onClick={isUploadingAvatar ? undefined : handleAvatarClick}
-                className="w-24 h-24 bg-slate-800 rounded-2xl flex items-center justify-center font-black text-3xl text-slate-400 border border-white/10 relative overflow-hidden group shadow-2xl cursor-pointer"
+                className="w-24 h-24 bg-slate-800 rounded-2xl flex items-center justify-center font-normal text-3xl text-slate-400 border border-white/10 relative overflow-hidden group shadow-2xl cursor-pointer"
               >
                 <img src={currentUser?.avatarUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt=""/>
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[8px] font-black uppercase tracking-widest gap-1">
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-xs font-normal uppercase tracking-normal gap-1">
                   {isUploadingAvatar ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
                   {isUploadingAvatar ? 'Uploading' : 'Change'}
                 </div>
@@ -263,12 +264,12 @@ const Settings: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <h3 className="text-3xl font-black text-white tracking-tight uppercase leading-none">{currentUser?.name || "Authenticating..."}</h3>
+                <h3 className="text-3xl font-semibold text-white tracking-tight uppercase leading-none">{currentUser?.name || "Authenticating..."}</h3>
                 <div className="flex items-center gap-3 mt-2">
-                  <div className="px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-lg text-blue-400 text-[10px] font-black uppercase tracking-widest">
-                    {(currentUser?.role || userRole).toUpperCase()}
+                  <div className="px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-lg text-blue-400 text-xs font-normal uppercase tracking-normal">
+                    {staffLabel(currentUser ?? {role: userRole})}
                   </div>
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-dash flex items-center gap-1">
+                  <span className="text-xs text-slate-500 font-normal uppercase tracking-normal flex items-center gap-1">
                     <ShieldCheck size={12} className="text-emerald-500" /> Verified Staff
                   </span>
                 </div>
@@ -277,9 +278,9 @@ const Settings: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
               <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex justify-between">
+                <label className="text-xs text-slate-500 font-medium uppercase tracking-normal ml-1 flex justify-between">
                   Primary Email
-                  <span className="text-[8px] text-emerald-500 flex items-center gap-1 uppercase tracking-tighter">
+                  <span className="text-xs text-emerald-500 flex items-center gap-1 uppercase tracking-tighter">
                     <Shield size={10} /> Verified
                   </span>
                 </label>
@@ -294,9 +295,9 @@ const Settings: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1 flex justify-between">
+                <label className="text-xs text-slate-500 font-medium uppercase tracking-normal ml-1 flex justify-between">
                   Assigned Authority
-                  <span className="text-[8px] text-blue-500 flex items-center gap-1 uppercase tracking-tighter">
+                  <span className="text-xs text-blue-500 flex items-center gap-1 uppercase tracking-tighter">
                     <Shield size={10} /> Active Role
                   </span>
                 </label>
@@ -304,7 +305,7 @@ const Settings: React.FC = () => {
                   <Shield size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
                   <input
                     readOnly
-                    value={(currentUser?.role || userRole).toUpperCase()}
+                    value={staffLabel(currentUser ?? {role: userRole})}
                     className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-[13px] text-slate-500 cursor-not-allowed outline-none"
                   />
                 </div>
@@ -316,8 +317,8 @@ const Settings: React.FC = () => {
                 <ShieldCheck size={24} className="text-emerald-400" />
               </div>
               <div>
-                <p className="text-[15px] font-black text-white tracking-tight uppercase">Secure Login</p>
-                <p className="text-[11px] text-slate-500 uppercase tracking-widest font-bold mt-1">Password, lockout, role, and session controls are active.</p>
+                <p className="text-[15px] font-normal text-white tracking-tight uppercase">Secure Login</p>
+                <p className="text-xs text-slate-500 uppercase tracking-normal font-normal mt-1">Password, lockout, role, and session controls are active.</p>
               </div>
             </div>
           </div>
@@ -327,8 +328,8 @@ const Settings: React.FC = () => {
       {activeSubTab === 'notifications' && (
         <div className="glass-card p-6 sm:p-8 rounded-2xl border border-white/5 space-y-7 mt-4 animate-in slide-in-from-right-4 shadow-xl">
           <div>
-            <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Notification alerts</h3>
-            <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">
+            <h3 className="text-2xl font-semibold text-white mb-2 uppercase tracking-tight">Notification alerts</h3>
+            <p className="text-xs text-slate-500 leading-relaxed font-normal uppercase tracking-normal">
               Control the sound used when a genuinely new hotel notification arrives.
             </p>
           </div>
@@ -344,8 +345,8 @@ const Settings: React.FC = () => {
                   {notificationSoundEnabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
                 </div>
                 <div>
-                  <p className="text-[14px] font-black text-white uppercase tracking-tight">New notification sound</p>
-                  <p className="mt-1.5 max-w-xl text-[11px] leading-relaxed text-slate-500">
+                  <p className="text-[14px] font-normal text-white uppercase tracking-tight">New notification sound</p>
+                  <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-500">
                     Plays one short chime when a notification first reaches this signed-in session.
                     Initial notification history and repeated background refreshes remain silent.
                   </p>
@@ -377,7 +378,7 @@ const Settings: React.FC = () => {
             </div>
 
             <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-white/10 pt-5">
-              <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-xs font-normal uppercase tracking-normal">
                 <span className={`h-2 w-2 rounded-full ${
                   notificationSoundEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'
                 }`} />
@@ -389,14 +390,14 @@ const Settings: React.FC = () => {
                 type="button"
                 onClick={handleNotificationSoundPreview}
                 disabled={!notificationSoundEnabled}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 text-[9px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 text-xs font-medium uppercase tracking-normal text-white transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <Play size={13} /> Test sound
               </button>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 rounded-xl border border-blue-500/15 bg-blue-500/5 p-4 text-[10px] leading-relaxed text-slate-400">
+          <div className="flex items-start gap-3 rounded-xl border border-blue-500/15 bg-blue-500/5 p-4 text-xs leading-relaxed text-slate-400">
             <ShieldCheck size={16} className="mt-0.5 shrink-0 text-blue-400" />
             <p>
               Your browser or operating-system mute controls can still silence alerts. The setting
@@ -409,8 +410,8 @@ const Settings: React.FC = () => {
       {activeSubTab === 'security' && (
         <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8 mt-4 animate-in slide-in-from-right-4 shadow-xl">
             <div>
-              <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Security</h3>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-bold uppercase tracking-widest">Update your password to keep your account safe.</p>
+              <h3 className="text-2xl font-semibold text-white mb-2 uppercase tracking-tight">Security</h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-normal uppercase tracking-normal">Update your password to keep your account safe.</p>
             </div>
 
             <form onSubmit={handleRotateSecurity} className="space-y-8 max-w-lg">
@@ -418,21 +419,21 @@ const Settings: React.FC = () => {
             {rotationStatus === 'success' && (
               <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400 animate-in zoom-in-95">
                 <CheckCircle2 size={18} />
-                <p className="text-[11px] font-black uppercase">Password updated.</p>
+                <p className="text-xs font-normal uppercase">Password updated.</p>
               </div>
             )}
 
             {rotationStatus === 'error' && (
               <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-400 animate-in shake">
                 <AlertCircle size={18} />
-                <p className="text-[11px] font-black uppercase">{errorMessage}</p>
+                <p className="text-xs font-normal uppercase">{errorMessage}</p>
               </div>
             )}
 
 
             <div className="space-y-4">
                <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Old Password</label>
+                  <label className="text-xs text-slate-500 font-medium uppercase tracking-normal ml-1">Old Password</label>
                    <div className="relative">
                     <input
                       aria-label="Old Password" type={showOldPassword ? "text" : "password"}
@@ -440,7 +441,7 @@ const Settings: React.FC = () => {
                       value={securityForm.oldPassword}
                       onChange={(e) => setSecurityForm({...securityForm, oldPassword: e.target.value})}
                       placeholder="••••••••"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-normal"
                     />
                     <button type="button" aria-label={showOldPassword ? "Hide old password" : "Show old password"} onClick={() => setShowOldPassword(!showOldPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showOldPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
@@ -448,7 +449,7 @@ const Settings: React.FC = () => {
                   </div>
                </div>
                <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">New Password</label>
+                  <label className="text-xs text-slate-500 font-medium uppercase tracking-normal ml-1">New Password</label>
                    <div className="relative">
                     <input
                       aria-label="New Password" type={showNewPassword ? "text" : "password"}
@@ -458,7 +459,7 @@ const Settings: React.FC = () => {
                       value={securityForm.newPassword}
                       onChange={(e) => setSecurityForm({...securityForm, newPassword: e.target.value})}
                       placeholder="••••••••"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-normal"
                     />
                     <button type="button" aria-label={showNewPassword ? "Hide new password" : "Show new password"} onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showNewPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
@@ -466,7 +467,7 @@ const Settings: React.FC = () => {
                   </div>
                   {securityForm.newPassword && (
                     <div className="px-1 space-y-1.5">
-                      <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest">
+                      <div className="flex justify-between items-center text-xs font-normal uppercase tracking-normal">
                         <span className="text-slate-500">Strength</span>
                         <span className={
                           calculateStrength(securityForm.newPassword) <= 2 ? "text-rose-500" :
@@ -493,7 +494,7 @@ const Settings: React.FC = () => {
                   )}
                </div>
                <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Confirm Password</label>
+                  <label className="text-xs text-slate-500 font-medium uppercase tracking-normal ml-1">Confirm Password</label>
                    <div className="relative">
                     <input
                       aria-label="Confirm Password" type={showConfirmPassword ? "text" : "password"}
@@ -503,7 +504,7 @@ const Settings: React.FC = () => {
                       value={securityForm.confirmNewPassword}
                       onChange={(e) => setSecurityForm({...securityForm, confirmNewPassword: e.target.value})}
                       placeholder="••••••••"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-widest"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-5 pr-12 text-[14px] text-white focus:bg-white/10 outline-none transition-all focus:ring-2 focus:ring-blue-500/30 font-mono tracking-normal"
                     />
                     <button type="button" aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"} onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-all z-20 p-1">
                       {showConfirmPassword ? <EyeOff size={16}/> : <Eye size={16}/>}
@@ -515,7 +516,7 @@ const Settings: React.FC = () => {
             <button
               type="submit"
               disabled={isRotating}
-              className="bg-white text-slate-950 font-black px-10 py-4 rounded-xl text-[10px] uppercase tracking-[0.2em] transition-all hover:bg-slate-200 active:scale-95 shadow-2xl shadow-white/5 flex items-center justify-center gap-3"
+              className="bg-white text-slate-950 font-medium px-6 py-4 rounded-xl text-xs uppercase tracking-normal transition-all hover:bg-slate-200 active:scale-95 shadow-2xl shadow-white/5 flex items-center justify-center gap-3"
             >
               {isRotating ? <Loader2 size={16} className="animate-spin" /> : <Key size={16} />}
               Update Password

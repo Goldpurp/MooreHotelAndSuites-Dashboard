@@ -198,11 +198,11 @@ const Guests: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="w-8 h-[2px] bg-emerald-500 rounded-full"></span>
-              <p className="adaptive-text-xs text-emerald-400 font-black uppercase tracking-widest leading-none">
+              <p className="adaptive-text-xs text-emerald-400 font-normal uppercase tracking-normal leading-none">
                 Guests
               </p>
             </div>
-            <h1 className="adaptive-text-2xl font-black text-white tracking-tight uppercase leading-none">
+            <h1 className="adaptive-text-2xl font-semibold text-white tracking-tight uppercase leading-none">
               {activeTab === "in-house" ? "Checked In" : "Past Guests"}
             </h1>
           </div>
@@ -217,7 +217,7 @@ const Guests: React.FC = () => {
         <div className="flex border-b border-white/5 gap-6 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setLocalActiveTab("in-house")}
-            className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === "in-house" ? "text-emerald-400" : "text-slate-600"}`}
+            className={`pb-3 adaptive-text-xs font-medium uppercase tracking-normal transition-all relative ${activeTab === "in-house" ? "text-emerald-400" : "text-slate-600"}`}
           >
             Checked In ({unifiedResidentList.filter((r) => !!r.activeStay).length}
             )
@@ -227,7 +227,7 @@ const Guests: React.FC = () => {
           </button>
           <button
             onClick={() => setLocalActiveTab("history")}
-            className={`pb-3 adaptive-text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === "history" ? "text-blue-400" : "text-slate-600"}`}
+            className={`pb-3 adaptive-text-xs font-medium uppercase tracking-normal transition-all relative ${activeTab === "history" ? "text-blue-400" : "text-slate-600"}`}
           >
             History (
             {
@@ -262,7 +262,7 @@ const Guests: React.FC = () => {
           <div className="scroll-pane min-h-0 flex-1 overflow-auto">
             <table className="mobile-card-table w-full text-left min-w-[500px]">
               <thead className="sticky top-0 bg-slate-950 z-20 border-b border-white/10">
-                <tr className="text-slate-500 adaptive-text-xs font-black uppercase tracking-widest">
+                <tr className="text-slate-500 adaptive-text-xs font-normal uppercase tracking-normal">
                   <th className="responsive-table-padding">Guest Details</th>
                   <th className="responsive-table-padding text-center col-priority-med">
                     Status
@@ -280,7 +280,7 @@ const Guests: React.FC = () => {
                   <tr>
                     <td
                       colSpan={4}
-                      className="py-32 text-center text-slate-700 font-black uppercase adaptive-text-sm"
+                      className="py-32 text-center text-slate-700 font-normal uppercase adaptive-text-sm"
                     >
                       No guest records found in this view
                     </td>
@@ -324,7 +324,7 @@ const Guests: React.FC = () => {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 mb-1.5">
                                 <p
-                                  className={`adaptive-text-sm font-black transition-colors uppercase truncate leading-none ${isOverdue ? "text-rose-400 group-hover:text-rose-300" : "text-white group-hover:text-brand-400"}`}
+                                  className={`adaptive-text-sm font-normal transition-colors uppercase truncate leading-none ${isOverdue ? "text-rose-400 group-hover:text-rose-300" : "text-white group-hover:text-brand-400"}`}
                                 >
                                 {resident.firstName} {resident.lastName}
                                 </p>
@@ -347,7 +347,7 @@ const Guests: React.FC = () => {
                                       className={checkoutTiming.isOverdue ? "text-rose-500" : "text-amber-400"}
                                     />
                                     <span
-                                      className={`text-[7px] font-black uppercase ${
+                                      className={`text-[7px] font-normal uppercase ${
                                         checkoutTiming.isOverdue ? "text-rose-400" : "text-amber-300"
                                       }`}
                                     >
@@ -356,7 +356,7 @@ const Guests: React.FC = () => {
                                   </div>
                                 )}
                               </div>
-                              <p className="break-all text-[8px] font-black uppercase tracking-wider text-slate-500">
+                              <p className="break-all text-xs font-normal uppercase tracking-normal text-slate-500">
                                 Ref: {visibleBooking?.bookingCode || "Not available"}
                               </p>
                             </div>
@@ -365,7 +365,7 @@ const Guests: React.FC = () => {
                         <td data-label="Status" className="responsive-table-padding text-center col-priority-med">
                           <div className="flex flex-wrap items-center justify-center gap-2">
                             {active && isOverdue && (
-                              <span className="relative inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-[9px] font-black uppercase text-rose-400 shadow-[0_0_14px_rgba(244,63,94,0.18)] animate-pulse">
+                              <span className="relative inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-normal uppercase text-rose-400 shadow-[0_0_14px_rgba(244,63,94,0.18)] animate-pulse">
                                 <span className="relative flex h-2 w-2">
                                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
                                   <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
@@ -374,7 +374,7 @@ const Guests: React.FC = () => {
                               </span>
                             )}
                             <span
-                              className={`inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase ${
+                              className={`inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-normal uppercase ${
                                 active
                                   ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]"
                                   : "border-white/5 bg-slate-900 text-slate-600"
@@ -390,7 +390,7 @@ const Guests: React.FC = () => {
                           </div>
                         </td>
                         <td data-label="Stay" className="responsive-table-padding col-priority-low">
-                          <div className="flex items-center gap-2 adaptive-text-xs font-bold text-slate-600">
+                          <div className="flex items-center gap-2 adaptive-text-xs font-normal text-slate-600">
                             <span className={isOverdue ? "text-rose-400" : ""}>
                               {visibleBooking
                                 ? new Date(
@@ -421,7 +421,7 @@ const Guests: React.FC = () => {
                         <td data-label="Actions" className="responsive-table-padding text-right">
                           <div className="min-w-0">
                             <p
-                              className={`adaptive-text-sm font-black tracking-tighter truncate ${active ? (activeIsPaid ? "text-emerald-400" : "text-rose-500") : "text-slate-400"}`}
+                              className={`adaptive-text-sm font-normal tracking-tighter truncate ${active ? (activeIsPaid ? "text-emerald-400" : "text-rose-500") : "text-slate-400"}`}
                             >
                               ₦
                               {(active
@@ -429,7 +429,7 @@ const Guests: React.FC = () => {
                                 : resident.totalSpent
                               ).toLocaleString()}
                             </p>
-                            <p className="text-[8px] text-slate-700 font-black uppercase mt-1">
+                            <p className="text-xs text-slate-700 font-normal uppercase mt-1">
                               {active
                                 ? activeIsPaid
                                   ? "Paid"
@@ -446,7 +446,7 @@ const Guests: React.FC = () => {
             </table>
           </div>
           <div className="px-8 py-4 bg-slate-950/60 border-t border-white/5 flex items-center justify-between">
-            <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest">
+            <span className="text-xs text-slate-600 font-normal uppercase tracking-normal">
               {filteredResidents.length} Guests
             </span>
             <div className="flex gap-2">
@@ -458,7 +458,7 @@ const Guests: React.FC = () => {
                 <ChevronLeft size={18} />
               </button>
               <div className="flex items-center px-4 rounded-xl bg-black/40 border border-white/5">
-                <span className="text-[11px] font-black text-white">
+                <span className="text-xs font-normal text-white">
                   {currentPage} / {totalPages || 1}
                 </span>
               </div>
@@ -481,10 +481,10 @@ const Guests: React.FC = () => {
           <div className="glass-card scroll-pane rounded-2xl p-8 flex flex-col border border-white/10 bg-[#0a0f1a] shadow-2xl h-full overflow-y-auto">
             <div className="flex justify-between items-start mb-3">
               <div className="space-y-1">
-                <h3 className="adaptive-text-xl font-black text-white tracking-tighter uppercase leading-none">
+                <h3 className="adaptive-text-xl font-semibold text-white tracking-tighter uppercase leading-none">
                   Guest Details
                 </h3>
-                <p className="text-[9px] text-brand-500 font-black tracking-widest uppercase">
+                <p className="text-xs text-brand-500 font-normal tracking-normal uppercase">
                   History
                 </p>
               </div>
@@ -503,17 +503,17 @@ const Guests: React.FC = () => {
                   className="text-rose-500 shrink-0 mt-0.5"
                 />
                 <div>
-                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                  <p className="text-xs font-normal text-rose-500 uppercase tracking-normal">
                     ALERT: OVERDUE
                   </p>
-                  <p className="text-[9px] text-rose-400 font-bold uppercase mt-1">
+                  <p className="text-xs text-rose-400 font-normal uppercase mt-1">
                     This guest should have checked out by 12:00 PM.
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col items-center mb-10 pt-4">
+            <div className="flex flex-col items-center mb-6 pt-4">
               <div className="relative mb-6">
                 <img
                   src={selectedResident.avatarUrl}
@@ -532,12 +532,12 @@ const Guests: React.FC = () => {
                   </div>
                 )}
               </div>
-              <h3 className="adaptive-text-lg font-black text-white uppercase text-center leading-[1] tracking-tighter truncate w-full px-2 mb-2">
+              <h3 className="adaptive-text-lg font-semibold text-white uppercase text-center leading-[1] tracking-tighter truncate w-full px-2 mb-2">
                 {selectedResident.firstName} <br /> {selectedResident.lastName}
               </h3>
               <div className="px-4 py-1.5 bg-white/5 border border-white/5 rounded-xl flex items-center gap-2">
                 <Fingerprint size={12} className="text-slate-600" />
-                <p className="text-[8px] text-slate-600 font-black uppercase tracking-widest truncate max-w-[120px]">
+                <p className="text-xs text-slate-600 font-normal uppercase tracking-normal truncate max-w-[120px]">
                   {selectedResident.id}
                 </p>
               </div>
@@ -547,13 +547,13 @@ const Guests: React.FC = () => {
               <div className="bg-[#0d131f] p-5 rounded-2xl space-y-4 border border-white/5 shadow-inner">
                 <div className="flex items-center gap-4 text-slate-500">
                   <Mail size={14} className="shrink-0" />
-                  <span className="adaptive-text-sm font-bold truncate leading-none">
+                  <span className="adaptive-text-sm font-normal truncate leading-none">
                     {selectedResident.email || "No Email Record"}
                   </span>
                 </div>
                 <div className="flex items-center gap-4 text-slate-500 pt-4 border-t border-white/5">
                   <Phone size={14} className="shrink-0" />
-                  <span className="adaptive-text-sm font-bold leading-none">
+                  <span className="adaptive-text-sm font-normal leading-none">
                     {selectedResident.phone || "No Phone Record"}
                   </span>
                 </div>
@@ -565,14 +565,14 @@ const Guests: React.FC = () => {
                 >
                   <div className="flex justify-between items-center">
                     <span
-                      className={`text-[9px] font-black uppercase tracking-widest ${selectedResident.activeStay.isOverdue ? "text-rose-500" : "text-emerald-500/60"}`}
+                      className={`text-xs font-normal uppercase tracking-normal ${selectedResident.activeStay.isOverdue ? "text-rose-500" : "text-emerald-500/60"}`}
                     >
                       {selectedResident.activeStay.isOverdue
                         ? "OVERDUE · CHECKED IN"
                         : "Checked In"}
                     </span>
                     <span
-                      className={`px-2 py-1 text-[8px] font-black uppercase rounded border ${(selectedResident.activeStay.booking.paymentStatus || "").toLowerCase() === "paid" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}
+                      className={`px-2 py-1 text-xs font-normal uppercase rounded border ${(selectedResident.activeStay.booking.paymentStatus || "").toLowerCase() === "paid" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20"}`}
                     >
                       {selectedResident.activeStay.booking.paymentStatus}
                     </span>
@@ -584,13 +584,13 @@ const Guests: React.FC = () => {
                       <Bed size={20} />
                     </div>
                     <div className="min-w-0">
-                      <p className="adaptive-text-base font-black text-white italic tracking-tighter leading-none mb-1">
+                      <p className="adaptive-text-base font-normal text-white italic tracking-tighter leading-none mb-1">
                         {selectedResident.activeStay.room?.name}
                       </p>
-                      <p className="text-[8px] text-slate-600 font-bold uppercase truncate">
+                      <p className="text-xs text-slate-600 font-normal uppercase truncate">
                         {selectedResident.activeStay.room?.category}
                       </p>
-                      <p className="mt-1 break-all text-[8px] font-black uppercase tracking-wider text-slate-500">
+                      <p className="mt-1 break-all text-xs font-normal uppercase tracking-normal text-slate-500">
                         Ref: {selectedResident.activeStay.booking.bookingCode}
                       </p>
                     </div>
@@ -598,8 +598,8 @@ const Guests: React.FC = () => {
 
                   <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest block mb-1">Check-In</span>
-                      <p className="adaptive-text-sm font-bold text-white leading-none">
+                      <span className="text-xs text-slate-600 font-normal uppercase tracking-normal block mb-1">Check-In</span>
+                      <p className="adaptive-text-sm font-normal text-white leading-none">
                         {new Date(selectedResident.activeStay.booking.checkIn).toLocaleDateString("en-GB", {
                           day: "2-digit",
                           month: "short",
@@ -608,8 +608,8 @@ const Guests: React.FC = () => {
                       </p>
                     </div>
                     <div>
-                      <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest block mb-1">Check-Out</span>
-                      <p className={`adaptive-text-sm font-bold leading-none ${selectedResident.activeStay.isOverdue ? 'text-rose-500' : 'text-white'}`}>
+                      <span className="text-xs text-slate-600 font-normal uppercase tracking-normal block mb-1">Check-Out</span>
+                      <p className={`adaptive-text-sm font-normal leading-none ${selectedResident.activeStay.isOverdue ? 'text-rose-500' : 'text-white'}`}>
                         {new Date(selectedResident.activeStay.booking.checkOut).toLocaleDateString("en-GB", {
                           day: "2-digit",
                           month: "short",
@@ -623,17 +623,17 @@ const Guests: React.FC = () => {
 
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between px-1">
-                  <h4 className="text-[9px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
+                  <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
                     <History size={12} /> PAST BOOKINGS
                   </h4>
-                  <span className="text-[9px] font-black text-slate-700 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                  <span className="text-xs font-normal text-slate-700 bg-white/5 px-2 py-0.5 rounded border border-white/5">
                     {selectedResident.history.length} BOOKINGS
                   </span>
                 </div>
                 <div className="space-y-1.5 max-h-[160px] overflow-y-auto">
                   {selectedResident.history.length === 0 ? (
                     <div className="p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10 opacity-30">
-                      <p className="text-[9px] text-slate-600 uppercase font-black">
+                      <p className="text-xs text-slate-600 uppercase font-normal">
                         No past bookings
                       </p>
                     </div>
@@ -644,12 +644,12 @@ const Guests: React.FC = () => {
                         className="p-3 bg-white/[0.03] border border-white/5 rounded-xl hover:bg-white/[0.06] transition-all group flex items-center justify-between gap-2"
                       >
                         <div className="min-w-0">
-                          <p className="text-[11px] font-black text-white uppercase tracking-tighter leading-none mb-1.5">
+                          <p className="text-xs font-normal text-white uppercase tracking-tighter leading-none mb-1.5">
                             Room{" "}
                             {rooms.find((r) => r.id === stay.roomId)
                               ?.name || "---"}
                           </p>
-                          <p className="text-[8px] text-slate-700 font-bold uppercase truncate">
+                          <p className="text-xs text-slate-700 font-normal uppercase truncate">
                             {new Date(stay.checkIn).toLocaleDateString(
                               "en-GB",
                               {
@@ -659,7 +659,7 @@ const Guests: React.FC = () => {
                               },
                             )}
                           </p>
-                          <p className="mt-1 break-all text-[8px] font-black uppercase tracking-wider text-slate-500">
+                          <p className="mt-1 break-all text-xs font-normal uppercase tracking-normal text-slate-500">
                             Ref: {stay.bookingCode}
                           </p>
                         </div>
@@ -674,7 +674,7 @@ const Guests: React.FC = () => {
                             setActiveTab("bookings");
                             setSelectedBookingId(stay.id);
                           }}
-                          className="text-brand-500 hover:text-brand-400 opacity-0 group-hover:opacity-100 transition-all font-black shrink-0"
+                          className="text-brand-500 hover:text-brand-400 opacity-0 group-hover:opacity-100 transition-all font-medium shrink-0"
                         >
                           <ExternalLink size={12} />
                         </button>
@@ -698,7 +698,7 @@ const Guests: React.FC = () => {
                       setIsCheckOutModalOpen(true);
                     }
                   }}
-                  className="w-full bg-rose-600 hover:bg-rose-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl"
+                  className="w-full bg-rose-600 hover:bg-rose-700 py-5 rounded-2xl adaptive-text-sm font-medium uppercase tracking-normal flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl"
                 >
                   <LogOut size={20} strokeWidth={3} /> CHECK OUT
                 </button>
@@ -713,7 +713,7 @@ const Guests: React.FC = () => {
                     });
                     setActiveTab("bookings");
                   }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 py-5 rounded-2xl adaptive-text-sm font-black uppercase tracking-widest text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 py-5 rounded-2xl adaptive-text-sm font-medium uppercase tracking-normal text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
                 >
                   <Users size={20} /> NEW BOOKING
                 </button>
