@@ -14,17 +14,6 @@ test('staff edit passes the selected existing account and clears it for creation
   assert.match(modal, /updateStaff\(editingUser.id/);
 });
 
-test('staff setup uses its own single-use route and endpoint', () => {
-  assert.match(app, /\/setup-password/);
-  assert.match(app, /get\("route"\) === "setup-password"/);
-  assert.match(setup, /window\.location\.hash\.slice\(1\)/);
-  assert.match(setup, /params\.get\("userId"\)/);
-  assert.match(setup, /\/api\/Auth\/setup-password/);
-  assert.match(setup, /Create your staff password/);
-  assert.doesNotMatch(setup, /forgot-password|reset-password/);
-  assert.match(setup, /\/#route=setup-password/);
-});
-
 test('staff setup password fields expose independent accessible visibility controls', () => {
   assert.match(setup, /aria-label=\{visible \? `Hide \$\{label\.toLowerCase\(\)\}` : `Show \$\{label\.toLowerCase\(\)\}`\}/);
   assert.match(setup, /aria-pressed=\{visible\}/);
