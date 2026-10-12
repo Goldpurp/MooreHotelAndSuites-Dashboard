@@ -1,3 +1,4 @@
+import { passwordRecoveryMode } from "./lib/passwordRecovery";
 import AppToaster from './components/AppToaster';
 import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
@@ -29,11 +30,6 @@ const Settlements = lazy(() => import("./pages/Settlements"));
 const PrivacyRequests = lazy(() => import("./pages/PrivacyRequests"));
 const Auth = lazy(() => import("./pages/Auth"));
 const StaffSetupPassword = lazy(() => import("./pages/StaffSetupPassword"));
-
-const isStaffSetupRoute = () => {
-  if (window.location.pathname.replace(/\/+$/, "") === "/setup-password") return true;
-  return new URLSearchParams(window.location.hash.slice(1)).get("route") === "setup-password";
-};
 
 const AppContent: React.FC = () => {
   const {
@@ -294,10 +290,11 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  if (isStaffSetupRoute()) {
+  const recoveryMode = passwordRecoveryMode(window.location);
+  if (recoveryMode) {
     return (
-      <Suspense fallback={<div className="grid min-h-[100dvh] place-items-center bg-slate-950 text-slate-400">Opening secure setup...</div>}>
-        <StaffSetupPassword />
+      <Suspense fallback={<div className="grid min-h-[100dvh] place-items-center bg-slate-950 text-slate-400">Opening secure password form...</div>}>
+        <StaffSetupPassword mode={recoveryMode} />
       </Suspense>
     );
   }
